@@ -1,0 +1,24 @@
+<h2 style="color: #4a7729; margin-top: 0">{{titulo}}</h2>
+
+<p>Hola <strong>{{nombre}}</strong>,</p>
+
+<p>{{mensaje}}</p>
+
+{{#if detalle}}
+<div class="info-box">
+  <span class="label">{{detalleLabel}}</span>
+  <span class="value" style="font-family: monospace; font-size: 16px"
+    >{{detalle}}</span
+  >
+</div>
+{{/if}} {{#if botonUrl}}
+<div style="text-align: center">
+  <a href="{{botonUrl}}" class="btn">{{botonTexto}}</a>
+</div>
+{{/if}} {{#if advertencia}}
+<p
+  style="color: #d97706; font-size: 13px; font-style: italic; margin-top: 20px"
+>
+  ⚠️ {{advertencia}}
+</p>
+{{/if}}

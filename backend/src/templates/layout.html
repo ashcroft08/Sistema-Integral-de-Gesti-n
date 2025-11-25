@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SIG-KALLARI</title>
+    <style>
+      /* ESTILOS RESPONSIVOS Y CORPORATIVOS */
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      /* HEADER VERDE KALLARI */
+      .header {
+        background-color: #ffffff;
+        padding: 25px;
+        text-align: center;
+        border-bottom: 4px solid #4a7729;
+      }
+
+      /* CONTENIDO */
+      .content {
+        padding: 40px 30px;
+        color: #333333;
+        line-height: 1.6;
+      }
+
+      /* FOOTER CACAO */
+      .footer {
+        background-color: #3e2723;
+        color: #ffffff;
+        text-align: center;
+        padding: 20px;
+        font-size: 12px;
+      }
+      .footer a {
+        color: #ffc107;
+        text-decoration: none;
+      }
+
+      /* BOTONES Y UTILIDADES */
+      .btn {
+        display: inline-block;
+        background-color: #4a7729;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+      .info-box {
+        background-color: #f9f9f9;
+        border-left: 5px solid #ffc107;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .label {
+        font-size: 12px;
+        font-weight: bold;
+        color: #888;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 2px;
+      }
+      .value {
+        font-size: 16px;
+        font-weight: 500;
+        color: #3e2723;
+        display: block;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img
+          src="https://i.postimg.cc/PqwZP4xg/imagotipo-sig-kallari-Photoroom.png"
+          alt="Kallari Logo"
+          height="60"
+        />
+      </div>
+
+      {{{body}}}
+
+      <div class="footer">
+        <p>
+          <strong>Asociación KALLARI</strong><br />Sistema Integral de Gestión
+        </p>
+        <p>Tena - Napo - Ecuador</p>
+        <p style="opacity: 0.7; font-size: 11px">
+          &copy; {{year}} Todos los derechos reservados.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

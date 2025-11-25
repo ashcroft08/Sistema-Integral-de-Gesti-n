@@ -1,0 +1,26 @@
+// Códigos inmutables definidos en la Base de Datos
+
+export const ROLES = {
+    SUPERUSUARIO: 'ROL_SUPER',
+    ADMINISTRADOR: 'ROL_ADMIN',
+    VENDEDOR: 'ROL_VENDEDOR',
+    CONTADOR: 'ROL_CONTADOR'
+};
+
+export const ESTADOS_USUARIO = {
+    ACTIVO: 'ESTADO_ACTIVO',
+    INACTIVO: 'ESTADO_INACTIVO',
+    BLOQUEADO: 'ESTADO_BLOQUEADO'
+};
+
+export const ESTADOS_CATEGORIA = {
+    ACTIVA: 'CAT_ACTIVA',
+    INACTIVA: 'CAT_INACTIVA'
+};
+
+export const ESTADOS_PRODUCTO = {
+    ACTIVO: 'PRO_ACTIVA',
+    INACTIVO: 'PRO_INACTIVA',
+    AGOTADO: 'PRO_AGOTADO',
+    DESCONTINUADO: 'PRO_DESCONTINUADO'
+};

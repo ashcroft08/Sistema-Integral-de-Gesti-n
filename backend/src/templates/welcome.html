@@ -1,0 +1,36 @@
+<h2 style="color: #4a7729; margin-top: 0">¡Bienvenido, {{nombre}}!</h2>
+
+<p>
+  Tu cuenta profesional ha sido creada exitosamente en el sistema
+  <strong>SIG-KALLARI</strong>.
+</p>
+
+<p>A continuación, te entregamos tus credenciales de acceso temporal:</p>
+
+<div class="info-box">
+  <span class="label">Usuario / Email:</span>
+  <span class="value">{{email}}</span>
+
+  <span class="label">Contraseña Temporal:</span>
+  <span
+    class="value"
+    style="font-family: monospace; letter-spacing: 1px; font-size: 18px"
+    >{{password}}</span
+  >
+</div>
+
+{{#if isGenerated}}
+<p style="color: #d9534f; font-size: 13px; font-style: italic">
+  ⚠️ Por seguridad, el sistema te solicitará cambiar esta contraseña
+  automáticamente al ingresar por primera vez.
+</p>
+{{/if}}
+
+<div style="text-align: center">
+  <a href="{{loginUrl}}" class="btn">Ingresar al Sistema</a>
+</div>
+
+<p style="margin-top: 30px; font-size: 13px; color: #777">
+  Si tienes problemas para acceder, por favor contacta al administrador del
+  sistema.
+</p>
