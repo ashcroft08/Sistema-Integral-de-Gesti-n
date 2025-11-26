@@ -22,6 +22,51 @@ export class AuthService {
         return estado.id_estado_usuario;
     }
 
+    async getCurrentUser(userId) {
+        try {
+            const usuario = await Usuario.findByPk(userId, {
+                include: [
+                    {
+                        model: Rol,
+                        attributes: ['id_rol', 'rol', 'codigo']
+                    },
+                    {
+                        model: EstadoUsuario,
+                        attributes: ['id_estado_usuario', 'estado_usuario', 'codigo']
+                    }
+                ],
+                attributes: {
+                    exclude: ['password', 'resetPasswordToken', 'primer_ingreso', 'intentos_fallidos', 'tiempo_bloqueo']
+                }
+            });
+
+            if (!usuario) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            return {
+                id: usuario.id_usuario,
+                nombre: usuario.nombre,
+                apellido: usuario.apellido,
+                email: usuario.email,
+                telefono: usuario.telefono,
+                id_rol: usuario.id_rol,
+                rol: usuario.Rol.rol,
+                rol_codigo: usuario.Rol.codigo,
+                id_estado_usuario: usuario.id_estado_usuario,
+                estado_usuario: usuario.EstadoUsuario.estado_usuario,
+                estado_codigo: usuario.EstadoUsuario.codigo,
+                primer_ingreso: usuario.primer_ingreso, // Opcional: si lo necesitas en el front
+                creado_en: usuario.creado_en,
+                actualizado_en: usuario.actualizado_en
+            };
+
+        } catch (error) {
+            console.error('Error en AuthService.getCurrentUser:', error);
+            throw error;
+        }
+    }
+
     async login(email, password) {
         try {
             // 1. Obtener la configuración de bloqueo y de token

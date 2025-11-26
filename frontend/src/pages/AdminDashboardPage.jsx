@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import AdminLayout from "../components/Layout/AdminLayout";
 import DashboardStats from "../components/Admin/DashboardStats";
 import Button from "../components/UI/Button";
-import api from "../services/auth.service";
+import axiosInstance from "../services/axios";
 import { categoryService } from "../services/category.service";
 import { Link } from "react-router-dom";
 
@@ -34,7 +34,7 @@ const AdminDashboardPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users');
+      const response = await axiosInstance.get('/users');
       if (response.data.success) {
         const allUsersData = response.data.usuarios || [];
         setAllUsers(allUsersData);

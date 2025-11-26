@@ -11,6 +11,36 @@ const authService = new AuthService();
 
 export class AuthController {
 
+    async getCurrentUser(req, res) {
+        try {
+            // El ID del usuario viene del middleware verifyToken (req.user.id)
+            const userId = req.user.id;
+
+            // Llama al servicio para obtener los datos del usuario
+            const usuario = await authService.getCurrentUser(userId);
+
+            return res.status(200).json({
+                success: true,
+                usuario: usuario
+            });
+
+        } catch (error) {
+            console.error('Error en getCurrentUser controller:', error);
+
+            if (error.message === 'Usuario no encontrado') {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Usuario no encontrado'
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message: 'Error del servidor al obtener datos del usuario'
+            });
+        }
+    }
+
     async login(req, res) {
         try {
             // Los datos ya están validados por el middleware

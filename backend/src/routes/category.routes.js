@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { CategoryProductController} from '../controllers/category.controller.js'
+import { CategoryProductController } from '../controllers/category.controller.js'
 import { verifyToken, checkRole } from '../middleware/auth.middleware.js';
 import { validateRequest, validateParams } from '../middleware/validation.middleware.js';
 import { CategoryIdSchema, ChangeCategoryStatusSchema, CreateCategorySchema, UpdateCategorySchema } from '../schemas/category.schema.js';
@@ -9,9 +9,17 @@ const router = Router();
 const categoryController = new CategoryProductController();
 
 // Middleware de seguridad
+// 🔒 ACCESO TOTAL (Solo Admins)
 const adminAccess = [
     verifyToken,
     checkRole([ROLES.SUPERUSUARIO, ROLES.ADMINISTRADOR])
+];
+
+// 🔓 ACCESO LECTURA (Admins + Vendedores)
+// El vendedor necesita ver las categorías para filtrar el inventario
+const readAccess = [
+    verifyToken,
+    checkRole([ROLES.SUPERUSUARIO, ROLES.ADMINISTRADOR, ROLES.VENDEDOR])
 ];
 
 /**
@@ -34,7 +42,7 @@ router.post(
  */
 router.get(
     '/',
-    adminAccess,
+    readAccess,
     (req, res) => categoryController.getAllCategories(req, res)
 );
 

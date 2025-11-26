@@ -1,12 +1,12 @@
 // src/services/user.service.js
-import api from './api';
+import axiosInstance from './axios'; // 👈 Cambiado: ahora usa axios.js
 
 export const userService = {
 
     // Obtener todos los usuarios
     async getUsers() {
         try {
-            const response = await api.get('/users');
+            const response = await axiosInstance.get('/users');
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -16,7 +16,7 @@ export const userService = {
     // Obtener usuario por ID
     async getUserById(id) {
         try {
-            const response = await api.get(`/users/${id}`);
+            const response = await axiosInstance.get(`/users/${id}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -26,7 +26,7 @@ export const userService = {
     // Crear usuario
     async createUser(userData) {
         try {
-            const response = await api.post('/users', userData);
+            const response = await axiosInstance.post('/users', userData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -36,7 +36,7 @@ export const userService = {
     // Actualizar usuario
     async updateUser(id, userData) {
         try {
-            const response = await api.put(`/users/${id}`, userData);
+            const response = await axiosInstance.put(`/users/${id}`, userData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -46,7 +46,7 @@ export const userService = {
     // Eliminar usuario
     async deleteUser(id) {
         try {
-            const response = await api.delete(`/users/${id}`);
+            const response = await axiosInstance.delete(`/users/${id}`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -56,7 +56,7 @@ export const userService = {
     // Cambiar estado de usuario
     async changeUserStatus(id, statusData) {
         try {
-            const response = await api.patch(`/users/${id}/status`, statusData);
+            const response = await axiosInstance.patch(`/users/${id}/status`, statusData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -66,7 +66,7 @@ export const userService = {
     // Activar usuario
     async activateUser(id) {
         try {
-            const response = await api.patch(`/users/${id}/activate`);
+            const response = await axiosInstance.patch(`/users/${id}/activate`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -76,7 +76,7 @@ export const userService = {
     // Desactivar usuario
     async deactivateUser(id) {
         try {
-            const response = await api.patch(`/users/${id}/deactivate`);
+            const response = await axiosInstance.patch(`/users/${id}/deactivate`);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -86,8 +86,7 @@ export const userService = {
     // Obtener roles
     async getRoles() {
         try {
-            // Asumiendo que tienes un endpoint para roles
-            const response = await api.get('/roles');
+            const response = await axiosInstance.get('/roles');
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -95,11 +94,11 @@ export const userService = {
     },
 
     /**
-   * Actualizar configuración completa
-   */
+     * Actualizar configuración completa
+     */
     async updateSettings(settingsData) {
         try {
-            const response = await api.put('/user-settings', settingsData);
+            const response = await axiosInstance.put('/user-settings', settingsData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -107,11 +106,11 @@ export const userService = {
     },
 
     /**
- * Obtener perfil del usuario actual
- */
+     * Obtener perfil del usuario actual
+     */
     async getMyProfile() {
         try {
-            const response = await api.get('/user-settings/profile');
+            const response = await axiosInstance.get('/user-settings/profile');
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -123,7 +122,7 @@ export const userService = {
      */
     async updateProfile(profileData) {
         try {
-            const response = await api.put('/user-settings/profile', profileData);
+            const response = await axiosInstance.put('/user-settings/profile', profileData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -135,7 +134,7 @@ export const userService = {
      */
     async changePassword(passwordData) {
         try {
-            const response = await api.put('/user-settings/password', passwordData);
+            const response = await axiosInstance.put('/user-settings/password', passwordData);
             return response.data;
         } catch (error) {
             throw this.handleError(error);
@@ -144,7 +143,7 @@ export const userService = {
 
     async getUserStatuses() {
         try {
-            const response = await api.get('/users/statuses');
+            const response = await axiosInstance.get('/users/statuses');
             return response.data;
         } catch (error) {
             throw this.handleError(error);

@@ -1,7 +1,7 @@
 // src/routes/auth.routes.js
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller.js';
-import { verifyFirstLoginToken } from '../middleware/auth.middleware.js';
+import { verifyFirstLoginToken, verifyToken } from '../middleware/auth.middleware.js';
 import { validateRequest } from '../middleware/validation.middleware.js';
 import {
     LoginSchema,
@@ -12,6 +12,13 @@ import {
 
 const router = Router();
 const authController = new AuthController();
+
+// 🔥 NUEVA RUTA: Obtener datos del usuario autenticado
+router.get(
+    '/me',
+    verifyToken,
+    (req, res) => authController.getCurrentUser(req, res)
+);
 
 // Ruta de login
 router.post(
