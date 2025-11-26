@@ -1,13 +1,13 @@
 // src/components/Login/LoginHeader.jsx
 import React from 'react';
-
+import logo from '../../assets/imagotipo-sig-kallari.svg';
 const LoginHeader = ({ headline }) => {
   return (
     <div className="flex flex-col items-center">
       {/* ✅ Logo como imagen */}
       <div className="flex justify-center items-center py-8">
         <img
-          src="/imagotipo-sig-kallari.webp" // 👈 Ruta relativa desde la carpeta public
+          src={logo} // 👈 Ruta relativa desde la carpeta public
           alt="Kallari Logo"
           className="h-24 w-auto" // Ajusta el tamaño según necesites
         />

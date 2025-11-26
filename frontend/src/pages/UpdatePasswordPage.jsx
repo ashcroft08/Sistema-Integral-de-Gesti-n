@@ -10,6 +10,8 @@ import PasswordInput from "../components/UI/PasswordInput";
 import Button from "../components/UI/Button";
 import ErrorMessageCard from "../components/UI/ErrorMessageCard";
 import { ChangePasswordWithConfirmationSchema } from "../schemas/auth.schemas";
+import logo from '../assets/imagotipo-sig-kallari.svg';
+
 import {
   calculatePasswordStrength as calcStrength,
   getPasswordRequirements,
@@ -147,7 +149,7 @@ const UpdatePasswordPage = () => {
             <div className="flex flex-col items-center">
               <div className="flex justify-center items-center py-8">
                 <img
-                  src="/imagotipo-sig-kallari.webp"
+                  src={logo}
                   alt="Kallari Logo"
                   className="h-24 w-auto"
                 />

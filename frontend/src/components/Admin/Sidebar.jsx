@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import logo from "../../assets/horizontal-sig-kallari.svg";
+import favicon from "../../assets/favicon-sig-kallari.svg";
 
 const menuItems = {
   admin: [
@@ -186,11 +188,7 @@ const Sidebar = () => {
             }`}
           >
             <img
-              src={
-                isCollapsed
-                  ? "/favicon-sig-kallari.webp"
-                  : "/horizontal-sig-kallari.webp"
-              }
+              src={isCollapsed ? favicon : logo} // ✅ Correcto: condición que devuelve una cadena
               alt="Kallari Logo"
               className={`object-contain transition-all duration-300 ${
                 isCollapsed ? "h-14" : "h-14"

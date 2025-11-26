@@ -1,18 +1,14 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+// Importa el componente Loading (Ajusta la ruta si lo guardaste en otra carpeta)
+import Loading from "./components/Loading/Loading"; 
 
 const PublicRoute = () => {
   const { loading, isAuthenticated, user } = useAuth();
 
-  // 1. Esperar carga inicial
+  // 1. Esperar carga inicial con el nuevo diseño
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p className="text-gray-700">Cargando...</p>
-        </div>
-      </div>
-    );
+    return <Loading text="VERIFICANDO SESIÓN..." />;
   }
 
   // 2. Si está autenticado Y tenemos datos del usuario, redirigir
@@ -28,15 +24,9 @@ const PublicRoute = () => {
     return <Navigate to={destination} replace />;
   }
 
-  // 3. Si está autenticado pero aún no carga el usuario (esto no debería pasar)
+  // 3. Si está autenticado pero aún no carga el usuario
   if (isAuthenticated && !user) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <p className="text-gray-700">Redirigiendo...</p>
-        </div>
-      </div>
-    );
+    return <Loading text="REDIRECCIONANDO..." />;
   }
 
   // 4. Si no está autenticado, mostrar rutas públicas

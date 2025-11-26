@@ -10,6 +10,7 @@ import InputField from "../components/UI/InputField";
 import Button from "../components/UI/Button";
 import ErrorMessageCard from "../components/UI/ErrorMessageCard";
 import { ForgotPasswordSchema } from "../schemas/auth.schemas";
+import logo from '../assets/imagotipo-sig-kallari.svg';
 
 const ForgotPasswordPage = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const ForgotPasswordPage = () => {
             <div className="flex flex-col items-center">
               <div className="flex justify-center items-center py-8">
                 <img
-                  src="/imagotipo-sig-kallari.webp"
+                  src={logo}
                   alt="eco Artisanale"
                   className="h-24 w-auto"
                 />
