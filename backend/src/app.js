@@ -9,6 +9,8 @@ import roleRoutes from './routes/role.routes.js';
 import userSettingsRoutes from './routes/userSettings.routes.js';
 import productRoutes from './routes/product.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import salesRoutes from './routes/sales.routes.js';
+import clientRoutes from './routes/client.routes.js';
 
 const app = express();
 
@@ -31,5 +33,7 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/sales', salesRoutes);
+app.use('/api/clients', clientRoutes);
 
 export default app;

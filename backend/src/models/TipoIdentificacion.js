@@ -9,6 +9,12 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(255),
             allowNull: false
         },
+        // ✨ NUEVO CAMPO: Código inmutable para referencia segura
+        codigo: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            unique: true // Garantiza que no se repita (ej: 'SRI_RUC')
+        },
         descripcion: {
             type: DataTypes.TEXT,
             allowNull: false
@@ -23,38 +29,42 @@ export default (sequelize, DataTypes) => {
         TipoIdentificacion.hasMany(models.Cliente, { foreignKey: 'id_tipo_identificacion' });
     };
 
-    // Hook para insertar tipos de identificación iniciales
+    // Hook mejorado con Códigos
     TipoIdentificacion.afterSync(async (options) => {
         try {
             const tiposIdentificacion = [
                 {
                     tipo_identificacion: 'RUC',
-                    descripcion: 'Registro Único de Contribuyentes para personas jurídicas y naturales con negocio'
+                    codigo: 'SRI_RUC', // Código fijo
+                    descripcion: 'Registro Único de Contribuyentes'
                 },
                 {
                     tipo_identificacion: 'Cédula',
-                    descripcion: 'Cédula de identidad para personas naturales'
+                    codigo: 'SRI_CEDULA',
+                    descripcion: 'Cédula de identidad'
                 },
                 {
                     tipo_identificacion: 'Pasaporte',
-                    descripcion: 'Documento de identificación para extranjeros'
+                    codigo: 'SRI_PASAPORTE',
+                    descripcion: 'Documento para extranjeros'
                 },
                 {
                     tipo_identificacion: 'Consumidor Final',
-                    descripcion: 'Para ventas a consumidores finales que no requieren factura con identificación'
+                    codigo: 'SRI_CONSUMIDOR_FINAL',
+                    descripcion: 'Ventas menores'
                 }
             ];
 
             for (const tipo of tiposIdentificacion) {
+                // Buscamos por CÓDIGO, no por nombre
                 await TipoIdentificacion.findOrCreate({
-                    where: { tipo_identificacion: tipo.tipo_identificacion },
+                    where: { codigo: tipo.codigo },
                     defaults: tipo
                 });
             }
-
-            console.log('✅ Tipos de identificación iniciales verificados/creados correctamente');
+            console.log('✅ Tipos de identificación verificados');
         } catch (error) {
-            console.error('Error en afterSync hook de TipoIdentificacion:', error);
+            console.error('Error en afterSync de TipoIdentificacion:', error);
         }
     });
 
