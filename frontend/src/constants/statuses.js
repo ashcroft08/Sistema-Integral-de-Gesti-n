@@ -11,7 +11,7 @@ export const ESTADOS_CATEGORIA = {
 
 export const ESTADOS_PRODUCTO = {
     ACTIVO: 'PRO_ACTIVA',
-    INACTIVO: 'PRO_INACTIVA',
-    AGOTADO: 'PRO_AGOTADO',
-    DESCONTINUADO: 'PRO_DESCONTINUADO'
+    // INACTIVO: 'PRO_INACTIVA', // Eliminado de la BD
+    AGOTADO: 'PRO_AGOTADO',      // Estado VISUAL (Calculado por stock)
+    DESCONTINUADO: 'PRO_DESCONTINUADO'  // Estado BD
 };

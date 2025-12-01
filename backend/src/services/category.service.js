@@ -143,24 +143,6 @@ export class CategoryProductService {
     }
 
     /**
-     * Elimina una categoria
-     */
-    async deleteCategory(categoryId) {
-        try {
-            const categoria = await CategoriaProducto.findByPk(categoryId);
-            if (!categoria) {
-                throw new Error('Categoria no encontrada.');
-            }
-
-            await categoria.destroy();
-            return { message: 'Categoria eliminada correctamente.' };
-
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    /**
      * Cambiar estado de una categoria
      */
     async changeCategoryStatus(categoryId, nuevoEstadoId) {

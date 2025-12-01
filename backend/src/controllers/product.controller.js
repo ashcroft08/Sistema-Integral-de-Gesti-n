@@ -201,4 +201,27 @@ export class ProductController {
             });
         }
     }
+
+    /**
+     * Reabastecer stock (Compra)
+     */
+    async addStock(req, res) {
+        try {
+            const { id } = req.validatedParams;
+            const { cantidad } = req.body; // No necesitamos un schema complejo, solo un número
+
+            const producto = await productService.addStock(id, cantidad);
+
+            res.status(200).json({
+                success: true,
+                message: `Stock agregado correctamente. Nuevo total: ${producto.stock_actual}`,
+                producto
+            });
+        } catch (error) {
+            res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }

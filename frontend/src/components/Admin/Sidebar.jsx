@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import logo from "../../assets/horizontal-sig-kallari.svg";
 import favicon from "../../assets/favicon-sig-kallari.svg";
+import NotificationBell from "../../components/ui/NotificationBell.jsx";
 
 const menuItems = {
   admin: [
@@ -229,6 +230,10 @@ const Sidebar = () => {
 
       {/* --- FOOTER ACTIONS --- */}
       <div className="flex flex-col gap-2 p-4">
+
+        {/* CENTRO DE NOTIFICACIONES */}
+        <NotificationBell isCollapsed={isCollapsed} />
+
         {/* Selector de Perfil - ADMINISTRADOR */}
         {isAdmin && (
           <div className="relative">
@@ -345,6 +350,8 @@ const Sidebar = () => {
           </span>
         </button>
       </div>
+
+
     </aside>
   );
 };

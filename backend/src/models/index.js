@@ -7,7 +7,7 @@ const { sequelize } = db;
 import AsientoContableModel from './AsientoContable.js';
 import AuditoriaModel from './Auditoria.js';
 import CantonModel from './Canton.js';
-import EstadoCategoriaModel  from './EstadoCategoria.js';
+import EstadoCategoriaModel from './EstadoCategoria.js';
 import CategoriaProductoModel from './CategoriaProducto.js';
 import ClienteModel from './Cliente.js';
 import ConfiguracionBloqueoModel from './ConfiguracionBloqueo.js';
@@ -20,8 +20,9 @@ import EstadoUsuarioModel from './EstadoUsuario.js';
 import FacturaModel from './Factura.js';
 import MovimientoInventarioModel from './MovimientoInventario.js';
 import PlanCuentaModel from './PlanCuenta.js';
-import EstadoProductoModel  from './EstadoProducto.js';
+import EstadoProductoModel from './EstadoProducto.js';
 import ProductoModel from './Producto.js';
+import NotificacionesStockModel from './NotificacionesStock.js';
 import ProvinciaModel from './Provincia.js';
 import RolModel from './Rol.js';
 import TipoIdentificacionModel from './TipoIdentificacion.js';
@@ -48,6 +49,7 @@ const MovimientoInventario = MovimientoInventarioModel(sequelize, DataTypes);
 const PlanCuenta = PlanCuentaModel(sequelize, DataTypes);
 const EstadoProducto = EstadoProductoModel(sequelize, DataTypes);
 const Producto = ProductoModel(sequelize, DataTypes);
+const NotificacionesStock = NotificacionesStockModel(sequelize, DataTypes);
 const Provincia = ProvinciaModel(sequelize, DataTypes);
 const Rol = RolModel(sequelize, DataTypes);
 const TipoIdentificacion = TipoIdentificacionModel(sequelize, DataTypes);
@@ -76,6 +78,7 @@ const models = {
     PlanCuenta,
     EstadoProducto,
     Producto,
+    NotificacionesStock,
     Provincia,
     Rol,
     TipoIdentificacion,
@@ -112,6 +115,7 @@ export {
     PlanCuenta,
     EstadoProducto,
     Producto,
+    NotificacionesStock,
     Provincia,
     Rol,
     TipoIdentificacion,

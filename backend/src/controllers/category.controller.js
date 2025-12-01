@@ -107,34 +107,6 @@ export class CategoryProductController {
     }
 
     /**
-     * Eliminar categoria
-     */
-    async deleteCategory(req, res) {
-        try {
-            const { id } = req.validatedParams;
-
-            const result = await categoryService.deleteCategory(id);
-
-            res.status(200).json({
-                success: true,
-                message: result.message
-            });
-
-        } catch (error) {
-            if (error.message === 'Categoria del producto no encontrado.') {
-                return res.status(404).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-            res.status(500).json({
-                success: false,
-                message: error.message
-            });
-        }
-    }
-
-    /**
          * Cambiar estado de categoría
          */
     async changeCategoryStatus(req, res) {
@@ -203,13 +175,6 @@ export class CategoryProductController {
                 });
             }
 
-            if (error.message.includes('último administrador')) {
-                return res.status(400).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-
             res.status(500).json({
                 success: false,
                 message: 'Error al activar la categoría del producto.'
@@ -237,13 +202,6 @@ export class CategoryProductController {
 
             if (error.message === 'Categoría del producto no encontrada.') {
                 return res.status(404).json({
-                    success: false,
-                    message: error.message
-                });
-            }
-
-            if (error.message.includes('último administrador')) {
-                return res.status(400).json({
                     success: false,
                     message: error.message
                 });

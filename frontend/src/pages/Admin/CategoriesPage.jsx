@@ -3,8 +3,9 @@ import { useAuth } from "../../context/AuthContext";
 import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
 import Modal from "../../components/UI/Modal";
-import Table from "../../components/UI/Table"; // ✅ Componente de Tabla Reutilizable
-import CategoryStatusModal from "../../components/UI/CategoryStatusModal"; // ✅ Modal de Estado Bonito
+import Table from "../../components/UI/Table";
+import TablePagination from "../../components/UI/TablePagination";
+import CategoryStatusModal from "../../components/UI/CategoryStatusModal";
 import { useCategories } from "../../hooks/useCategories";
 import { toast } from "react-toastify";
 import { ESTADOS_CATEGORIA } from "../../constants/statuses";
@@ -29,6 +30,10 @@ const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" }); // ✅ 1. Estado para ordenar
 
+  // --- 2. ESTADOS PARA PAGINACIÓN ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -42,6 +47,11 @@ const CategoriesPage = () => {
   // Verifica el código que viene del backend (incluido en getAllCategories)
   const isCategoryActive = (row) =>
     row?.EstadoCategoria?.codigo === ESTADOS_CATEGORIA.ACTIVA;
+
+  // --- 3. EFECTO: RESETEAR PAGINACIÓN AL FILTRAR ---
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // --- LÓGICA DE FILTRADO (useMemo) ---
   const filteredCategories = useMemo(() => {
@@ -89,6 +99,19 @@ const CategoriesPage = () => {
     }
     setSortConfig({ key, direction });
   };
+
+  // --- 4. CÁLCULO DE DATOS PAGINADOS (SLICE) ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  // Estos son los datos que REALMENTE se verán en la tabla
+  const currentCategories = sortedCategories.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+
+  const totalItems = sortedCategories.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // --- EFECTOS ---
   useEffect(() => {
@@ -164,10 +187,7 @@ const CategoriesPage = () => {
     if (!currentCategory) return;
     setActionLoading(true);
     try {
-      const result = await toggleCategoryStatus(
-        currentCategory.id_categoria,
-        currentCategory.id_estado_categoria
-      );
+      const result = await toggleCategoryStatus(currentCategory);
 
       if (result.success) {
         toast.success(
@@ -330,11 +350,27 @@ const CategoriesPage = () => {
           {/* ✅ COMPONENTE DE TABLA REUTILIZABLE CON SORTING */}
           <Table
             columns={tableColumns}
-            data={sortedCategories} // ✅ Usamos los datos ordenados
+            data={currentCategories} // ✅ 5. Usamos los datos cortados (currentCategories)
             isLoading={loading}
             keyField="id_categoria"
             sortConfig={sortConfig} // ✅ Pasamos config de orden
             onSort={handleSort} // ✅ Pasamos handler de orden
+            // --- 5. AGREGADO: Paginación inyectada ---
+            pagination={
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                limit={itemsPerPage}
+                onLimitChange={(newLimit) => {
+                  setItemsPerPage(newLimit);
+                  setCurrentPage(1);
+                }}
+                totalItems={totalItems}
+                showingFrom={indexOfFirstItem + 1}
+                showingTo={Math.min(indexOfLastItem, totalItems)}
+              />
+            }
             emptyText={
               categories.length === 0
                 ? "No hay categorías registradas."

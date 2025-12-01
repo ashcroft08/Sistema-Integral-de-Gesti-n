@@ -72,18 +72,6 @@ router.put(
 );
 
 /**
- * @route   DELETE /api/categories/:id
- * @desc    Eliminar categoria
- * @access  Privado (Admin)
- */
-router.delete(
-    '/:id',
-    adminAccess,
-    validateParams(CategoryIdSchema), // ✅ Validación parámetros
-    (req, res) => categoryController.deleteCategory(req, res)
-);
-
-/**
  * @route   PATCH /api/categories/:id/status
  * @desc    Cambiar estado de una categoria
  * @access  Privado (Admin)

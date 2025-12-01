@@ -68,4 +68,13 @@ router.patch(
     (req, res) => productController.changeProductStatus(req, res)
 );
 
+// Reabastecer stock (MOV_COMPRA)
+router.patch(
+    '/:id/restock',
+    validateParams(ProductIdSchema),
+    // Puedes crear un schema simple para validar que 'cantidad' venga en el body
+    checkRole([ROLES.SUPERUSUARIO, ROLES.ADMINISTRADOR, ROLES.VENDEDOR]), 
+    (req, res) => productController.addStock(req, res)
+);
+
 export default router;

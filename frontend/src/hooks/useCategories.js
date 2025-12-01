@@ -62,7 +62,7 @@ export const useCategories = () => {
                     console.error('Error al recargar categorías:', err);
                     // No establecer error global, solo log
                 });
-                return { success: true, data: response.categoria || response.usuario };
+                return { success: true, data: response.categoria };
             } else {
                 throw new Error(response.message || 'Error al actualizar categoría');
             }
@@ -75,36 +75,17 @@ export const useCategories = () => {
         }
     };
 
-    // Eliminar categoría
-    const deleteCategory = async (id) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await categoryService.deleteCategory(id);
-            if (response.success) {
-                await loadCategories(); // Recargar la lista
-                return { success: true, message: response.message };
-            } else {
-                throw new Error(response.message || 'Error al eliminar categoría');
-            }
-        } catch (err) {
-            setError(err.message);
-            return { success: false, error: err.message };
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Cambiar estado de categoría
-    const toggleCategoryStatus = async (id, currentStatus) => {
+    const toggleCategoryStatus = async (category) => {
         // No establecer loading para no bloquear la UI
         setError(null);
         try {
+            const isActiva = category.EstadoCategoria?.codigo === 'CAT_ACTIVA';
             let response;
-            if (currentStatus === 1) { // Si está activo, desactivar
-                response = await categoryService.deactivateCategory(id);
+            if (isActiva) { // Si está activo, desactivar
+                response = await categoryService.deactivateCategory(category.id_categoria);
             } else { // Si está inactivo, activar
-                response = await categoryService.activateCategory(id);
+                response = await categoryService.activateCategory(category.id_categoria);
             }
 
             if (response.success) {
@@ -113,7 +94,7 @@ export const useCategories = () => {
                     console.error('Error al recargar categorías:', err);
                     // No establecer error global, solo log
                 });
-                return { success: true, data: response.categoria || response.usuario };
+                return { success: true, data: response.categoria };
             } else {
                 throw new Error(response.message || 'Error al cambiar estado');
             }
@@ -134,7 +115,6 @@ export const useCategories = () => {
         error,
         createCategory,
         updateCategory,
-        deleteCategory,
         toggleCategoryStatus,
         refetch: loadCategories
     };

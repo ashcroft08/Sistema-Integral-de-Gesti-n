@@ -9,7 +9,6 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(30),
             allowNull: false
         },
-        // ✨ NUEVO CAMPO
         codigo: {
             type: DataTypes.STRING(20),
             allowNull: false,
@@ -30,8 +29,8 @@ export default (sequelize, DataTypes) => {
             // ✨ DEFINICIÓN CON CÓDIGOS
             const estados = [
                 { nombre: 'Activo', codigo: 'PRO_ACTIVA' },
-                { nombre: 'Inactivo', codigo: 'PRO_INACTIVA' },
-                { nombre: 'Agotado', codigo: 'PRO_AGOTADO' },
+                //{ nombre: 'Inactivo', codigo: 'PRO_INACTIVA' }, <-- ELIMINAR (Lo maneja la categoría)
+                //{ nombre: 'Agotado', codigo: 'PRO_AGOTADO' },   <-- ELIMINAR (Es stock 0)
                 { nombre: 'Descontinuado', codigo: 'PRO_DESCONTINUADO' },
             ];
 

@@ -5,6 +5,7 @@ import { useUsers } from "../../hooks/useUsers";
 import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
 import Table from "../../components/UI/Table";
+import TablePagination from "../../components/UI/TablePagination";
 import UserFormModal from "../../components/UI/UserFormModal";
 import StatusConfirmationModal from "../../components/UI/StatusConfirmationModal";
 import { toast } from "react-toastify";
@@ -30,6 +31,10 @@ const UsersPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
+  // --- 2. ESTADOS PARA PAGINACIÓN ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -42,8 +47,11 @@ const UsersPage = () => {
     userItem?.EstadoUsuario?.codigo === ESTADOS_USUARIO.ACTIVO;
   const isUserInactive = (userItem) =>
     userItem?.EstadoUsuario?.codigo === ESTADOS_USUARIO.INACTIVO;
-  const isUserBlocked = (userItem) =>
-    userItem?.EstadoUsuario?.codigo === ESTADOS_USUARIO.BLOQUEADO;
+
+  // --- 3. EFECTO: RESETEAR PAGINACIÓN AL FILTRAR ---
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, statusFilter]);
 
   // --- LÓGICA DE FILTRADO ---
   const filteredUsers = useMemo(() => {
@@ -95,6 +103,16 @@ const UsersPage = () => {
     setSortConfig({ key, direction });
   };
 
+  // --- 4. CÁLCULO DE DATOS PAGINADOS (SLICE) ---
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  // Estos son los usuarios que REALMENTE se verán en la tabla
+  const currentUsers = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalItems = sortedUsers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
   // --- HANDLERS ---
   const handleAddUser = () => {
     setCurrentUser(null);
@@ -133,7 +151,6 @@ const UsersPage = () => {
   const handleChangeStatus = async () => {
     if (!userToChangeStatus) return;
     try {
-      // Opción Eliminar (Física) - Solo si decides habilitarla en el futuro para inactivos
       if (statusAction === "delete") {
         await deleteUser(userToChangeStatus.id_usuario);
         toast.success("Usuario eliminado permanentemente");
@@ -141,7 +158,6 @@ const UsersPage = () => {
         return;
       }
 
-      // Lógica Activar/Desactivar
       let targetStatusCode = "";
       if (statusAction === "activate")
         targetStatusCode = ESTADOS_USUARIO.ACTIVO;
@@ -230,10 +246,8 @@ const UsersPage = () => {
       header: "Acciones",
       className: "text-right",
       render: (row) => {
-        // ✨ LÓGICA CORREGIDA: Prioridad a Activar/Desactivar
         return (
           <div className="inline-flex items-center justify-end gap-2">
-            {/* Botón Editar */}
             <button
               onClick={() => handleEditUser(row)}
               className="p-2 text-text-secondary/80 hover:text-blue-600 dark:text-background-light/70 dark:hover:text-blue-400 rounded-lg transition-colors"
@@ -242,10 +256,7 @@ const UsersPage = () => {
               <span className="material-symbols-outlined text-lg">edit</span>
             </button>
 
-            {/* Botón de Estado (Switch lógico) */}
             {isUserActive(row) ? (
-              // Si está ACTIVO -> Botón DESACTIVAR (Naranja/Ámbar)
-              // Ya no usamos "Eliminar" aquí
               <button
                 onClick={() => openStatusModal(row, "deactivate")}
                 className="p-2 text-text-secondary/80 hover:text-orange-600 dark:text-background-light/70 dark:hover:text-orange-400 rounded-lg transition-colors"
@@ -256,7 +267,6 @@ const UsersPage = () => {
                 </span>
               </button>
             ) : (
-              // Si está INACTIVO/BLOQUEADO -> Botón ACTIVAR (Verde)
               <button
                 onClick={() => openStatusModal(row, "activate")}
                 className="p-2 text-text-secondary/80 hover:text-green-600 dark:text-background-light/70 dark:hover:text-green-400 rounded-lg transition-colors"
@@ -367,11 +377,27 @@ const UsersPage = () => {
 
         <Table
           columns={columnsConfig}
-          data={sortedUsers}
+          data={currentUsers} // --- 5. CAMBIO: Usamos 'currentUsers' (los cortados)
           isLoading={loading}
           keyField="id_usuario"
           sortConfig={sortConfig}
           onSort={handleSort}
+          // --- 5. AGREGADO: Paginación inyectada
+          pagination={
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              limit={itemsPerPage}
+              onLimitChange={(newLimit) => {
+                setItemsPerPage(newLimit);
+                setCurrentPage(1);
+              }}
+              totalItems={totalItems}
+              showingFrom={indexOfFirstItem + 1}
+              showingTo={Math.min(indexOfLastItem, totalItems)}
+            />
+          }
         />
       </div>
 

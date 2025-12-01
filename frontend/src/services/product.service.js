@@ -79,6 +79,19 @@ class ProductService {
         }
     }
 
+    // Reabastecer stock (Compra)
+    async addStock(id, cantidad) {
+        try {
+            // El backend espera { cantidad: number }
+            const response = await axiosInstance.patch(`/products/${id}/restock`, {
+                cantidad: Number(cantidad)
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
     // Manejo de errores
     handleError(error) {
         if (error.response?.data?.message) {

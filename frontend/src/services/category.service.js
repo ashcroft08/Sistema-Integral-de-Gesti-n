@@ -40,17 +40,7 @@ class CategoryService {
             throw this.handleError(error);
         }
     }
-
-    // Eliminar categoría
-    async deleteCategory(id) {
-        try {
-            const response = await axiosInstance.delete(`/category-product/${id}`);
-            return response.data;
-        } catch (error) {
-            throw this.handleError(error);
-        }
-    }
-
+    
     // Cambiar estado de categoría
     async changeCategoryStatus(id, statusData) {
         try {

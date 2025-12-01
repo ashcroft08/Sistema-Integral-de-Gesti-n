@@ -18,7 +18,7 @@ export default (sequelize, DataTypes) => {
             allowNull: false
         },
         fecha_movimiento: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.DATE,
             allowNull: false
         },
         stock_anterior: {

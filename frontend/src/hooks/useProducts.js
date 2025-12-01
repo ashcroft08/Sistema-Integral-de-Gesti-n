@@ -88,26 +88,38 @@ export const useProducts = () => {
             return { success: false, error: err.message };
         }
     };
-    
-    const discontinueProduct = async (id) => {
-    try {
-        const response = await productService.discontinueProduct(id);
-        await loadInventoryData();
-        return { success: true, data: response };
-    } catch (err) {
-        return { success: false, error: err.message };
-    }
-};
 
-const reactivateProduct = async (id) => {
-    try {
-        const response = await productService.reactivateDiscontinuedProduct(id);
-        await loadInventoryData();
-        return { success: true, data: response };
-    } catch (err) {
-        return { success: false, error: err.message };
-    }
-};
+    const discontinueProduct = async (id) => {
+        try {
+            const response = await productService.discontinueProduct(id);
+            await loadInventoryData();
+            return { success: true, data: response };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    };
+
+    const reactivateProduct = async (id) => {
+        try {
+            const response = await productService.reactivateDiscontinuedProduct(id);
+            await loadInventoryData();
+            return { success: true, data: response };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    };
+
+    // Reabastecer Stock (MOV_COMPRA)
+    const addStock = async (id, cantidad) => {
+        try {
+            // Asumiendo que creaste el método en ProductService (ver abajo)
+            const response = await productService.addStock(id, cantidad);
+            await loadInventoryData();
+            return { success: true, data: response };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    };
 
     // Carga inicial
     useEffect(() => {
@@ -125,6 +137,7 @@ const reactivateProduct = async (id) => {
         changeProductStatus,
         discontinueProduct,
         reactivateProduct,
+        addStock,
         refresh: loadInventoryData
     };
 };
