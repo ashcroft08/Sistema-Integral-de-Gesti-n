@@ -1,3 +1,4 @@
+// models/DetalleFactura.js
 export default (sequelize, DataTypes) => {
     const DetalleFactura = sequelize.define('DetalleFactura', {
         id_detalle_factura: {
@@ -13,7 +14,11 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        id_valor_id: {
+        id_descuento: {
+            type: DataTypes.INTEGER,
+            allowNull: false // Puede ser nulo si borras el descuento, o ponle false si siempre usas "Ninguno"
+        },
+        id_valor_iva: { // Corregido nombre anterior
             type: DataTypes.INTEGER,
             allowNull: false
         },
@@ -29,15 +34,17 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false
         },
-        total: {
+        // Guardamos el porcentaje histórico por si cambian el catálogo luego
+        porcentaje_descuento: {
+            type: DataTypes.DECIMAL(5, 2),
+            allowNull: false,
+            defaultValue: 0
+        },
+        valor_descuento: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false
         },
-        porcentaje_descuento: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        valor_descuento: {
+        total: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false
         }
@@ -51,6 +58,7 @@ export default (sequelize, DataTypes) => {
         DetalleFactura.belongsTo(models.Factura, { foreignKey: 'id_factura' });
         DetalleFactura.belongsTo(models.Producto, { foreignKey: 'id_producto' });
         DetalleFactura.belongsTo(models.ValorIva, { foreignKey: 'id_valor_iva' });
+        DetalleFactura.belongsTo(models.Descuento, { foreignKey: 'id_descuento' });
         DetalleFactura.hasOne(models.MovimientoInventario, { foreignKey: 'id_detalle_factura' });
     };
 

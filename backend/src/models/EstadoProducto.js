@@ -26,7 +26,6 @@ export default (sequelize, DataTypes) => {
 
     EstadoProducto.afterSync(async (options) => {
         try {
-            // ✨ DEFINICIÓN CON CÓDIGOS
             const estados = [
                 { nombre: 'Activo', codigo: 'PRO_ACTIVA' },
                 //{ nombre: 'Inactivo', codigo: 'PRO_INACTIVA' }, <-- ELIMINAR (Lo maneja la categoría)

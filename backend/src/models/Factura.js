@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
         },
         id_estado_sri: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: true
         },
         secuencial: {
             type: DataTypes.STRING(255),
@@ -35,6 +35,10 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(255),
             allowNull: false,
             unique: true
+        },
+        fecha_autorizacion: {
+            type: DataTypes.DATE,
+            allowNull: true
         },
         total_descuento: {
             type: DataTypes.DECIMAL(10, 2),

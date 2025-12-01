@@ -29,6 +29,7 @@ import TipoIdentificacionModel from './TipoIdentificacion.js';
 import TipoMovimientoModel from './TipoMovimiento.js';
 import UsuarioModel from './Usuario.js';
 import ValorIvaModel from './ValorIva.js';
+import DescuentoModel from './Descuento.js';
 
 // 3. Inicializa cada modelo
 const AsientoContable = AsientoContableModel(sequelize, DataTypes);
@@ -56,6 +57,7 @@ const TipoIdentificacion = TipoIdentificacionModel(sequelize, DataTypes);
 const TipoMovimiento = TipoMovimientoModel(sequelize, DataTypes);
 const Usuario = UsuarioModel(sequelize, DataTypes);
 const ValorIva = ValorIvaModel(sequelize, DataTypes);
+const Descuento = DescuentoModel(sequelize, DataTypes);
 
 // 4. Agrupa todos los modelos en un objeto
 // Esto permite que el bucle de asociaciones funcione
@@ -84,7 +86,8 @@ const models = {
     TipoIdentificacion,
     TipoMovimiento,
     Usuario,
-    ValorIva
+    ValorIva,
+    Descuento
 };
 
 // 5. Ejecuta el método .associate() de cada modelo (si existe)
@@ -121,7 +124,8 @@ export {
     TipoIdentificacion,
     TipoMovimiento,
     Usuario,
-    ValorIva
+    ValorIva,
+    Descuento
 };
 
 // Exporta también la instancia de conexión de sequelize
