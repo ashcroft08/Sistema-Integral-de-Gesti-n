@@ -33,10 +33,10 @@ router.put('/:id',
     (req, res) => discountController.update(req, res)
 );
 
-router.delete('/:id',
+router.patch('/:id/status',
     adminAccess,
     validateParams(DiscountIdSchema),
-    (req, res) => discountController.delete(req, res)
+    (req, res) => discountController.changeStatus(req, res)
 );
 
 export default router;

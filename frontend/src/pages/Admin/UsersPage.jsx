@@ -328,6 +328,7 @@ const UsersPage = () => {
 
       <div className="flex flex-col gap-6 mt-6">
         <div className="flex flex-wrap items-center gap-4">
+          {/* Buscador */}
           <div className="relative flex-grow">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80">
               search
@@ -340,6 +341,7 @@ const UsersPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {/* Filtro Estado */}
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80 pointer-events-none">
               filter_list
@@ -374,31 +376,32 @@ const UsersPage = () => {
             </select>
           </div>
         </div>
-
-        <Table
-          columns={columnsConfig}
-          data={currentUsers} // --- 5. CAMBIO: Usamos 'currentUsers' (los cortados)
-          isLoading={loading}
-          keyField="id_usuario"
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          // --- 5. AGREGADO: Paginación inyectada
-          pagination={
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              limit={itemsPerPage}
-              onLimitChange={(newLimit) => {
-                setItemsPerPage(newLimit);
-                setCurrentPage(1);
-              }}
-              totalItems={totalItems}
-              showingFrom={indexOfFirstItem + 1}
-              showingTo={Math.min(indexOfLastItem, totalItems)}
-            />
-          }
-        />
+        <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+          <Table
+            columns={columnsConfig}
+            data={currentUsers} // --- 5. CAMBIO: Usamos 'currentUsers' (los cortados)
+            isLoading={loading}
+            keyField="id_usuario"
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            // --- 5. AGREGADO: Paginación inyectada
+            pagination={
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                limit={itemsPerPage}
+                onLimitChange={(newLimit) => {
+                  setItemsPerPage(newLimit);
+                  setCurrentPage(1);
+                }}
+                totalItems={totalItems}
+                showingFrom={indexOfFirstItem + 1}
+                showingTo={Math.min(indexOfLastItem, totalItems)}
+              />
+            }
+          />
+        </div>
       </div>
 
       <UserFormModal

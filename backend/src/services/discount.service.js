@@ -74,27 +74,15 @@ export class DiscountService {
         }
     }
 
-    async deleteDiscount(id) {
+    async changeStatus(id, nuevoEstado) {
         try {
             const discount = await Descuento.findByPk(id);
             if (!discount) throw new Error('Descuento no encontrado.');
 
-            // 🛡️ INTEGRIDAD REFERENCIAL: No borrar si se usó en facturas
-            const usageCount = await DetalleFactura.count({ where: { id_descuento: id } });
+            const estadoBool = Boolean(nuevoEstado);
 
-            if (usageCount > 0) {
-                // En lugar de borrar, lo desactivamos (Soft Delete lógico)
-                if (discount.activo) {
-                    await discount.update({ activo: false });
-                    return { message: 'El descuento se ha desactivado porque tiene historial de uso. Ya no aparecerá en nuevas ventas.' };
-                } else {
-                    throw new Error('No se puede eliminar un descuento histórico. Ya está desactivado.');
-                }
-            }
-
-            // Si nadie lo ha usado nunca, lo borramos físicamente
-            await discount.destroy();
-            return { message: 'Descuento eliminado permanentemente.' };
+            await discount.update({ activo: estadoBool });
+            return discount;
         } catch (error) {
             throw error;
         }

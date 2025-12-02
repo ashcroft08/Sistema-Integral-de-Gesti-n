@@ -25,7 +25,6 @@ export default (sequelize, DataTypes) => {
 
     Canton.associate = (models) => {
         Canton.belongsTo(models.Provincia, { foreignKey: 'id_provincia' });
-        Canton.hasMany(models.Cliente, { foreignKey: 'id_canton' });
     };
 
     return Canton;

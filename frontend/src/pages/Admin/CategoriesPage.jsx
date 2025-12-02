@@ -272,7 +272,7 @@ const CategoriesPage = () => {
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={() => openEditModal(row)}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg dark:hover:bg-blue-900/30 transition-colors"
+              className="p-2 text-text-secondary/80 hover:text-blue-600 dark:text-background-light/70 dark:hover:text-blue-400 rounded-lg transition-colors"
               title="Editar"
               disabled={actionLoading}
             >
@@ -346,37 +346,38 @@ const CategoriesPage = () => {
               />
             </div>
           </div>
-
-          {/* ✅ COMPONENTE DE TABLA REUTILIZABLE CON SORTING */}
-          <Table
-            columns={tableColumns}
-            data={currentCategories} // ✅ 5. Usamos los datos cortados (currentCategories)
-            isLoading={loading}
-            keyField="id_categoria"
-            sortConfig={sortConfig} // ✅ Pasamos config de orden
-            onSort={handleSort} // ✅ Pasamos handler de orden
-            // --- 5. AGREGADO: Paginación inyectada ---
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
-            emptyText={
-              categories.length === 0
-                ? "No hay categorías registradas."
-                : "No hay categorías que coincidan con la búsqueda."
-            }
-          />
+          <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+            {/* ✅ COMPONENTE DE TABLA REUTILIZABLE CON SORTING */}
+            <Table
+              columns={tableColumns}
+              data={currentCategories} // ✅ 5. Usamos los datos cortados (currentCategories)
+              isLoading={loading}
+              keyField="id_categoria"
+              sortConfig={sortConfig} // ✅ Pasamos config de orden
+              onSort={handleSort} // ✅ Pasamos handler de orden
+              // --- 5. AGREGADO: Paginación inyectada ---
+              pagination={
+                <TablePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  limit={itemsPerPage}
+                  onLimitChange={(newLimit) => {
+                    setItemsPerPage(newLimit);
+                    setCurrentPage(1);
+                  }}
+                  totalItems={totalItems}
+                  showingFrom={indexOfFirstItem + 1}
+                  showingTo={Math.min(indexOfLastItem, totalItems)}
+                />
+              }
+              emptyText={
+                categories.length === 0
+                  ? "No hay categorías registradas."
+                  : "No hay categorías que coincidan con la búsqueda."
+              }
+            />
+          </div>
         </div>
       )}
 

@@ -32,11 +32,19 @@ export class IvaController {
         }
     }
 
-    async delete(req, res) {
+    async changeStatus(req, res) {
         try {
             const { id } = req.validatedParams;
-            const result = await ivaService.deleteIva(id);
-            res.status(200).json({ success: true, message: result.message });
+            const { activo } = req.body; // Esperamos { "activo": true/false }
+
+            const updatedIva = await ivaService.changeStatus(id, activo);
+
+            const accion = activo ? 'activado' : 'desactivado';
+            res.status(200).json({
+                success: true,
+                message: `Valor de IVA ${accion} correctamente.`,
+                iva: updatedIva
+            });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
         }

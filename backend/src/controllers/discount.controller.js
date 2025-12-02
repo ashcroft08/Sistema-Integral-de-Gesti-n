@@ -48,11 +48,19 @@ export class DiscountController {
         }
     }
 
-    async delete(req, res) {
+    async changeStatus(req, res) {
         try {
             const { id } = req.validatedParams;
-            const result = await discountService.deleteDiscount(id);
-            res.status(200).json({ success: true, message: result.message });
+            const { activo } = req.body;
+
+            const updatedDiscount = await discountService.changeStatus(id, activo);
+
+            const accion = activo ? 'activado' : 'desactivado';
+            res.status(200).json({
+                success: true,
+                message: `Descuento ${accion} correctamente.`,
+                discount: updatedDiscount
+            });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
         }

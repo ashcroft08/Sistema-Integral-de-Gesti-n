@@ -2,11 +2,8 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastContainer } from "react-toastify";
-// Descomenta la siguiente línea en tu proyecto local para los estilos de las notificaciones
-// import "react-toastify/dist/ReactToastify.css";
 
 // Components de Rutas
-// Asegúrate de que estos archivos estén en src/components/
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoute";
 
@@ -24,6 +21,8 @@ import UsersPage from "./pages/Admin/UsersPage";
 import CategoriesPage from "./pages/Admin/CategoriesPage";
 import LocksPage from "./pages/Admin/LocksPage";
 import AdminSettingsPage from "./pages/Admin/SettingsPage";
+import DiscountPage from "./pages/Admin/DiscountPage";
+import IvaPage from "./pages/Admin/IvaPage";
 
 // Pages Vendedor
 import SellerDashboardPage from "./pages/SellerDashboardPage";
@@ -47,10 +46,7 @@ function App() {
           theme="colored"
         />
         <Routes>
-          {/* === RUTAS PÚBLICAS (Con restricción inversa) ===
-              PublicRoute redirige al dashboard si el usuario YA está logueado.
-              Si no, muestra el Outlet (LoginPage, etc.)
-          */}
+          {/* === RUTAS PÚBLICAS === */}
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -62,20 +58,13 @@ function App() {
               path="/reset-password/:token"
               element={<CreateNewPasswordPage />}
             />
-            {/* Redirección por defecto: Si entran a la raíz, van al login */}
             <Route path="/" element={<Navigate to="/login" replace />} />
           </Route>
 
-          {/* === RUTAS SEMI-PÚBLICAS === 
-              Rutas que son accesibles sin validación estricta de roles, 
-              o que manejan su propia lógica interna
-          */}
+          {/* === RUTAS SEMI-PÚBLICAS === */}
           <Route path="/update-password" element={<UpdatePasswordPage />} />
 
-          {/* === RUTAS PROTEGIDAS ADMIN ===
-              Solo accesibles para Administrador y Superusuario.
-              ProtectedRoute renderiza un <Outlet /> donde se cargan estas rutas hijas.
-          */}
+          {/* === RUTAS PROTEGIDAS ADMIN === */}
           <Route
             path="/admin"
             element={
@@ -90,12 +79,12 @@ function App() {
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="tokens" element={<TokenSettingsPage />} />
             <Route path="locks" element={<LocksPage />} />
+            <Route path="discounts" element={<DiscountPage />} />
+            <Route path="taxes" element={<IvaPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
 
-          {/* === RUTAS PROTEGIDAS VENDEDOR ===
-              Solo accesibles para Vendedor.
-          */}
+          {/* === RUTAS PROTEGIDAS VENDEDOR === */}
           <Route
             path="/seller"
             element={<ProtectedRoute allowedRoles={["Vendedor"]} />}
@@ -103,11 +92,11 @@ function App() {
             <Route index element={<SellerDashboardPage />} />
             <Route path="settings" element={<SellerSettingsPage />} />
             <Route path="inventory" element={<InventoryPage />} />
+            {/* 👇 Nueva ruta de categorías - accesible por URL pero sidebar lo oculta para vendedores */}
+            <Route path="categories" element={<CategoriesPage />} />
           </Route>
 
-          {/* === CATCH ALL ===
-              Cualquier ruta desconocida redirige al login
-          */}
+          {/* === CATCH ALL === */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

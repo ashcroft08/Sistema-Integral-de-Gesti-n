@@ -14,14 +14,20 @@ const menuItems = {
       icon: "manage_accounts",
       path: "/admin/users",
     },
-    {
-      id: "categories",
-      label: "Categorías",
-      icon: "category",
-      path: "/admin/categories",
-    },
     { id: "tokens", label: "Token", icon: "token", path: "/admin/tokens" },
     { id: "locks", label: "Bloqueo", icon: "lock_clock", path: "/admin/locks" },
+    {
+      id: "taxes",
+      label: "Impuestos (IVA)",
+      icon: "percent",
+      path: "/admin/taxes",
+    },
+    {
+      id: "discounts",
+      label: "Descuentos",
+      icon: "sell",
+      path: "/admin/discounts",
+    },
     {
       id: "settings",
       label: "Configuración",
@@ -48,6 +54,14 @@ const menuItems = {
       label: "Inventario",
       icon: "inventory_2",
       path: "/seller/inventory",
+    },
+    // Categorías - solo visible para admin
+    {
+      id: "categories",
+      label: "Categorías",
+      icon: "category",
+      path: "/seller/categories",
+      adminOnly: true, // 👈 Marcador especial
     },
     {
       id: "settings",
@@ -103,7 +117,6 @@ const Sidebar = () => {
 
   useEffect(() => {
     sessionStorage.setItem("sidebarCollapsed", isCollapsed);
-    // Cerrar el selector de roles si se pliega/despliega la barra para evitar bugs visuales
     setShowRoleSelector(false);
   }, [isCollapsed]);
 
@@ -118,10 +131,20 @@ const Sidebar = () => {
   };
 
   const currentRole = getCurrentRole();
-  const items = menuItems[currentRole] || menuItems.admin;
-  const userInitials = getInitials(user?.nombre);
   const isAdmin =
     user?.rol_codigo === "ROL_SUPER" || user?.rol_codigo === "ROL_ADMIN";
+  
+  // 👇 Filtrar items según si es admin o no
+  const allItems = menuItems[currentRole] || menuItems.admin;
+  const items = allItems.filter(item => {
+    // Si el item tiene la marca adminOnly, solo mostrarlo si es admin
+    if (item.adminOnly) {
+      return isAdmin;
+    }
+    return true;
+  });
+
+  const userInitials = getInitials(user?.nombre);
 
   const handleRoleChange = (newRole) => {
     setShowRoleSelector(false);
@@ -154,7 +177,6 @@ const Sidebar = () => {
     return roles[role] || "Administrador";
   };
 
-  // Componente auxiliar para los botones del dropdown (DRY)
   const RoleButton = ({ role, icon, label }) => (
     <button
       onClick={() => handleRoleChange(role)}
@@ -182,14 +204,13 @@ const Sidebar = () => {
             isCollapsed ? "justify-center" : "justify-start"
           }`}
         >
-          {/* Usamos un contenedor con ancho fijo para el logo para evitar saltos */}
           <div
             className={`relative flex items-center transition-all duration-300 ${
               isCollapsed ? "w-10" : "w-full"
             }`}
           >
             <img
-              src={isCollapsed ? favicon : logo} // ✅ Correcto: condición que devuelve una cadena
+              src={isCollapsed ? favicon : logo}
               alt="Kallari Logo"
               className={`object-contain transition-all duration-300 ${
                 isCollapsed ? "h-14" : "h-14"
@@ -230,7 +251,6 @@ const Sidebar = () => {
 
       {/* --- FOOTER ACTIONS --- */}
       <div className="flex flex-col gap-2 p-4">
-
         {/* CENTRO DE NOTIFICACIONES */}
         <NotificationBell isCollapsed={isCollapsed} />
 
@@ -259,10 +279,6 @@ const Sidebar = () => {
             </button>
 
             {showRoleSelector && (
-              /* OPTIMIZACIÓN CLAVE: 
-                 Si está colapsado (w-20), el menú flota a la DERECHA (left-14) y tiene ancho fijo.
-                 Si está abierto, flota ARRIBA (bottom-full) y tiene ancho completo (w-full).
-              */
               <div
                 className={`absolute z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-1
                   ${
@@ -350,8 +366,6 @@ const Sidebar = () => {
           </span>
         </button>
       </div>
-
-
     </aside>
   );
 };

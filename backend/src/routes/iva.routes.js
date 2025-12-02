@@ -35,10 +35,11 @@ router.put('/:id',
     (req, res) => ivaController.update(req, res)
 );
 
-router.delete('/:id',
+router.patch('/:id/status',
     adminAccess,
     validateParams(IvaIdSchema),
-    (req, res) => ivaController.delete(req, res)
+    // Podrías validar el body aquí con un schema simple { activo: boolean }
+    (req, res) => ivaController.changeStatus(req, res)
 );
 
 export default router;

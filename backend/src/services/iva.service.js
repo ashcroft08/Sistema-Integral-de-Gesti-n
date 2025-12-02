@@ -1,44 +1,73 @@
-import { IvaService } from '../services/iva.service.js';
+import { ValorIva, Producto, DetalleFactura } from '../models/index.js';
 
-const ivaService = new IvaService();
+export class IvaService {
 
-export class IvaController {
-
-    async getAll(req, res) {
+    async getAllIvas() {
         try {
-            const ivas = await ivaService.getAllIvas();
-            res.status(200).json({ success: true, ivas });
+            return await ValorIva.findAll({
+                order: [['porcentaje_iva', 'ASC']]
+            });
         } catch (error) {
-            res.status(500).json({ success: false, message: error.message });
+            throw error;
         }
     }
 
-    async create(req, res) {
+    async getIvaById(id) {
         try {
-            const newIva = await ivaService.createIva(req.validatedData);
-            res.status(201).json({ success: true, message: 'IVA registrado exitosamente.', iva: newIva });
+            const iva = await ValorIva.findByPk(id);
+            if (!iva) throw new Error('Valor de IVA no encontrado.');
+            return iva;
         } catch (error) {
-            res.status(400).json({ success: false, message: error.message });
+            throw error;
         }
     }
 
-    async update(req, res) {
+    async createIva(data) {
         try {
-            const { id } = req.validatedParams;
-            const updatedIva = await ivaService.updateIva(id, req.validatedData);
-            res.status(200).json({ success: true, message: 'IVA actualizado correctamente.', iva: updatedIva });
+            // Verificar duplicados por código
+            const existing = await ValorIva.findOne({ where: { codigo: data.codigo } });
+            if (existing) throw new Error(`El código SRI "${data.codigo}" ya existe.`);
+
+            // Verificar duplicados por porcentaje (opcional, pero recomendado)
+            const existingPercent = await ValorIva.findOne({ where: { porcentaje_iva: data.porcentaje_iva } });
+            if (existingPercent) throw new Error(`Ya existe un registro con el ${data.porcentaje_iva}%.`);
+
+            return await ValorIva.create(data);
         } catch (error) {
-            res.status(400).json({ success: false, message: error.message });
+            throw error;
         }
     }
 
-    async delete(req, res) {
+    async updateIva(id, data) {
         try {
-            const { id } = req.validatedParams;
-            const result = await ivaService.deleteIva(id);
-            res.status(200).json({ success: true, message: result.message });
+            const iva = await ValorIva.findByPk(id);
+            if (!iva) throw new Error('Valor de IVA no encontrado.');
+
+            // Validar código único si se intenta cambiar
+            if (data.codigo && data.codigo !== iva.codigo) {
+                const existing = await ValorIva.findOne({ where: { codigo: data.codigo } });
+                if (existing) throw new Error(`El código SRI "${data.codigo}" ya está en uso.`);
+            }
+
+            await iva.update(data);
+            return iva;
         } catch (error) {
-            res.status(400).json({ success: false, message: error.message });
+            throw error;
+        }
+    }
+
+    async changeStatus(id, nuevoEstado) {
+        try {
+            const iva = await ValorIva.findByPk(id);
+            if (!iva) throw new Error('Valor de IVA no encontrado.');
+
+            // Validar booleano
+            const estadoBool = Boolean(nuevoEstado);
+
+            await iva.update({ activo: estadoBool });
+            return iva;
+        } catch (error) {
+            throw error;
         }
     }
 }
