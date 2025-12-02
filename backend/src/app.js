@@ -11,6 +11,7 @@ import productRoutes from './routes/product.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import salesRoutes from './routes/sales.routes.js';
 import clientRoutes from './routes/client.routes.js';
+import ivaRoutes from './routes/iva.routes.js';
 
 const app = express();
 
@@ -35,5 +36,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/taxes', ivaRoutes);
 
 export default app;
