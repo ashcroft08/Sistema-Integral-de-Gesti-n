@@ -7,9 +7,9 @@ export const CreateClientSchema = z.object({
         required_error: "Selecciona un tipo de identificación"
     }).int().positive(),
 
-    id_canton: z.number({
+    id_parroquia: z.number({
         invalid_type_error: "La ubicación es inválida",
-        required_error: "Selecciona una ubicación (cantón)"
+        required_error: "Selecciona una parroquia"
     }).int().positive(),
 
     // Validamos formato general (letras y números, longitud razonable)

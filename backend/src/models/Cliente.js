@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        id_canton: {
+        id_parroquia: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
 
     Cliente.associate = (models) => {
         Cliente.belongsTo(models.TipoIdentificacion, { foreignKey: 'id_tipo_identificacion' });
-        Cliente.belongsTo(models.Canton, { foreignKey: 'id_canton' });
+        Cliente.belongsTo(models.Parroquia, { foreignKey: 'id_parroquia' });
         Cliente.hasMany(models.Factura, { foreignKey: 'id_cliente' });
     };
 

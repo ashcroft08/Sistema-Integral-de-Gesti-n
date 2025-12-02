@@ -1,32 +1,33 @@
 export default (sequelize, DataTypes) => {
-    const Canton = sequelize.define('Canton', {
-        id_canton: {
+    const Parroquia = sequelize.define('Parroquia', {
+        id_parroquia: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
-        canton: {
+        parroquia: {
             type: DataTypes.STRING(255),
             allowNull: false
         },
+        // Guardamos el código del INEC (ej: "010150")
         codigo: {
             type: DataTypes.STRING(10),
             allowNull: true
         },
-        id_provincia: {
+        id_canton: {
             type: DataTypes.INTEGER,
             allowNull: false
         }
     }, {
-        tableName: 'canton',
+        tableName: 'parroquia',
         schema: 'catalogo',
         timestamps: false
     });
 
-    Canton.associate = (models) => {
-        Canton.belongsTo(models.Provincia, { foreignKey: 'id_provincia' });
-        Canton.hasMany(models.Cliente, { foreignKey: 'id_canton' });
+    Parroquia.associate = (models) => {
+        Parroquia.belongsTo(models.Canton, { foreignKey: 'id_canton' });
+        Parroquia.hasMany(models.Cliente, { foreignKey: 'id_parroquia' });
     };
 
-    return Canton;
+    return Parroquia;
 };

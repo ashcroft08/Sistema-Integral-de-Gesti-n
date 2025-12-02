@@ -6,6 +6,7 @@ const { sequelize } = db;
 // 2. Importa todas las definiciones de modelos de tu carpeta
 import AsientoContableModel from './AsientoContable.js';
 import AuditoriaModel from './Auditoria.js';
+import ParroquiaModel from './Parroquia.js';
 import CantonModel from './Canton.js';
 import EstadoCategoriaModel from './EstadoCategoria.js';
 import CategoriaProductoModel from './CategoriaProducto.js';
@@ -34,6 +35,7 @@ import DescuentoModel from './Descuento.js';
 // 3. Inicializa cada modelo
 const AsientoContable = AsientoContableModel(sequelize, DataTypes);
 const Auditoria = AuditoriaModel(sequelize, DataTypes);
+const Parroquia = ParroquiaModel(sequelize, DataTypes);
 const Canton = CantonModel(sequelize, DataTypes);
 const EstadoCategoria = EstadoCategoriaModel(sequelize, DataTypes);
 const CategoriaProducto = CategoriaProductoModel(sequelize, DataTypes);
@@ -64,6 +66,7 @@ const Descuento = DescuentoModel(sequelize, DataTypes);
 const models = {
     AsientoContable,
     Auditoria,
+    Parroquia,
     Canton,
     EstadoCategoria,
     CategoriaProducto,
@@ -102,6 +105,7 @@ Object.values(models).forEach(model => {
 export {
     AsientoContable,
     Auditoria,
+    Parroquia,
     Canton,
     EstadoCategoria,
     CategoriaProducto,
