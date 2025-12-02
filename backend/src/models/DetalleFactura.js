@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         },
         id_descuento: {
             type: DataTypes.INTEGER,
-            allowNull: false // Puede ser nulo si borras el descuento, o ponle false si siempre usas "Ninguno"
+            allowNull: true // Puede ser nulo si borras el descuento, o ponle false si siempre usas "Ninguno"
         },
         id_valor_iva: { // Corregido nombre anterior
             type: DataTypes.INTEGER,

@@ -24,8 +24,8 @@ export default (sequelize, DataTypes) => {
         },
         clave_acceso_sri: {
             type: DataTypes.STRING(255),
-            allowNull: false,
-            unique: true
+            allowNull: true,  // ✅ Puede ser NULL al crear
+            defaultValue: null
         },
         fecha_emision: {
             type: DataTypes.DATEONLY,
@@ -33,8 +33,8 @@ export default (sequelize, DataTypes) => {
         },
         xml_autorizacion_sri: {
             type: DataTypes.STRING(255),
-            allowNull: false,
-            unique: true
+            allowNull: true,  // ✅ Se llenará después de autorización
+            defaultValue: null
         },
         fecha_autorizacion: {
             type: DataTypes.DATE,

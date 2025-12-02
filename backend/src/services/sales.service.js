@@ -2,51 +2,67 @@ import {
     Factura, DetalleFactura, Producto, MovimientoInventario,
     TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente, Usuario
 } from '../models/index.js';
+import db from '../database/database.js';
+
+const { sequelize } = db;
 
 export class SalesService {
 
-    /**
-     * Genera el secuencial local (001-001-00000000X)
-     * Busca la última factura y le suma 1.
-     */
-    async _generarSecuencial() {
+    _redondear(valor) {
+        return Math.round(valor * 100) / 100;
+    }
+
+    async _generarSecuencial(transaction) {
         const ultimaFactura = await Factura.findOne({
             order: [['id_factura', 'DESC']],
-            attributes: ['secuencial']
+            attributes: ['secuencial'],
+            lock: transaction.LOCK.UPDATE,
+            transaction
         });
 
         let secuencia = 1;
         if (ultimaFactura && ultimaFactura.secuencial) {
-            const partes = ultimaFactura.secuencial.split('-'); // [001, 001, 000000005]
+            const partes = ultimaFactura.secuencial.split('-');
             secuencia = parseInt(partes[2]) + 1;
         }
 
-        // Formato: Establ-PtoEmi-Secuencia (Ej: 001-001-000000006)
         return `001-001-${secuencia.toString().padStart(9, '0')}`;
     }
 
-    /**
-     * Crear Venta Completa
-     * @param {Object} data - Datos validados desde el controller
-     */
     async createSale(data) {
-        const t = await sequelize.transaction(); // 🔒 INICIO TRANSACCIÓN
+        const t = await sequelize.transaction();
 
         try {
             const { id_cliente, id_vendedor, productos } = data;
 
-            // 1. Validar Configuraciones Iniciales
-            const estadoPendiente = await EstadoSri.findOne({ where: { codigo: 'SRI_PENDIENTE' } });
-            const tipoMovVenta = await TipoMovimiento.findOne({ where: { tipo_movimiento: 'MOV_VENTA' } });
+            // Validaciones
+            const clienteExiste = await Cliente.findByPk(id_cliente, { transaction: t });
+            if (!clienteExiste) {
+                throw new Error('Cliente no encontrado.');
+            }
+
+            if (!productos || productos.length === 0) {
+                throw new Error('Debe incluir al menos un producto en la venta.');
+            }
+
+            // Configuraciones
+            const estadoPendiente = await EstadoSri.findOne({
+                where: { codigo: 'SRI_PENDIENTE' },
+                transaction: t
+            });
+            const tipoMovVenta = await TipoMovimiento.findOne({
+                where: { tipo_movimiento: 'MOV_VENTA' },
+                transaction: t
+            });
 
             if (!estadoPendiente || !tipoMovVenta) {
                 throw new Error('Error de configuración: Faltan estados SRI o Tipos de Movimiento.');
             }
 
-            // 2. Generar Secuencial
-            const nuevoSecuencial = await this._generarSecuencial();
+            // Generar secuencial
+            const nuevoSecuencial = await this._generarSecuencial(t);
 
-            // 3. Crear Cabecera (Factura) vacía temporalmente
+            // Crear factura
             const nuevaFactura = await Factura.create({
                 id_cliente,
                 id_vendedor,
@@ -59,71 +75,63 @@ export class SalesService {
                 total: 0
             }, { transaction: t });
 
-            // Acumuladores globales
             let totalSubtotalSinIva = 0;
             let totalSubtotalConIva = 0;
             let totalDescuentos = 0;
             let totalPagarFinal = 0;
 
-            // 4. Procesar Productos (Detalles)
+            // Procesar productos
             for (const item of productos) {
-                // item = { id_producto, cantidad, id_valor_iva, id_descuento }
+                if (!item.cantidad || item.cantidad <= 0) {
+                    throw new Error('La cantidad de cada producto debe ser mayor a cero.');
+                }
 
-                // A. Buscar información en BD
-                const productoDb = await Producto.findByPk(item.id_producto);
-                if (!productoDb) throw new Error(`Producto ID ${item.id_producto} no encontrado.`);
+                const productoDb = await Producto.findByPk(item.id_producto, { transaction: t });
+                if (!productoDb) {
+                    throw new Error(`Producto ID ${item.id_producto} no encontrado.`);
+                }
 
-                const ivaDb = await ValorIva.findByPk(item.id_valor_iva);
-                if (!ivaDb) throw new Error(`IVA ID ${item.id_valor_iva} no válido.`);
+                const ivaDb = await ValorIva.findByPk(item.id_valor_iva, { transaction: t });
+                if (!ivaDb) {
+                    throw new Error(`IVA ID ${item.id_valor_iva} no válido.`);
+                }
 
-                // B. Lógica de Descuento
                 let porcentajeDesc = 0;
                 let idDescuentoFinal = item.id_descuento || null;
 
                 if (item.id_descuento) {
-                    const descuentoDb = await Descuento.findByPk(item.id_descuento);
-
-                    if (descuentoDb) {
+                    const descuentoDb = await Descuento.findByPk(item.id_descuento, { transaction: t });
+                    if (descuentoDb && descuentoDb.activo) {
                         porcentajeDesc = parseFloat(descuentoDb.porcentaje_descuento);
+                    } else {
+                        throw new Error(`Descuento ID ${item.id_descuento} no está disponible.`);
                     }
                 }
 
-                // C. Validar Stock
                 if (productoDb.stock_actual < item.cantidad) {
                     throw new Error(`Stock insuficiente para "${productoDb.nombre}". Disponible: ${productoDb.stock_actual}`);
                 }
 
-                // D. CÁLCULOS MATEMÁTICOS
+                // Cálculos
                 const cantidad = parseInt(item.cantidad);
                 const precio = parseFloat(productoDb.precio);
-
-                // 1. Subtotal Bruto
-                const subtotalBruto = precio * cantidad;
-
-                // 2. Descuento en Dinero
-                const valorDescuento = subtotalBruto * (porcentajeDesc / 100);
-
-                // 3. Base Imponible (Precio - Descuento)
-                const baseImponible = subtotalBruto - valorDescuento;
-
-                // 4. Impuesto
+                const subtotalBruto = this._redondear(precio * cantidad);
+                const valorDescuento = this._redondear(subtotalBruto * (porcentajeDesc / 100));
+                const baseImponible = this._redondear(subtotalBruto - valorDescuento);
                 const porcentajeIva = parseFloat(ivaDb.porcentaje_iva);
-                const valorIva = baseImponible * (porcentajeIva / 100);
+                const valorIva = this._redondear(baseImponible * (porcentajeIva / 100));
+                const totalLinea = this._redondear(baseImponible + valorIva);
 
-                // 5. Total de la línea
-                const totalLinea = baseImponible + valorIva;
-
-                // E. Acumular a totales generales
-                totalDescuentos += valorDescuento;
-                totalPagarFinal += totalLinea;
+                totalDescuentos = this._redondear(totalDescuentos + valorDescuento);
+                totalPagarFinal = this._redondear(totalPagarFinal + totalLinea);
 
                 if (porcentajeIva > 0) {
-                    totalSubtotalConIva += baseImponible;
+                    totalSubtotalConIva = this._redondear(totalSubtotalConIva + baseImponible);
                 } else {
-                    totalSubtotalSinIva += baseImponible;
+                    totalSubtotalSinIva = this._redondear(totalSubtotalSinIva + baseImponible);
                 }
 
-                // F. Guardar Detalle
+                // Guardar detalle
                 const detalleCreado = await DetalleFactura.create({
                     id_factura: nuevaFactura.id_factura,
                     id_producto: productoDb.id_producto,
@@ -131,13 +139,13 @@ export class SalesService {
                     id_descuento: idDescuentoFinal,
                     cantidad: cantidad,
                     precio_unitario: precio,
-                    subtotal: baseImponible, // Guardamos la base imponible
+                    subtotal: baseImponible,
                     porcentaje_descuento: porcentajeDesc,
                     valor_descuento: valorDescuento,
                     total: totalLinea
                 }, { transaction: t });
 
-                // G. MOVIMIENTO DE INVENTARIO
+                // Movimiento inventario
                 const stockAnterior = productoDb.stock_actual;
                 const stockNuevo = stockAnterior - cantidad;
 
@@ -151,11 +159,10 @@ export class SalesService {
                     id_detalle_factura: detalleCreado.id_detalle_factura
                 }, { transaction: t });
 
-                // H. Actualizar Stock Producto
                 await productoDb.update({ stock_actual: stockNuevo }, { transaction: t });
             }
 
-            // 5. Actualizar Totales Finales en Factura
+            // Actualizar totales
             await nuevaFactura.update({
                 subtotal_sin_iva: totalSubtotalSinIva,
                 subtotal_con_iva: totalSubtotalConIva,
@@ -163,32 +170,85 @@ export class SalesService {
                 total: totalPagarFinal
             }, { transaction: t });
 
-            await t.commit(); // ÉXITO: Guardar todo
+            // ✅ GUARDAR ID ANTES DEL COMMIT
+            const idFacturaCreada = nuevaFactura.id_factura;
 
-            // 6. Retornar Factura Completa (para imprimir o mostrar)
-            return await Factura.findByPk(nuevaFactura.id_factura, {
+            await t.commit();
+
+            // ✅ CARGAR FACTURA DESPUÉS DEL COMMIT (SIN TRANSACCIÓN)
+            return await Factura.findByPk(idFacturaCreada, {
                 include: [
-                    { model: Cliente },
-                    { model: EstadoSri },
+                    {
+                        model: Cliente,
+                        attributes: ['id_cliente', 'nombre', 'identificacion', 'email']
+                    },
+                    {
+                        model: Usuario,
+                        as: 'Usuario', // ✅ USA EL ALIAS CORRECTO SEGÚN TU ASOCIACIÓN
+                        attributes: ['id_usuario', 'nombre', 'apellido', 'email']
+                    },
+                    {
+                        model: EstadoSri,
+                        attributes: ['id_estado_sri', 'codigo', 'estado_sri'] // ✅ CORREGIDO
+                    },
                     {
                         model: DetalleFactura,
-                        include: [Producto, ValorIva, Descuento]
+                        include: [
+                            {
+                                model: Producto,
+                                attributes: ['id_producto', 'nombre', 'codigo_producto', 'precio']
+                            },
+                            {
+                                model: ValorIva,
+                                attributes: ['id_iva', 'porcentaje_iva']
+                            },
+                            {
+                                model: Descuento,
+                                attributes: ['id_descuento', 'descuento', 'porcentaje_descuento']
+                            }
+                        ]
                     }
                 ]
             });
 
         } catch (error) {
-            await t.rollback(); // ERROR: Deshacer todo
+            // ✅ SOLO HACER ROLLBACK SI LA TRANSACCIÓN NO ESTÁ FINALIZADA
+            if (!t.finished) {
+                await t.rollback();
+            }
             throw error;
         }
     }
 
-    /**
-     * Obtener catálogos para el formulario de ventas
-     */
     async getSalesCatalogs() {
-        const descuentos = await Descuento.findAll({ where: { activo: true } });
-        const impuestos = await ValorIva.findAll();
+        const descuentos = await Descuento.findAll({
+            where: { activo: true },
+            order: [['porcentaje_descuento', 'DESC']]
+        });
+        const impuestos = await ValorIva.findAll({
+            order: [['porcentaje_iva', 'ASC']]
+        });
+
         return { descuentos, impuestos };
+    }
+
+    async getSalesHistory(filtros = {}) {
+        const { fecha_desde, fecha_hasta, id_vendedor, limit = 50 } = filtros;
+
+        const where = {};
+        if (fecha_desde) where.fecha_emision = { [sequelize.Sequelize.Op.gte]: fecha_desde };
+        if (fecha_hasta) where.fecha_emision = { ...where.fecha_emision, [sequelize.Sequelize.Op.lte]: fecha_hasta };
+        if (id_vendedor) where.id_vendedor = id_vendedor;
+
+        return await Factura.findAll({
+            where,
+            include: [
+                { model: Cliente, attributes: ['nombre', 'identificacion'] },
+                { model: Usuario, as: 'Usuario', attributes: ['nombre', 'apellido'] },
+                { model: EstadoSri }
+            ],
+            order: [['fecha_emision', 'DESC']],
+            limit
+        });
     }
 }
