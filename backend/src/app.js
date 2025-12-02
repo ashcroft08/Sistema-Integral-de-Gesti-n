@@ -12,6 +12,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import salesRoutes from './routes/sales.routes.js';
 import clientRoutes from './routes/client.routes.js';
 import ivaRoutes from './routes/iva.routes.js';
+import discountRoutes from './routes/discount.routes.js';
 
 const app = express();
 
@@ -37,5 +38,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/taxes', ivaRoutes);
+app.use('/api/discounts', discountRoutes);
 
 export default app;
