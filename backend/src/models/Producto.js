@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
         },
         codigo_producto: {
             type: DataTypes.STRING(50),
-            allowNull: true,
+            allowNull: false,
             unique: true
         },
         nombre: {

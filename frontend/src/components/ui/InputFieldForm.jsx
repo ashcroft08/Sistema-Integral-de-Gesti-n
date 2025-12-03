@@ -11,17 +11,21 @@ const InputFieldForm = ({
   onChange,
   error = "",
   children,
-  containerClassName = "", // <--- Añadido
-  inputClassName = "", // <--- Añadido
+  containerClassName = "",
+  inputClassName = "",
   required = false,
   disabled = false,
+  // ✅ NUEVAS PROPS PARA TEXTAREA
+  multiline = false, // Indica si es textarea
+  rows = 3, // Número de filas para textarea
   ...props // Para soportar register de react-hook-form
 }) => {
   const borderClass = error ? "border-red-500" : "border-primary/30";
 
+  // ✅ RENDERIZAR SELECT
   if (type === "select") {
     return (
-      <div className={`flex flex-col ${containerClassName}`}> {/* <--- Aplicado */}
+      <div className={`flex flex-col ${containerClassName}`}>
         {/* El label ahora es condicional */}
         {label && (
           <label className="mb-1.5 block text-sm font-medium text-text-primary dark:text-background-light/80">
@@ -37,8 +41,8 @@ const InputFieldForm = ({
           <select
             name={name}
             className={`w-full appearance-none rounded-lg border ${borderClass} bg-white/50 py-2 pr-8 text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light ${
-              icon ? "pl-10" : "pl-4" // <--- Padding condicional
-            } h-14 ${inputClassName}`} // <--- Altura h-14 y className aplicado
+              icon ? "pl-10" : "pl-4"
+            } h-14 ${inputClassName}`}
             value={value}
             onChange={onChange}
             required={required}
@@ -56,6 +60,44 @@ const InputFieldForm = ({
     );
   }
 
+  // ✅ RENDERIZAR TEXTAREA (si multiline es true o type es textarea)
+  if (multiline || type === "textarea") {
+    return (
+      <div className={`flex flex-col ${containerClassName}`}>
+        {/* El label ahora es condicional */}
+        {label && (
+          <label className="mb-1.5 block text-sm font-medium text-text-primary dark:text-background-light/80">
+            {label}
+          </label>
+        )}
+        <div
+          className={`relative flex w-full items-start ${containerClassName}`} // items-start para alinear arriba
+        >
+          {icon && (
+            <span className="material-symbols-outlined absolute left-4 top-3 text-text-light/60 dark:text-text-dark/60">
+              {icon}
+            </span>
+          )}
+          <textarea
+            name={name}
+            className={`form-textarea flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-accent/50 border ${borderClass} bg-black/5 dark:bg-white/5 placeholder:text-text-light/50 dark:placeholder:text-text-dark/50 pr-4 py-2 text-base font-normal leading-normal ${
+              icon ? "pl-12" : "pl-4"
+            } ${inputClassName}`}
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+            required={required}
+            disabled={disabled}
+            rows={rows} // Aplicamos las filas
+            {...props}
+          />
+        </div>
+        {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+      </div>
+    );
+  }
+
+  // ✅ RENDERIZAR INPUT (por defecto)
   return (
     <div className="flex flex-col">
       {/* El label ahora es condicional */}
@@ -65,7 +107,7 @@ const InputFieldForm = ({
         </label>
       )}
       <div
-        className={`relative flex w-full items-center ${containerClassName}`} // <--- Aplicado
+        className={`relative flex w-full items-center ${containerClassName}`}
       >
         {icon && (
           <span className="material-symbols-outlined absolute left-4 text-text-light/60 dark:text-text-dark/60">
@@ -76,8 +118,8 @@ const InputFieldForm = ({
           name={name}
           type={type}
           className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-accent/50 border ${borderClass} bg-black/5 dark:bg-white/5 h-14 placeholder:text-text-light/50 dark:placeholder:text-text-dark/50 pr-4 py-2 text-base font-normal leading-normal ${
-            icon ? "pl-12" : "pl-4" // <--- Padding condicional
-          } ${inputClassName}`} // <--- className aplicado
+            icon ? "pl-12" : "pl-4"
+          } ${inputClassName}`}
           placeholder={placeholder}
           value={value}
           onChange={onChange}

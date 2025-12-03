@@ -38,6 +38,14 @@ export const CreateProductSchema = z.object({
     })
         .int("El stock mínimo debe ser un número entero")
         .nonnegative("El stock mínimo no puede ser negativo"),
+
+    // Nuevo campo: Código de Producto
+    codigo_producto: z.string()
+        .max(50, "El código de producto no puede exceder 50 caracteres")
+        .trim()
+        .optional()
+        .nullable() // Permite null si no se ingresa
+        .transform(val => val === '' ? null : val), // Transforma cadenas vacías en null
 }).refine((data) => data.stock_minimo <= data.stock_actual || data.stock_actual === 0, {
     message: "El stock mínimo no puede ser mayor al stock actual (excepto cuando el stock es 0)",
     path: ["stock_minimo"]
@@ -80,6 +88,14 @@ export const UpdateProductSchema = z.object({
         .int("El stock mínimo debe ser un número entero")
         .nonnegative("El stock mínimo no puede ser negativo")
         .optional(),
+
+    // Nuevo campo: Código de Producto (opcional para actualización)
+    codigo_producto: z.string()
+        .max(50, "El código de producto no puede exceder 50 caracteres")
+        .trim()
+        .optional()
+        .nullable() // Permite null si se quiere borrar
+        .transform(val => val === '' ? null : val), // Transforma cadenas vacías en null
 }).refine((data) => {
     // Solo validar si ambos campos están presentes
     if (data.stock_minimo !== undefined && data.stock_actual !== undefined) {

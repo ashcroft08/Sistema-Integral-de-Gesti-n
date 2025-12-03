@@ -1,3 +1,4 @@
+// models/cliente.js
 export default (sequelize, DataTypes) => {
     const Cliente = sequelize.define('Cliente', {
         id_cliente: {
@@ -47,7 +48,8 @@ export default (sequelize, DataTypes) => {
 
     Cliente.associate = (models) => {
         Cliente.belongsTo(models.TipoIdentificacion, { foreignKey: 'id_tipo_identificacion' });
-        Cliente.belongsTo(models.Parroquia, { foreignKey: 'id_parroquia' });
+        // Usar 'as' aquí define cómo se llamará la relación en el JSON
+        Cliente.belongsTo(models.Parroquia, { foreignKey: 'id_parroquia', as: 'parroquia' });
         Cliente.hasMany(models.Factura, { foreignKey: 'id_cliente' });
     };
 

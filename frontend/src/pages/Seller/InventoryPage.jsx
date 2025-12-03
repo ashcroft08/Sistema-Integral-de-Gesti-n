@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react";
+// src/pages/Admin/InventoryPage.jsx
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useProducts } from "../../hooks/useProducts";
 import AdminLayout from "../../components/Layout/AdminLayout";
-import Button from "../../components/ui/Button";
+import Button from "../../components/UI/Button";
 import Table from "../../components/UI/Table";
 import TablePagination from "../../components/UI/TablePagination";
 import { toast } from "react-toastify";
@@ -19,6 +20,7 @@ const InventoryPage = () => {
     products,
     categories,
     loading,
+    error,
     createProduct,
     updateProduct,
     discontinueProduct,
@@ -44,6 +46,7 @@ const InventoryPage = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [productToDiscontinue, setProductToDiscontinue] = useState(null);
   const [productToRestock, setProductToRestock] = useState(null); // ✨ Producto a reabastecer
+  const [initialLoadError, setInitialLoadError] = useState(null);
 
   // --- 🧠 HELPERS DE LÓGICA ---
   const isDiscontinued = (p) =>
@@ -58,54 +61,86 @@ const InventoryPage = () => {
     setCurrentPage(1);
   }, [searchTerm, categoryFilter, statusFilter]);
 
-  // --- FILTRADO ---
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const term = searchTerm.toLowerCase();
-      const matchesSearch =
-        product.nombre.toLowerCase().includes(term) ||
-        product.CategoriaProducto?.categoria.toLowerCase().includes(term);
+  // --- ERROR HANDLING ---
+  useEffect(() => {
+    if (error && !loading && products.length === 0) {
+      setInitialLoadError(error);
+    } else {
+      setInitialLoadError(null);
+    }
+  }, [error, loading, products.length]);
 
-      const matchesCategory =
-        categoryFilter === "all" ||
-        product.id_categoria === Number(categoryFilter);
+  if (initialLoadError && !loading && products.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-8 text-red-500">
+          Error: {initialLoadError}
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Reintentar
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
 
-      let matchesStatus = true;
-      if (statusFilter === "active") {
-        matchesStatus = isActiveAndAvailable(product);
-      } else if (statusFilter === "out_of_stock") {
-        matchesStatus = isOutOfStock(product);
-      } else if (statusFilter === "discontinued") {
-        matchesStatus = isDiscontinued(product);
+  // --- FILTRADO (SIN useMemo) ---
+  const filteredProducts = products.filter((product) => {
+    const term = searchTerm.toLowerCase();
+    // Modificado: Buscar también por codigo_producto
+    const matchesSearch =
+      product.nombre.toLowerCase().includes(term) ||
+      product.CategoriaProducto?.categoria.toLowerCase().includes(term) ||
+      (product.codigo_producto &&
+        product.codigo_producto.toLowerCase().includes(term));
+
+    const matchesCategory =
+      categoryFilter === "all" ||
+      product.id_categoria === Number(categoryFilter);
+
+    let matchesStatus = true;
+    if (statusFilter === "active") {
+      matchesStatus = isActiveAndAvailable(product);
+    } else if (statusFilter === "out_of_stock") {
+      matchesStatus = isOutOfStock(product);
+    } else if (statusFilter === "discontinued") {
+      matchesStatus = isDiscontinued(product);
+    }
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // --- ORDENAMIENTO (SIN useMemo) ---
+  const sortedProducts = [...filteredProducts];
+  if (sortConfig.key) {
+    sortedProducts.sort((a, b) => {
+      let aVal = a[sortConfig.key];
+      let bVal = b[sortConfig.key];
+
+      if (sortConfig.key === "categoria") {
+        aVal = a.CategoriaProducto?.categoria || "";
+        bVal = b.CategoriaProducto?.categoria || "";
+      }
+      // Añadido para ordenar por código de producto
+      if (sortConfig.key === "codigo_producto") {
+        aVal = a.codigo_producto || "";
+        bVal = b.codigo_producto || "";
       }
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      if (typeof aVal === "string") aVal = aVal.toLowerCase();
+      if (typeof bVal === "string") bVal = bVal.toLowerCase();
+
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
     });
-  }, [products, searchTerm, categoryFilter, statusFilter]);
+  }
 
-  // --- ORDENAMIENTO ---
-  const sortedProducts = useMemo(() => {
-    let items = [...filteredProducts];
-    if (sortConfig.key) {
-      items.sort((a, b) => {
-        let aVal = a[sortConfig.key];
-        let bVal = b[sortConfig.key];
-
-        if (sortConfig.key === "categoria") {
-          aVal = a.CategoriaProducto?.categoria || "";
-          bVal = b.CategoriaProducto?.categoria || "";
-        }
-
-        if (typeof aVal === "string") aVal = aVal.toLowerCase();
-        if (typeof bVal === "string") bVal = bVal.toLowerCase();
-
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-    return items;
-  }, [filteredProducts, sortConfig]);
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc")
+      direction = "desc";
+    setSortConfig({ key, direction });
+  };
 
   // --- PAGINACIÓN ---
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -116,13 +151,6 @@ const InventoryPage = () => {
   );
   const totalItems = sortedProducts.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc")
-      direction = "desc";
-    setSortConfig({ key, direction });
-  };
 
   // --- HANDLERS ACCIONES GENERALES ---
   const handleOpenCreate = () => {
@@ -233,6 +261,17 @@ const InventoryPage = () => {
       ),
     },
     {
+      header: "Código de Barras",
+      accessorKey: "codigo_producto", // Usar el nombre del campo en el objeto producto
+      sortable: true,
+      // Aplicado el mismo className que Categoría
+      className: "text-text-secondary dark:text-background-light/80 font-mono",
+      render: (row) =>
+        row.codigo_producto || (
+          <span className="italic text-gray-400">N/A</span>
+        ),
+    },
+    {
       header: "Categoría",
       accessorKey: "categoria",
       sortable: true,
@@ -304,15 +343,13 @@ const InventoryPage = () => {
           user?.rol === "Administrador" || user?.rol === "Superusuario";
 
         return (
-          <div className="flex items-center justify-end gap-2">
+          <div className="inline-flex items-center justify-end gap-2">
             {/* ✨ BOTÓN DE REABASTECER (NUEVO) */}
             <button
               onClick={() => handleOpenRestock(row)}
               disabled={isDisc}
-              className={`p-2 rounded-lg transition-colors ${
-                isDisc
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 dark:text-indigo-400"
+              className={`p-2 text-text-secondary/80 hover:text-indigo-600 dark:text-background-light/70 dark:hover:text-indigo-400 rounded-lg transition-colors ${
+                isDisc ? "cursor-not-allowed opacity-50" : ""
               }`}
               title="Agregar Stock (Compra)"
             >
@@ -325,10 +362,8 @@ const InventoryPage = () => {
             <button
               onClick={() => handleOpenEdit(row)}
               disabled={isDisc}
-              className={`p-2 rounded-lg transition-colors ${
-                isDisc
-                  ? "text-gray-400 cursor-not-allowed opacity-50"
-                  : "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:text-blue-400"
+              className={`p-2 text-text-secondary/80 hover:text-blue-600 dark:text-background-light/70 dark:hover:text-blue-400 rounded-lg transition-colors ${
+                isDisc ? "cursor-not-allowed opacity-50" : ""
               }`}
               title="Editar"
             >
@@ -339,10 +374,10 @@ const InventoryPage = () => {
             {isAdmin && (
               <button
                 onClick={() => handleOpenDiscontinueModal(row)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 text-text-secondary/80 rounded-lg transition-colors ${
                   isDisc
-                    ? "text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 dark:text-green-400"
-                    : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400"
+                    ? "hover:text-green-600 dark:hover:text-green-400"
+                    : "hover:text-gray-500 dark:hover:text-gray-400"
                 }`}
                 title={isDisc ? "Reactivar" : "Descontinuar"}
               >
@@ -361,7 +396,7 @@ const InventoryPage = () => {
   return (
     <AdminLayout>
       {/* HEADER */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="font-heading text-4xl font-bold tracking-tight text-text-primary dark:text-background-light">
             Inventario
@@ -373,84 +408,95 @@ const InventoryPage = () => {
 
         <Button
           onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2 px-6 py-3 min-w-[180px] justify-center shadow-lg shadow-primary/20 whitespace-nowrap shrink-0"
+          className="inline-flex items-center gap-2 px-6 py-3 min-w-[180px] justify-center"
           disabled={loading}
         >
           <span className="material-symbols-outlined">add</span>
-          Nuevo Producto
+          {loading ? "Cargando..." : "Nuevo Producto"}
         </Button>
       </div>
 
       {/* FILTROS */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 p-4 bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm">
-        <div className="md:col-span-5 relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-primary/60 dark:text-background-light/60">
-            search
-          </span>
-          <input
-            type="search"
-            className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-primary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
-            placeholder="Buscar por nombre..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      <div className="flex flex-col gap-6 mt-6">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Buscador */}
+          <div className="relative flex-grow">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80">
+              search
+            </span>
+            <input
+              type="search"
+              className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
+              placeholder="Buscar por nombre o código..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Filtro Categoría */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80 pointer-events-none">
+              filter_list
+            </span>
+            <select
+              className="w-full appearance-none rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-8 text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light sm:w-auto cursor-pointer"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="all">Todas las Categorías</option>
+              {categories.map((cat) => (
+                <option key={cat.id_categoria} value={cat.id_categoria}>
+                  {cat.categoria}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro Estado */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80 pointer-events-none">
+              filter_list
+            </span>
+            <select
+              className="w-full appearance-none rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-8 text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light sm:w-auto cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Todos los Estados</option>
+              <option value="active">🟢 Disponibles</option>
+              <option value="out_of_stock">🟠 Agotados</option>
+              <option value="discontinued">⚪ Descontinuados</option>
+            </select>
+          </div>
+        </div>
+
+        {/* TABLA */}
+        <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+          <Table
+            columns={columns}
+            data={currentProducts}
+            isLoading={loading}
+            keyField="id_producto"
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            pagination={
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                limit={itemsPerPage}
+                onLimitChange={(newLimit) => {
+                  setItemsPerPage(newLimit);
+                  setCurrentPage(1);
+                }}
+                totalItems={totalItems}
+                showingFrom={indexOfFirstItem + 1}
+                showingTo={Math.min(indexOfLastItem, totalItems)}
+              />
+            }
+            emptyText="No se encontraron productos con los filtros actuales."
           />
         </div>
-
-        <div className="md:col-span-4 relative">
-          <select
-            className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-3 pr-8 text-sm text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light cursor-pointer"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="all">Todas las Categorías</option>
-            {categories.map((cat) => (
-              <option key={cat.id_categoria} value={cat.id_categoria}>
-                {cat.categoria}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="md:col-span-3 relative">
-          <select
-            className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-3 pr-8 text-sm text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light cursor-pointer"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">Todos los Estados</option>
-            <option value="active">🟢 Disponibles</option>
-            <option value="out_of_stock">🟠 Agotados</option>
-            <option value="discontinued">⚪ Descontinuados</option>
-          </select>
-        </div>
-      </div>
-
-      {/* TABLA */}
-      <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-        <Table
-          columns={columns}
-          data={currentProducts}
-          isLoading={loading}
-          keyField="id_producto"
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          pagination={
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              limit={itemsPerPage}
-              onLimitChange={(newLimit) => {
-                setItemsPerPage(newLimit);
-                setCurrentPage(1);
-              }}
-              totalItems={totalItems}
-              showingFrom={indexOfFirstItem + 1}
-              showingTo={Math.min(indexOfLastItem, totalItems)}
-            />
-          }
-          emptyText="No se encontraron productos con los filtros actuales."
-        />
       </div>
 
       {/* MODALES */}

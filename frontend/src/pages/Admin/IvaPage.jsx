@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+// src/pages/Admin/IvaPage.jsx
+import React, { useState, useEffect } from "react";
 import { useIvas } from "../../hooks/useIvas.js";
 import AdminLayout from "../../components/Layout/AdminLayout.jsx";
 import Button from "../../components/UI/Button.jsx";
@@ -43,49 +44,55 @@ const IvaPage = () => {
     }
   }, [error, loading, ivas.length]);
 
-  // --- LÓGICA DE FILTRADO ---
-  const filteredIvas = useMemo(() => {
-    return ivas.filter((item) => {
-      const term = searchTerm.toLowerCase();
-      const codigo = item.codigo ? item.codigo.toLowerCase() : "";
-      const descripcion = item.descripcion
-        ? item.descripcion.toLowerCase()
-        : "";
+  if (initialLoadError) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-8 text-red-500">
+          Error: {initialLoadError}
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Reintentar
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
 
-      const matchesSearch = codigo.includes(term) || descripcion.includes(term);
+  // --- LÓGICA DE FILTRADO (SIN useMemo) ---
+  const filteredIvas = ivas.filter((item) => {
+    const term = searchTerm.toLowerCase();
+    const codigo = item.codigo ? item.codigo.toLowerCase() : "";
+    const descripcion = item.descripcion ? item.descripcion.toLowerCase() : "";
 
-      let matchesStatus = true;
-      if (statusFilter === "active") matchesStatus = item.activo === true;
-      if (statusFilter === "inactive") matchesStatus = item.activo === false;
+    const matchesSearch = codigo.includes(term) || descripcion.includes(term);
 
-      return matchesSearch && matchesStatus;
+    let matchesStatus = true;
+    if (statusFilter === "active") matchesStatus = item.activo === true;
+    if (statusFilter === "inactive") matchesStatus = item.activo === false;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // --- LÓGICA DE ORDENAMIENTO (SIN useMemo) ---
+  const sortedIvas = [...filteredIvas];
+  if (sortConfig.key !== null) {
+    sortedIvas.sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      // Para porcentajes, convertimos a número para ordenar correctamente
+      if (sortConfig.key === "porcentaje_iva") {
+        aValue = parseFloat(aValue);
+        bValue = parseFloat(bValue);
+      }
+
+      if (typeof aValue === "string") aValue = aValue.toLowerCase();
+      if (typeof bValue === "string") bValue = bValue.toLowerCase();
+
+      if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
     });
-  }, [ivas, searchTerm, statusFilter]);
-
-  // --- LÓGICA DE ORDENAMIENTO ---
-  const sortedIvas = useMemo(() => {
-    let sortableItems = [...filteredIvas];
-    if (sortConfig.key !== null) {
-      sortableItems.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-
-        // Para porcentajes, convertimos a número para ordenar correctamente
-        if (sortConfig.key === "porcentaje_iva") {
-          aValue = parseFloat(aValue);
-          bValue = parseFloat(bValue);
-        }
-
-        if (typeof aValue === "string") aValue = aValue.toLowerCase();
-        if (typeof bValue === "string") bValue = bValue.toLowerCase();
-
-        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-    return sortableItems;
-  }, [filteredIvas, sortConfig]);
+  }
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -212,7 +219,7 @@ const IvaPage = () => {
       header: "Acciones",
       className: "text-right",
       render: (row) => (
-        <div className="flex justify-end gap-2">
+        <div className="inline-flex items-center justify-end gap-2">
           {/* Botón Editar */}
           <button
             onClick={() => handleEdit(row)}
@@ -243,93 +250,89 @@ const IvaPage = () => {
     },
   ];
 
-  if (initialLoadError) {
-    return (
-      <AdminLayout>
-        <div className="text-center py-8 text-red-500">
-          Error: {initialLoadError}
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Reintentar
-          </Button>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   return (
     <AdminLayout>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="font-heading text-3xl font-bold text-text-primary dark:text-background-light">
+      {/* HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-text-primary dark:text-background-light">
             Configuración de Impuestos (IVA)
           </h1>
-          <p className="text-text-secondary dark:text-background-light/60 mt-1">
+          <p className="text-text-secondary text-base font-normal leading-normal dark:text-background-light/70">
             Gestiona los porcentajes de IVA permitidos por el SRI.
           </p>
         </div>
         <Button
           onClick={handleCreate}
-          className="inline-flex items-center gap-2 px-6 py-3 shadow-lg shadow-primary/20"
+          className="inline-flex items-center gap-2 px-6 py-3 min-w-[180px] justify-center"
+          disabled={loading}
         >
           <span className="material-symbols-outlined">add</span>
-          Nuevo Porcentaje
+          {loading ? "Cargando..." : "Nuevo Porcentaje"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6 p-4 bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm">
-        {/* Buscador */}
-        <div className="md:col-span-5 relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-primary/60 dark:text-background-light/60">
-            search
-          </span>
-          <input
-            type="search"
-            className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-primary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
-            placeholder="Buscar por código o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      {/* FILTROS */}
+      <div className="flex flex-col gap-6 mt-6">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Buscador */}
+          <div className="relative flex-grow">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80">
+              search
+            </span>
+            <input
+              type="search"
+              className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
+              placeholder="Buscar por código o descripción..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Filtro Estado */}
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80 pointer-events-none">
+              filter_list
+            </span>
+            <select
+              className="w-full appearance-none rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-8 text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light sm:w-auto cursor-pointer"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
+        </div>
+
+        {/* TABLA */}
+        <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+          <Table
+            columns={columns}
+            data={currentIvas}
+            isLoading={loading}
+            keyField="id_iva"
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            pagination={
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                limit={itemsPerPage}
+                onLimitChange={(newLimit) => {
+                  setItemsPerPage(newLimit);
+                  setCurrentPage(1);
+                }}
+                totalItems={totalItems}
+                showingFrom={indexOfFirstItem + 1}
+                showingTo={Math.min(indexOfLastItem, totalItems)}
+              />
+            }
+            emptyText="No hay valores de IVA configurados."
           />
         </div>
-
-        {/* Filtro Estado */}
-        <div className="md:col-span-3 relative">
-          <select
-            className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-3 pr-8 text-sm text-text-primary focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light cursor-pointer"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">Todos los estados</option>
-            <option value="active">Activos</option>
-            <option value="inactive">Inactivos</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-        <Table
-          columns={columns}
-          data={currentIvas}
-          isLoading={loading}
-          keyField="id_iva"
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          pagination={
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              limit={itemsPerPage}
-              onLimitChange={(newLimit) => {
-                setItemsPerPage(newLimit);
-                setCurrentPage(1);
-              }}
-              totalItems={totalItems}
-              showingFrom={indexOfFirstItem + 1}
-              showingTo={Math.min(indexOfLastItem, totalItems)}
-            />
-          }
-          emptyText="No hay valores de IVA configurados."
-        />
       </div>
 
       {/* Modal de Crear/Editar */}

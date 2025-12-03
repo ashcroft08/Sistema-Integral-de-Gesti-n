@@ -1,3 +1,4 @@
+// models/provincia.js
 export default (sequelize, DataTypes) => {
     const Provincia = sequelize.define('Provincia', {
         id_provincia: {
@@ -9,8 +10,8 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(255),
             allowNull: false
         },
-        codigo: { 
-            type: DataTypes.STRING(10), 
+        codigo: {
+            type: DataTypes.STRING(10),
             allowNull: true
         }
     }, {
@@ -20,7 +21,8 @@ export default (sequelize, DataTypes) => {
     });
 
     Provincia.associate = (models) => {
-        Provincia.hasMany(models.Canton, { foreignKey: 'id_provincia' });
+        // Usar 'as' aquí define cómo se llamará la relación en el JSON
+        Provincia.hasMany(models.Canton, { foreignKey: 'id_provincia', as: 'cantones' });
     };
 
     return Provincia;

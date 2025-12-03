@@ -19,32 +19,35 @@ export class ProductService {
 
     async createProduct(productData) {
         const t = await Producto.sequelize.transaction();
-
         try {
-            const { nombre, id_categoria, stock_actual } = productData;
-
-            // 1. Verificar duplicados
-            const productExists = await Producto.findOne({
+            const { nombre, id_categoria, stock_actual, codigo_producto } = productData; // Extraer codigo_producto
+            // 1. Verificar duplicados por nombre
+            const productExistsByName = await Producto.findOne({
                 where: { nombre: { [Op.iLike]: nombre } }
             });
-            if (productExists) throw new Error('El producto ya está registrado.');
+            if (productExistsByName) throw new Error('El producto ya está registrado.');
+
+            // 1.1. Verificar duplicados por código de producto (si se proporciona)
+            if (codigo_producto) {
+                const productExistsByCode = await Producto.findOne({
+                    where: { codigo_producto: codigo_producto }
+                });
+                if (productExistsByCode) throw new Error('Ya existe un producto con este código de barras.');
+            }
 
             // 2. Validar Categoría
             const category = await CategoriaProducto.findByPk(id_categoria);
             if (!category) throw new Error('La categoría seleccionada no existe.');
 
             // 3. Asignar estado por defecto (SIEMPRE ACTIVO)
-            // 🐛 CORRECCIÓN 1: Arreglado el error de tipeo "doActivoId" -> "const estadoActivoId"
             const estadoActivoId = await this._getEstadoIdByCode(ESTADOS_PRODUCTO.ACTIVO);
-
             const newProduct = await Producto.create({
-                ...productData,
+                ...productData, // Incluye codigo_producto si está presente
                 id_estado_producto: estadoActivoId
             }, { transaction: t });
 
             // 4. Registrar Stock Inicial (HISTORIAL)
             const idMovInicial = await this._getTipoMovimientoId('MOV_INICIAL');
-
             if (idMovInicial) {
                 await MovimientoInventario.create({
                     id_producto: newProduct.id_producto,
@@ -66,6 +69,83 @@ export class ProductService {
 
             await t.commit();
             return newProduct;
+        } catch (error) {
+            await t.rollback();
+            throw error;
+        }
+    }
+
+    async updateProduct(productId, updateData) {
+        const t = await Producto.sequelize.transaction();
+        try {
+            const { nombre, stock_actual, codigo_producto } = updateData; // Extraer codigo_producto
+            // 1. Obtener producto original
+            const producto = await Producto.findByPk(productId, {
+                include: [{ model: EstadoProducto }]
+            });
+            if (!producto) throw new Error('Producto no encontrado.');
+
+            // REGLA: No editar descontinuados
+            const idDescontinuado = await this._getEstadoIdByCode(ESTADOS_PRODUCTO.DESCONTINUADO);
+            if (producto.id_estado_producto === idDescontinuado) {
+                throw new Error('No se pueden modificar productos descontinuados. Primero debe reactivarlos.');
+            }
+
+            // Validar nombre único (si cambia)
+            if (nombre && nombre !== producto.nombre) {
+                const productExists = await Producto.findOne({
+                    where: {
+                        nombre: { [Op.iLike]: nombre },
+                        id_producto: { [Op.ne]: productId }
+                    }
+                });
+                if (productExists) throw new Error('Ya existe otro producto con ese nombre.');
+            }
+
+            // Validar código único (si cambia)
+            if (codigo_producto && codigo_producto !== producto.codigo_producto) {
+                const productExistsByCode = await Producto.findOne({
+                    where: {
+                        codigo_producto: codigo_producto,
+                        id_producto: { [Op.ne]: productId }
+                    }
+                });
+                if (productExistsByCode) throw new Error('Ya existe un producto con este código de barras.');
+            }
+
+
+            // ... resto de la lógica de actualización (stock, movimientos, etc.) ...
+            if (stock_actual !== undefined && stock_actual !== producto.stock_actual) {
+                const stockAnterior = producto.stock_actual;
+                const diferencia = stock_actual - stockAnterior;
+                const idMovAjuste = await this._getTipoMovimientoId('MOV_AJUSTE');
+                await MovimientoInventario.create({
+                    id_producto: producto.id_producto,
+                    id_tipo_movimiento: idMovAjuste,
+                    cantidad: Math.abs(diferencia),
+                    stock_anterior: stockAnterior,
+                    stock_nuevo: stock_actual,
+                    fecha_movimiento: new Date()
+                }, { transaction: t });
+
+                if (stock_actual === 0) {
+                    await NotificacionesStock.create({
+                        id_producto: producto.id_producto,
+                        mensaje: `ALERTA: El producto "${producto.nombre}" se ha agotado.`
+                    }, { transaction: t });
+                }
+            }
+
+            await producto.update(updateData, { transaction: t });
+
+            await t.commit();
+            await producto.reload({
+                include: [
+                    { model: CategoriaProducto, attributes: ['categoria'] },
+                    { model: EstadoProducto, attributes: ['estado_producto', 'codigo'] }
+                ]
+            });
+            return producto;
         } catch (error) {
             await t.rollback();
             throw error;
@@ -97,81 +177,6 @@ export class ProductService {
             if (!product) throw new Error('Producto no encontrado.');
             return product;
         } catch (error) {
-            throw error;
-        }
-    }
-
-    async updateProduct(productId, updateData) {
-        const t = await Producto.sequelize.transaction();
-        try {
-            const { nombre, stock_actual } = updateData;
-
-            // 1. Obtener producto original
-            const producto = await Producto.findByPk(productId, {
-                include: [{ model: EstadoProducto }]
-            });
-            if (!producto) throw new Error('Producto no encontrado.');
-
-            // REGLA: No editar descontinuados
-            const idDescontinuado = await this._getEstadoIdByCode(ESTADOS_PRODUCTO.DESCONTINUADO);
-            if (producto.id_estado_producto === idDescontinuado) {
-                throw new Error('No se pueden modificar productos descontinuados. Primero debe reactivarlos.');
-            }
-
-            // Validar nombre único
-            if (nombre && nombre !== producto.nombre) {
-                const productExists = await Producto.findOne({
-                    where: {
-                        nombre: { [Op.iLike]: nombre },
-                        id_producto: { [Op.ne]: productId }
-                    }
-                });
-                if (productExists) throw new Error('Ya existe otro producto con ese nombre.');
-            }
-
-            // ✅ LÓGICA DE MOVIMIENTO DE INVENTARIO (Antes del update)
-            if (stock_actual !== undefined && stock_actual !== producto.stock_actual) {
-
-                const stockAnterior = producto.stock_actual;
-                const diferencia = stock_actual - stockAnterior;
-
-                const idMovAjuste = await this._getTipoMovimientoId('MOV_AJUSTE');
-
-                await MovimientoInventario.create({
-                    id_producto: producto.id_producto,
-                    id_tipo_movimiento: idMovAjuste,
-                    cantidad: Math.abs(diferencia),
-                    stock_anterior: stockAnterior,
-                    stock_nuevo: stock_actual,
-                    fecha_movimiento: new Date()
-                }, { transaction: t });
-
-                // Notificación Stock 0
-                if (stock_actual === 0) {
-                    await NotificacionesStock.create({
-                        id_producto: producto.id_producto,
-                        mensaje: `ALERTA: El producto "${producto.nombre}" se ha agotado.`
-                    }, { transaction: t });
-                }
-            }
-
-            // Actualizar producto
-            await producto.update(updateData, { transaction: t });
-
-            await t.commit();
-
-            // Recargar datos
-            await producto.reload({
-                include: [
-                    { model: CategoriaProducto, attributes: ['categoria'] },
-                    { model: EstadoProducto, attributes: ['estado_producto', 'codigo'] }
-                ]
-            });
-
-            return producto;
-
-        } catch (error) {
-            await t.rollback();
             throw error;
         }
     }

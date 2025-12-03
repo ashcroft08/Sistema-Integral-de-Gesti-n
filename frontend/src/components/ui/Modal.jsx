@@ -8,6 +8,7 @@ const Modal = ({
   children,
   footer,
   closeOnlyWithX = true, // CAMBIO UX: Por defecto permitir cerrar con clic fuera
+  maxWidth = "max-w-2xl", //  Prop para controlar el ancho
 }) => {
   // Bloquear scroll del body cuando el modal está abierto (Mejora UX)
   useEffect(() => {
@@ -36,7 +37,7 @@ const Modal = ({
       onClick={handleBackdropClick}
     >
       <div
-        className="relative w-full max-w-lg overflow-hidden rounded-xl border border-white/10 bg-white shadow-2xl dark:bg-gray-900 dark:border-gray-800 flex flex-col max-h-[90vh]"
+        className={`relative w-full ${maxWidth} bg-white dark:bg-background-dark rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

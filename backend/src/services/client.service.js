@@ -109,16 +109,30 @@ export class ClientService {
 
     async getAllClients() {
         try {
+            // Cambiar 'Parroquia' por 'parroquia' (el alias)
+            // Cambiar 'Canton' por 'canton' (el alias)
+            // Cambiar 'Provincia' por 'provincia' (el alias)
             return await Cliente.findAll({
                 include: [
                     { model: TipoIdentificacion, attributes: ['tipo_identificacion', 'codigo'] },
                     {
+                        // Alias definido en Cliente.belongsTo(Parroquia, { as: 'parroquia' })
                         model: Parroquia,
+                        as: 'parroquia', // <-- Agregar 'as'
                         attributes: ['parroquia'],
                         include: [{
+                            // Alias definido en Parroquia.belongsTo(Canton, { as: 'canton' })
                             model: Canton,
+                            as: 'canton', // <-- Agregar 'as'
                             attributes: ['canton'],
-                            include: [{ model: Provincia, attributes: ['provincia'] }]
+                            include: [
+                                // Alias definido en Canton.belongsTo(Provincia, { as: 'provincia' })
+                                {
+                                    model: Provincia,
+                                    as: 'provincia', // <-- Agregar 'as'
+                                    attributes: ['provincia']
+                                }
+                            ]
                         }]
                     }
                 ],
@@ -135,10 +149,20 @@ export class ClientService {
                 include: [
                     { model: TipoIdentificacion },
                     {
+                        // Alias definido en Cliente.belongsTo(Parroquia, { as: 'parroquia' })
                         model: Parroquia,
+                        as: 'parroquia', // <-- Agregar 'as'
                         include: [{
+                            // Alias definido en Parroquia.belongsTo(Canton, { as: 'canton' })
                             model: Canton,
-                            include: [Provincia]
+                            as: 'canton', // <-- Agregar 'as'
+                            include: [
+                                // Alias definido en Canton.belongsTo(Provincia, { as: 'provincia' })
+                                {
+                                    model: Provincia,
+                                    as: 'provincia' // <-- Agregar 'as'
+                                }
+                            ]
                         }]
                     }
                 ]
@@ -150,34 +174,20 @@ export class ClientService {
         }
     }
 
+
     // Obtener catálogos para llenar los Selects del Frontend
     async getFormCatalogs() {
         try {
+            // Solo devolvemos tipos de identificación
+            // Las ubicaciones ahora se cargan desde /api/locations
             const types = await TipoIdentificacion.findAll({
-                attributes: ['id_tipo_identificacion', 'tipo_identificacion', 'codigo']
+                attributes: ['id_tipo_identificacion', 'tipo_identificacion', 'codigo'],
+                order: [['tipo_identificacion', 'ASC']]
             });
 
-            // Para el frontend, necesitamos la jerarquía completa
-            // Devolvemos Provincias con sus Cantones y Parroquias anidados
-            // Esto permite que el frontend filtre localmente sin hacer mil peticiones
-            const locations = await Provincia.findAll({
-                attributes: ['id_provincia', 'provincia'],
-                include: [{
-                    model: Canton,
-                    attributes: ['id_canton', 'canton'],
-                    include: [{
-                        model: Parroquia,
-                        attributes: ['id_parroquia', 'parroquia']
-                    }]
-                }],
-                order: [
-                    ['provincia', 'ASC'],
-                    [Canton, 'canton', 'ASC'],
-                    [Canton, Parroquia, 'parroquia', 'ASC']
-                ]
-            });
-
-            return { types, locations };
+            return {
+                types: types.map(t => t.toJSON())
+            };
         } catch (error) {
             throw error;
         }

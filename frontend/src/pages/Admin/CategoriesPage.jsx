@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+// src/pages/Admin/CategoriesPage.jsx
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
@@ -53,43 +54,49 @@ const CategoriesPage = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // --- LÓGICA DE FILTRADO (useMemo) ---
-  const filteredCategories = useMemo(() => {
-    return categories.filter((category) =>
-      category.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [categories, searchTerm]);
-
-  // ✅ 2. LÓGICA DE ORDENAMIENTO
-  const sortedCategories = useMemo(() => {
-    let sortableItems = [...filteredCategories];
-    if (sortConfig.key !== null) {
-      sortableItems.sort((a, b) => {
-        // Manejo seguro de valores nulos
-        let aValue =
-          a[sortConfig.key] !== undefined && a[sortConfig.key] !== null
-            ? a[sortConfig.key]
-            : "";
-        let bValue =
-          b[sortConfig.key] !== undefined && b[sortConfig.key] !== null
-            ? b[sortConfig.key]
-            : "";
-
-        // Si son strings, comparar lowercase, si son números comparar valor
-        if (typeof aValue === "string") aValue = aValue.toLowerCase();
-        if (typeof bValue === "string") bValue = bValue.toLowerCase();
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-      });
+  // --- EFECTOS ---
+  useEffect(() => {
+    if (error && !loading) {
+      if (categories.length === 0) {
+        setInitialLoadError(error);
+      }
+    } else {
+      setInitialLoadError(null);
     }
-    return sortableItems;
-  }, [filteredCategories, sortConfig]);
+  }, [error, loading, categories.length]);
+
+  // --- LÓGICA DE FILTRADO (SIN useMemo) ---
+  const filteredCategories = categories.filter((category) =>
+    category.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ✅ 2. LÓGICA DE ORDENAMIENTO (SIN useMemo)
+  const sortedCategories = [...filteredCategories];
+  if (sortConfig.key !== null) {
+    sortedCategories.sort((a, b) => {
+      // Manejo seguro de valores nulos
+      let aValue =
+        a[sortConfig.key] !== undefined && a[sortConfig.key] !== null
+          ? a[sortConfig.key]
+          : "";
+      let bValue =
+        b[sortConfig.key] !== undefined && b[sortConfig.key] !== null
+          ? b[sortConfig.key]
+          : "";
+
+      // Si son strings, comparar lowercase, si son números comparar valor
+      if (typeof aValue === "string") aValue = aValue.toLowerCase();
+      if (typeof bValue === "string") bValue = bValue.toLowerCase();
+
+      if (aValue < bValue) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }
 
   // ✅ 3. HANDLER PARA CLIC EN CABECERA
   const handleSort = (key) => {
@@ -112,17 +119,6 @@ const CategoriesPage = () => {
 
   const totalItems = sortedCategories.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  // --- EFECTOS ---
-  useEffect(() => {
-    if (error && !loading) {
-      if (categories.length === 0) {
-        setInitialLoadError(error);
-      }
-    } else {
-      setInitialLoadError(null);
-    }
-  }, [error, loading, categories.length]);
 
   // --- HANDLERS ---
 
@@ -269,7 +265,7 @@ const CategoriesPage = () => {
       render: (row) => {
         const isActive = isCategoryActive(row);
         return (
-          <div className="flex items-center justify-end gap-2">
+          <div className="inline-flex items-center justify-end gap-2">
             <button
               onClick={() => openEditModal(row)}
               className="p-2 text-text-secondary/80 hover:text-blue-600 dark:text-background-light/70 dark:hover:text-blue-400 rounded-lg transition-colors"
@@ -299,6 +295,19 @@ const CategoriesPage = () => {
   ];
 
   // --- RENDERIZADO ---
+  if (initialLoadError && !loading && categories.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-8 text-red-500">
+          Error: {initialLoadError}
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Reintentar
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       {/* Encabezado */}
@@ -317,69 +326,60 @@ const CategoriesPage = () => {
           disabled={loading}
         >
           <span className="material-symbols-outlined">add</span>
-          Crear Nueva Categoría
+          {loading ? "Cargando..." : "Crear Nueva Categoría"}
         </Button>
       </div>
 
-      {/* Manejo de Error Inicial */}
-      {initialLoadError && !loading && categories.length === 0 ? (
-        <div className="text-center py-8 text-red-500">
-          Error: {initialLoadError}
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Reintentar
-          </Button>
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-6">
-          {/* Barra de Búsqueda */}
-          <div className="flex items-center justify-between">
-            <div className="relative w-full max-w-md">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-primary/60 dark:text-background-light/60">
-                search
-              </span>
-              <input
-                type="search"
-                className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-sm text-text-primary placeholder:text-text-primary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
-                placeholder="Buscar categoría por nombre..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
-            {/* ✅ COMPONENTE DE TABLA REUTILIZABLE CON SORTING */}
-            <Table
-              columns={tableColumns}
-              data={currentCategories} // ✅ 5. Usamos los datos cortados (currentCategories)
-              isLoading={loading}
-              keyField="id_categoria"
-              sortConfig={sortConfig} // ✅ Pasamos config de orden
-              onSort={handleSort} // ✅ Pasamos handler de orden
-              // --- 5. AGREGADO: Paginación inyectada ---
-              pagination={
-                <TablePagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  limit={itemsPerPage}
-                  onLimitChange={(newLimit) => {
-                    setItemsPerPage(newLimit);
-                    setCurrentPage(1);
-                  }}
-                  totalItems={totalItems}
-                  showingFrom={indexOfFirstItem + 1}
-                  showingTo={Math.min(indexOfLastItem, totalItems)}
-                />
-              }
-              emptyText={
-                categories.length === 0
-                  ? "No hay categorías registradas."
-                  : "No hay categorías que coincidan con la búsqueda."
-              }
+      <div className="flex flex-col gap-6 mt-6">
+        {/* Barra de Búsqueda */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative flex-grow">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/80">
+              search
+            </span>
+            <input
+              type="search"
+              className="w-full rounded-lg border border-primary/30 bg-white/50 py-2 pl-10 pr-4 text-text-primary placeholder:text-text-secondary/60 focus:border-primary focus:ring-primary dark:border-primary/40 dark:bg-background-dark/50 dark:text-background-light dark:placeholder:text-background-light/60"
+              placeholder="Buscar categoría por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-      )}
+
+        <div className="bg-white dark:bg-background-dark/40 rounded-xl border border-primary/10 shadow-sm overflow-hidden">
+          {/* ✅ COMPONENTE DE TABLA REUTILIZABLE CON SORTING */}
+          <Table
+            columns={tableColumns}
+            data={currentCategories} // ✅ 5. Usamos los datos cortados (currentCategories)
+            isLoading={loading}
+            keyField="id_categoria"
+            sortConfig={sortConfig} // ✅ Pasamos config de orden
+            onSort={handleSort} // ✅ Pasamos handler de orden
+            // --- 5. AGREGADO: Paginación inyectada ---
+            pagination={
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                limit={itemsPerPage}
+                onLimitChange={(newLimit) => {
+                  setItemsPerPage(newLimit);
+                  setCurrentPage(1);
+                }}
+                totalItems={totalItems}
+                showingFrom={indexOfFirstItem + 1}
+                showingTo={Math.min(indexOfLastItem, totalItems)}
+              />
+            }
+            emptyText={
+              categories.length === 0
+                ? "No hay categorías registradas."
+                : "No hay categorías que coincidan con la búsqueda."
+            }
+          />
+        </div>
+      </div>
 
       {/* --- MODALES --- */}
 

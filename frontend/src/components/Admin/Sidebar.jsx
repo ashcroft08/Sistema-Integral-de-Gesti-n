@@ -49,19 +49,19 @@ const menuItems = {
       icon: "group",
       path: "/seller/clients",
     },
-    {
-      id: "inventory",
-      label: "Inventario",
-      icon: "inventory_2",
-      path: "/seller/inventory",
-    },
     // Categorías - solo visible para admin
     {
       id: "categories",
       label: "Categorías",
       icon: "category",
       path: "/seller/categories",
-      adminOnly: true, // 👈 Marcador especial
+      adminOnly: true,
+    },
+    {
+      id: "inventory",
+      label: "Inventario",
+      icon: "inventory_2",
+      path: "/seller/inventory",
     },
     {
       id: "settings",
@@ -133,10 +133,10 @@ const Sidebar = () => {
   const currentRole = getCurrentRole();
   const isAdmin =
     user?.rol_codigo === "ROL_SUPER" || user?.rol_codigo === "ROL_ADMIN";
-  
+
   // 👇 Filtrar items según si es admin o no
   const allItems = menuItems[currentRole] || menuItems.admin;
-  const items = allItems.filter(item => {
+  const items = allItems.filter((item) => {
     // Si el item tiene la marca adminOnly, solo mostrarlo si es admin
     if (item.adminOnly) {
       return isAdmin;

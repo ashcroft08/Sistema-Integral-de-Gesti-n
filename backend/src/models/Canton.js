@@ -1,3 +1,4 @@
+// models/canton.js
 export default (sequelize, DataTypes) => {
     const Canton = sequelize.define('Canton', {
         id_canton: {
@@ -24,7 +25,9 @@ export default (sequelize, DataTypes) => {
     });
 
     Canton.associate = (models) => {
-        Canton.belongsTo(models.Provincia, { foreignKey: 'id_provincia' });
+        // Usar 'as' aquí define cómo se llamará la relación en el JSON
+        Canton.belongsTo(models.Provincia, { foreignKey: 'id_provincia', as: 'provincia' });
+        Canton.hasMany(models.Parroquia, { foreignKey: 'id_canton', as: 'parroquias' });
     };
 
     return Canton;

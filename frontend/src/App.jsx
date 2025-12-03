@@ -28,6 +28,7 @@ import IvaPage from "./pages/Admin/IvaPage";
 import SellerDashboardPage from "./pages/SellerDashboardPage";
 import SellerSettingsPage from "./pages/Seller/SettingsPage";
 import InventoryPage from "./pages/Seller/InventoryPage";
+import ClientsPage from "./pages/Seller/ClientsPage";
 
 function App() {
   return (
@@ -94,6 +95,7 @@ function App() {
             <Route path="inventory" element={<InventoryPage />} />
             {/* 👇 Nueva ruta de categorías - accesible por URL pero sidebar lo oculta para vendedores */}
             <Route path="categories" element={<CategoriesPage />} />
+            <Route path="clients" element={<ClientsPage />} />
           </Route>
 
           {/* === CATCH ALL === */}

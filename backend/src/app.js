@@ -13,6 +13,7 @@ import salesRoutes from './routes/sales.routes.js';
 import clientRoutes from './routes/client.routes.js';
 import ivaRoutes from './routes/iva.routes.js';
 import discountRoutes from './routes/discount.routes.js';
+import locationRoutes from './routes/location.routes.js';
 
 const app = express();
 
@@ -39,5 +40,6 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/taxes', ivaRoutes);
 app.use('/api/discounts', discountRoutes);
+app.use('/api/locations', locationRoutes);
 
 export default app;
