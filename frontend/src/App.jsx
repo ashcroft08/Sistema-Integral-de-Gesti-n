@@ -29,6 +29,7 @@ import SellerDashboardPage from "./pages/SellerDashboardPage";
 import SellerSettingsPage from "./pages/Seller/SettingsPage";
 import InventoryPage from "./pages/Seller/InventoryPage";
 import ClientsPage from "./pages/Seller/ClientsPage";
+import SalesPage from "./pages/Seller/SalesPage";
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
             {/* 👇 Nueva ruta de categorías - accesible por URL pero sidebar lo oculta para vendedores */}
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="clients" element={<ClientsPage />} />
+            <Route path="sales" element={<SalesPage />} />
           </Route>
 
           {/* === CATCH ALL === */}

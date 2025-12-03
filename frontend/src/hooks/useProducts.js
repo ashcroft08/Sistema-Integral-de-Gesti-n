@@ -4,56 +4,62 @@ import { categoryService } from '../services/category.service';
 import { toast } from 'react-toastify';
 
 export const useProducts = () => {
-    const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]); // ✨ Necesario para el filtro por categoría
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [statuses, setStatuses] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    // Cargar datos (Productos + Categorías)
-    const loadInventoryData = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            // ✨ Ejecutamos ambas peticiones en paralelo para velocidad
-            const [productsResponse, categoriesResponse, statusesResponse] = await Promise.all([
-                productService.getAllProducts(),
-                categoryService.getAllCategories(),
-                productService.getProductStatuses()
-            ]);
+  const loadInventoryData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [productsResponse, categoriesResponse, statusesResponse] = await Promise.all([
+        productService.getAllProducts(),
+        categoryService.getAllCategories(),
+        productService.getProductStatuses()
+      ]);
 
-            // Setear Productos
-            if (productsResponse && productsResponse.length > 0) { // Ajusta según si tu back devuelve {success, productos} o array directo
-                // Si tu controller devuelve { success: true, productos: [...] }
-                setProducts(productsResponse.productos || productsResponse || []);
-            } else if (productsResponse.productos) {
-                setProducts(productsResponse.productos);
-            } else {
-                setProducts([]);
-            }
+      // ✅ CORRECCIÓN: Manejo consistente de productos
+      if (productsResponse && productsResponse.success !== false) {
+        // Si la API devuelve {success: true, productos: [...]}
+        // O {success: true, data: [...]} o simplemente el array
+        setProducts(productsResponse.productos || productsResponse.data || productsResponse || []);
+      } else if (productsResponse && productsResponse.success === false) {
+        throw new Error(productsResponse.message || 'Error al cargar productos');
+      } else {
+        // Si la estructura es diferente o es array directo
+        setProducts(productsResponse?.productos || productsResponse?.data || productsResponse || []);
+      }
 
-            // Setear Categorías (Para el filtro)
-            if (categoriesResponse && categoriesResponse.categorias) {
-                setCategories(categoriesResponse.categorias);
-            } else {
-                setCategories([]);
-            }
+      // Categorías (mantener igual o similar corrección)
+      if (categoriesResponse && categoriesResponse.success !== false) {
+        setCategories(categoriesResponse.categorias || categoriesResponse.data || categoriesResponse || []);
+      } else if (categoriesResponse && categoriesResponse.success === false) {
+        // Opcional: manejar error específico para categorías
+        console.error('Error cargando categorías:', categoriesResponse.message);
+        setCategories([]);
+      } else {
+        setCategories(categoriesResponse?.categorias || categoriesResponse?.data || categoriesResponse || []);
+      }
 
-            // Setear Statuses
-            if (statusesResponse && statusesResponse.estados) {
-                setStatuses(statusesResponse.estados);
-            } else {
-                setStatuses([]);
-            }
+      // Estados (mantener igual o similar corrección)
+      if (statusesResponse && statusesResponse.success !== false) {
+        setStatuses(statusesResponse.estados || statusesResponse.data || statusesResponse || []);
+      } else if (statusesResponse && statusesResponse.success === false) {
+        console.error('Error cargando estados:', statusesResponse.message);
+        setStatuses([]);
+      } else {
+        setStatuses(statusesResponse?.estados || statusesResponse?.data || statusesResponse || []);
+      }
 
-        } catch (err) {
-            console.error("Error cargando inventario:", err);
-            setError(err.message || "Error al cargar el inventario");
-            toast.error("Error al cargar datos del inventario");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    } catch (err) {
+      setError(err.message);
+      toast.error("Error al cargar datos del inventario");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
     // Crear Producto
     const createProduct = async (productData) => {
