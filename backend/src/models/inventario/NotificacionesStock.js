@@ -23,7 +23,7 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'notificaciones_stock',
-        schema: 'catalogo', // O 'catalogo', donde prefieras
+        schema: 'inventario', // O 'catalogo', donde prefieras
         timestamps: false
     });
 

@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
         },
     }, {
         tableName: 'categoria',
-        schema: 'ventas',
+        schema: 'inventario',
         timestamps: false
     });
 

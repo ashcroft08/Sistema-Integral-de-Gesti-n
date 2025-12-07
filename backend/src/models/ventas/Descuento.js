@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'descuento',
-        schema: 'catalogo', // Lo ponemos en catálogo
+        schema: 'ventas', // Lo ponemos en catálogo
         timestamps: false
     });
 

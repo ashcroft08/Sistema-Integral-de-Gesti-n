@@ -36,7 +36,7 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'producto',
-        schema: 'ventas',
+        schema: 'inventario',
         timestamps: false
     });
 
