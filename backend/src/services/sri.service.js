@@ -1,6 +1,5 @@
 // ============================================
-// services/sri.service.js - UNIFICADO
-// Detecta automáticamente BD o archivo estático
+// 1. services/sri.service.js - SIMPLIFICADO
 // ============================================
 import xmlbuilder2 from 'xmlbuilder2';
 import forge from 'node-forge';
@@ -15,16 +14,15 @@ export class SriService {
     constructor() {
         this.certificateService = new CertificateService();
 
-        // Detectar modo de operación
+        // Detectar modo
         this.useDbCertificates = process.env.USE_DB_CERTIFICATES === 'true';
-        this.modoMock = false; // Por defecto NO mock
+        this.modoMock = false;
 
-        // Si no hay certificado configurado, activar mock
         if (!this.useDbCertificates && !process.env.CERTIFICADO_PATH) {
             this.modoMock = true;
             console.log('🧪 SRI Service en MODO PRUEBA (sin certificado)');
         } else if (this.useDbCertificates) {
-            console.log('✅ SRI Service usando CERTIFICADOS DE BASE DE DATOS');
+            console.log('✅ SRI Service usando CERTIFICADO DE BASE DE DATOS');
         } else {
             console.log('📁 SRI Service usando ARCHIVO ESTÁTICO');
         }
@@ -201,9 +199,9 @@ export class SriService {
     }
 
     // ============================================
-    // FIRMAR XML - MODO AUTOMÁTICO
+    // FIRMAR XML - SIMPLIFICADO (sin parámetros)
     // ============================================
-    async firmarXml(xmlString, idCertificado = null) {
+    async firmarXml(xmlString) {
         // MODO MOCK
         if (this.modoMock) {
             console.log('🧪 MOCK: Simulando firma digital...');
@@ -220,42 +218,47 @@ export class SriService {
         try {
             let p12Buffer, password;
 
-            // MODO BASE DE DATOS
+            // MODO BASE DE DATOS - BUSCA EL CERTIFICADO ACTIVO
             if (this.useDbCertificates) {
-                if (!idCertificado) {
-                    // Buscar certificado activo más reciente
-                    const cert = await CertificadoDigital.findOne({
-                        where: { activo: true },
-                        order: [['fecha_expiracion', 'DESC']]
-                    });
+                // ✅ SIMPLIFICADO: Buscar el único certificado activo
+                const cert = await CertificadoDigital.findOne({
+                    where: { activo: true },
+                    order: [['fecha_expiracion', 'DESC']]
+                });
 
-                    if (!cert) {
-                        throw new Error('No hay certificados activos disponibles');
-                    }
-
-                    idCertificado = cert.id_certificado;
+                if (!cert) {
+                    throw new Error('No hay ningún certificado activo. Sube uno desde el panel de administración.');
                 }
 
-                const certData = await this.certificateService.getCertificateForSigning(idCertificado);
+                // Verificar que no esté expirado
+                if (new Date() > cert.fecha_expiracion) {
+                    throw new Error(`Certificado expirado el ${cert.fecha_expiracion.toLocaleDateString()}. Por favor, sube uno nuevo.`);
+                }
+
+                const certData = await this.certificateService.getCertificateForSigning(cert.id_certificado);
                 p12Buffer = certData.p12Buffer;
                 password = certData.password;
+
+                console.log(`✅ Usando certificado: ${cert.nombre} (Expira: ${cert.fecha_expiracion.toLocaleDateString()})`);
             }
             // MODO ARCHIVO ESTÁTICO
             else {
                 const certPath = process.env.CERTIFICADO_PATH;
                 if (!certPath) {
-                    throw new Error('CERTIFICADO_PATH no configurado');
+                    throw new Error('CERTIFICADO_PATH no configurado en .env');
                 }
 
                 p12Buffer = await fs.readFile(certPath);
                 password = process.env.CERTIFICADO_PASSWORD;
 
                 if (!password) {
-                    throw new Error('CERTIFICADO_PASSWORD no configurado');
+                    throw new Error('CERTIFICADO_PASSWORD no configurado en .env');
                 }
+
+                console.log('✅ Usando certificado desde archivo estático');
             }
 
-            // Firmar con forge
+            // Firmar con forge (código igual)
             const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
             const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
 
@@ -298,6 +301,44 @@ export class SriService {
         } catch (error) {
             throw new Error(`Error firmando XML: ${error.message}`);
         }
+    }
+
+    // ============================================
+    // OBTENER INFO DEL CERTIFICADO ACTIVO
+    // ============================================
+    async getCertificateInfo() {
+        if (!this.useDbCertificates) {
+            return {
+                source: 'archivo',
+                mensaje: 'Usando certificado desde archivo estático'
+            };
+        }
+
+        const cert = await CertificadoDigital.findOne({
+            where: { activo: true },
+            order: [['fecha_expiracion', 'DESC']]
+        });
+
+        if (!cert) {
+            return {
+                existe: false,
+                mensaje: '⚠️ No hay certificado activo. Sube uno desde el panel de administración.'
+            };
+        }
+
+        const diasRestantes = Math.ceil((cert.fecha_expiracion - new Date()) / (1000 * 60 * 60 * 24));
+
+        return {
+            existe: true,
+            nombre: cert.nombre,
+            emisor: cert.emisor,
+            fecha_expiracion: cert.fecha_expiracion,
+            diasRestantes,
+            estado: diasRestantes < 0 ? 'expirado' : diasRestantes < 30 ? 'por_expirar' : 'vigente',
+            alerta: diasRestantes < 30 && diasRestantes >= 0
+                ? `⚠️ El certificado expira en ${diasRestantes} días. Considera renovarlo pronto.`
+                : null
+        };
     }
 
     // ============================================

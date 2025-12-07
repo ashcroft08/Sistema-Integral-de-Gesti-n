@@ -5,12 +5,12 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
-        ambiente: {  // 1=Pruebas, 2=Producción
+        ambiente: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 1
         },
-        tipo_emision: {  // 1=Normal
+        tipo_emision: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 1
@@ -27,12 +27,12 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(13),
             allowNull: false
         },
-        establecimiento: {  // 001
+        establecimiento: {
             type: DataTypes.STRING(3),
             allowNull: false,
             defaultValue: '001'
         },
-        punto_emision: {  // 001
+        punto_emision: {
             type: DataTypes.STRING(3),
             allowNull: false,
             defaultValue: '001'
@@ -50,16 +50,6 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(5),
             allowNull: true
         },
-        // Certificado digital (.p12)
-        certificado_path: {
-            type: DataTypes.STRING(500),
-            allowNull: true
-        },
-        certificado_password: {  // ⚠️ En producción, usar secrets manager
-            type: DataTypes.STRING(255),
-            allowNull: true
-        },
-        // URLs del SRI
         url_recepcion: {
             type: DataTypes.STRING(500),
             allowNull: false
@@ -78,6 +68,38 @@ export default (sequelize, DataTypes) => {
         timestamps: true,
         createdAt: 'fecha_creacion',
         updatedAt: 'fecha_actualizacion'
+    });
+
+    // ✅ AGREGAR: Seed inicial
+    ConfiguracionSri.afterSync(async () => {
+        try {
+            const exists = await ConfiguracionSri.findOne();
+
+            if (!exists) {
+                const ambiente = process.env.SRI_ENVIRONMENT || '1';
+                const urlBase = ambiente === '1'
+                    ? 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws'
+                    : 'https://cel.sri.gob.ec/comprobantes-electronicos-ws';
+
+                await ConfiguracionSri.create({
+                    razon_social: 'ASOCIACIÓN KALLARI',
+                    ruc: '1234567890001', // ⚠️ CAMBIAR por el RUC real
+                    direccion_matriz: 'Dirección de la asociación', // ⚠️ CAMBIAR
+                    establecimiento: '001',
+                    punto_emision: '001',
+                    ambiente: parseInt(ambiente),
+                    tipo_emision: 1,
+                    obligado_contabilidad: true,
+                    url_recepcion: `${urlBase}/RecepcionComprobantesOffline?wsdl`,
+                    url_autorizacion: `${urlBase}/AutorizacionComprobantesOffline?wsdl`,
+                    activo: true
+                });
+
+                console.log('✅ Configuración SRI inicial creada');
+            }
+        } catch (error) {
+            console.error('Error en afterSync ConfiguracionSri:', error);
+        }
     });
 
     return ConfiguracionSri;

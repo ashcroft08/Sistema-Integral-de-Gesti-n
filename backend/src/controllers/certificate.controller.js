@@ -108,6 +108,54 @@ export class CertificateController {
             });
         }
     }
+
+    /**
+     * Obtener info del certificado activo
+     * GET /api/certificates/active
+     */
+    async getActiveCertificate(req, res) {
+        try {
+            const cert = await CertificadoDigital.findOne({
+                where: { activo: true },
+                order: [['fecha_expiracion', 'DESC']],
+                attributes: [
+                    'id_certificado',
+                    'nombre',
+                    'fecha_emision',
+                    'fecha_expiracion',
+                    'emisor',
+                    'activo'
+                ]
+            });
+
+            if (!cert) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No hay certificado activo',
+                    alert: 'Sube un certificado desde el panel de gestión'
+                });
+            }
+
+            const diasRestantes = Math.ceil(
+                (cert.fecha_expiracion - new Date()) / (1000 * 60 * 60 * 24)
+            );
+
+            res.status(200).json({
+                success: true,
+                certificado: {
+                    ...cert.toJSON(),
+                    diasRestantes,
+                    estado: diasRestantes < 0 ? 'expirado' :
+                        diasRestantes < 30 ? 'por_expirar' : 'vigente'
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }
 
 export const uploadMiddleware = upload.single('certificado');

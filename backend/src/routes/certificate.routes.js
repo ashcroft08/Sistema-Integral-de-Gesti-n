@@ -13,20 +13,46 @@ const adminOnly = [
 
 router.use(adminOnly);
 
+// ✅ NUEVO: Info del certificado activo
+router.get('/active', (req, res) => certificateController.getActiveCertificate(req, res));
+
 // Subir certificado
-router.post(
-    '/upload',
-    uploadMiddleware,
-    (req, res) => certificateController.uploadCertificate(req, res)
+router.post('/upload', uploadMiddleware, (req, res) =>
+    certificateController.uploadCertificate(req, res)
 );
 
-// Listar certificados
+// Listar todos
 router.get('/', (req, res) => certificateController.listCertificates(req, res));
 
-// Activar certificado
-router.patch('/:id/activate', (req, res) => certificateController.activateCertificate(req, res));
+// Activar certificado (automáticamente desactiva los demás)
+router.patch('/:id/activate', async (req, res) => {
+    try {
+        const { id } = req.params;
 
-// Desactivar certificado
-router.delete('/:id', (req, res) => certificateController.deactivateCertificate(req, res));
+        // Desactivar todos
+        await CertificadoDigital.update(
+            { activo: false },
+            { where: {} }
+        );
+
+        // Activar el seleccionado
+        await certificateService.activateCertificate(parseInt(id));
+
+        res.status(200).json({
+            success: true,
+            message: 'Certificado activado. Los demás fueron desactivados automáticamente.'
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
+// Desactivar
+router.delete('/:id', (req, res) =>
+    certificateController.deactivateCertificate(req, res)
+);
 
 export default router;

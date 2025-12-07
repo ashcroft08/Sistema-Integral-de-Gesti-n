@@ -55,7 +55,6 @@ const menuItems = {
       icon: "group",
       path: "/seller/clients",
     },
-    // Categorías - solo visible para admin
     {
       id: "categories",
       label: "Categorías",
@@ -140,10 +139,8 @@ const Sidebar = () => {
   const isAdmin =
     user?.rol_codigo === "ROL_SUPER" || user?.rol_codigo === "ROL_ADMIN";
 
-  // 👇 Filtrar items según si es admin o no
   const allItems = menuItems[currentRole] || menuItems.admin;
   const items = allItems.filter((item) => {
-    // Si el item tiene la marca adminOnly, solo mostrarlo si es admin
     if (item.adminOnly) {
       return isAdmin;
     }
@@ -199,39 +196,39 @@ const Sidebar = () => {
 
   return (
     <aside
-      className={`flex h-screen flex-col justify-between border-r border-primary/20 bg-white/50 dark:bg-background-dark/50 dark:border-primary/30 sticky top-0 transition-all duration-300 z-40 ${
+      className={`flex h-screen flex-col border-r border-primary/20 bg-white/50 dark:bg-background-dark/50 dark:border-primary/30 sticky top-0 transition-all duration-300 z-40 ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
-      <div className="flex flex-col gap-4">
-        {/* --- LOGO SECTION --- */}
+      {/* --- LOGO SECTION (Fixed Height) --- */}
+      <div
+        className={`flex h-16 flex-shrink-0 items-center px-4 overflow-hidden ${
+          isCollapsed ? "justify-center" : "justify-start"
+        }`}
+      >
         <div
-          className={`flex h-16 items-center px-4 overflow-hidden ${
-            isCollapsed ? "justify-center" : "justify-start"
+          className={`relative flex items-center transition-all duration-300 ${
+            isCollapsed ? "w-10" : "w-full"
           }`}
         >
-          <div
-            className={`relative flex items-center transition-all duration-300 ${
-              isCollapsed ? "w-10" : "w-full"
-            }`}
-          >
-            <img
-              src={isCollapsed ? favicon : logo}
-              alt="Kallari Logo"
-              className={`object-contain transition-all duration-300 ${
-                isCollapsed ? "h-14" : "h-14"
-              }`}
-            />
-          </div>
+          <img
+            src={isCollapsed ? favicon : logo}
+            alt="Kallari Logo"
+            className="object-contain h-14"
+          />
         </div>
+      </div>
 
-        {/* --- NAVIGATION --- */}
-        <nav className="flex flex-col gap-2 px-2">
+      {/* --- NAVIGATION (Scrollable Area) --- */}
+      {/* El cambio clave: flex-1 permite que esta zona ocupe el espacio disponible
+          y overflow-y-auto permite scroll si hay muchos items */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2 custom-scrollbar">
+        <nav className="flex flex-col gap-2">
           {items.map((item) => (
             <Link
               key={item.id}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2 text-text-primary/80 hover:bg-primary/10 dark:text-background-light/80 dark:hover:bg-primary/20 rounded-lg transition-colors overflow-hidden ${
+              className={`flex items-center gap-3 px-3 py-2 text-text-primary/80 hover:bg-primary/10 dark:text-background-light/80 dark:hover:bg-primary/20 rounded-lg transition-colors overflow-hidden flex-shrink-0 ${
                 location.pathname === item.path
                   ? "bg-primary/20 text-primary dark:bg-primary/30"
                   : ""
@@ -242,10 +239,10 @@ const Sidebar = () => {
                 {item.icon}
               </span>
               <p
-                className={`text-sm font-medium leading-normal whitespace-nowrap transition-opacity duration-200 ${
+                className={`text-sm font-medium leading-normal whitespace-nowrap transition-all duration-300 origin-left ${
                   isCollapsed
-                    ? "opacity-0 w-0 hidden"
-                    : "opacity-100 w-auto block"
+                    ? "opacity-0 w-0 translate-x-[-10px]" // Removido 'hidden' para suavidad
+                    : "opacity-100 w-auto translate-x-0"
                 }`}
               >
                 {item.label}
@@ -255,8 +252,8 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      {/* --- FOOTER ACTIONS --- */}
-      <div className="flex flex-col gap-2 p-4">
+      {/* --- FOOTER ACTIONS (Fixed at Bottom) --- */}
+      <div className="flex flex-col gap-2 p-4 flex-shrink-0 border-t border-primary/10">
         {/* CENTRO DE NOTIFICACIONES */}
         <NotificationBell isCollapsed={isCollapsed} />
 
@@ -275,9 +272,7 @@ const Sidebar = () => {
               </span>
               <span
                 className={`whitespace-nowrap overflow-hidden transition-all duration-200 ${
-                  isCollapsed
-                    ? "w-0 opacity-0 hidden"
-                    : "w-auto opacity-100 block"
+                  isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
                 }`}
               >
                 Cambiar Perfil
@@ -311,16 +306,19 @@ const Sidebar = () => {
 
         {/* Información del Usuario */}
         <div
-          className={`flex items-center gap-3 border-t border-primary/20 pt-4 dark:border-primary/30 overflow-hidden ${
-            isCollapsed ? "justify-center" : ""
+          className={`flex items-center pt-2 overflow-hidden transition-all duration-300 ${
+            isCollapsed
+              ? "justify-center gap-0" // CAMBIO CLAVE: gap-0 al colapsar
+              : "gap-3" // gap-3 normal al expandir
           }`}
         >
           <div className="flex-shrink-0 flex items-center justify-center bg-primary/80 text-white dark:bg-primary/90 rounded-full size-10">
             <span className="text-sm font-semibold">{userInitials}</span>
           </div>
+
           <div
-            className={`flex flex-col transition-opacity duration-200 ${
-              isCollapsed ? "opacity-0 w-0 hidden" : "opacity-100 w-auto block"
+            className={`flex flex-col transition-all duration-200 ${
+              isCollapsed ? "opacity-0 w-0" : "opacity-100 w-auto"
             }`}
           >
             <h2 className="text-base font-medium leading-normal text-text-primary dark:text-background-light whitespace-nowrap">
@@ -345,7 +343,7 @@ const Sidebar = () => {
           </span>
           <span
             className={`whitespace-nowrap overflow-hidden transition-all duration-200 ${
-              isCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100 block"
+              isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
             }`}
           >
             Cerrar sesión
@@ -365,7 +363,7 @@ const Sidebar = () => {
           </span>
           <span
             className={`whitespace-nowrap overflow-hidden transition-all duration-200 ${
-              isCollapsed ? "w-0 opacity-0 hidden" : "w-auto opacity-100 block"
+              isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
             }`}
           >
             {isCollapsed ? "Desplegar" : "Plegar"}

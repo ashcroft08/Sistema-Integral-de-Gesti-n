@@ -17,8 +17,8 @@ export const CreateProductSchema = z.object({
     codigo_producto: z.string({ required_error: "El código de barras es obligatorio" })
         .trim()
         .min(3, "El código debe tener al menos 3 caracteres")
-        .max(50, "El código no puede exceder 50 caracteres")
-        .regex(/^[a-zA-Z0-9-_]+$/, "El código solo puede contener letras, números, guiones y guiones bajos"),
+        .max(50, "El código no puede exceder 50 caracteres"),
+
 
     precio: z.number({ required_error: "El precio es obligatorio" })
         .nonnegative("El precio no puede ser negativo"),
@@ -49,7 +49,7 @@ export const UpdateProductSchema = z.object({
         .trim()
         .min(3, "El código debe tener al menos 3 caracteres")
         .max(50, "El código no puede exceder 50 caracteres")
-        .regex(/^[a-zA-Z0-9-_]+$/, "El código solo puede contener letras, números, guiones y guiones bajos")
+
         .optional(),
 
     precio: z.number()
