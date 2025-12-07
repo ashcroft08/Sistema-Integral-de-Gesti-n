@@ -13,6 +13,10 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(20),
             allowNull: false,
             unique: true
+        },
+        descripcion: {  // ✅ NUEVO: Descripción detallada
+            type: DataTypes.TEXT,
+            allowNull: true
         }
     }, {
         tableName: 'estado_sri',
@@ -27,11 +31,46 @@ export default (sequelize, DataTypes) => {
     EstadoSri.afterSync(async () => {
         try {
             const estados = [
-                { estado_sri: 'Pendiente', codigo: 'SRI_PENDIENTE' }, // Guardado localmente
-                { estado_sri: 'Enviado', codigo: 'SRI_ENVIADO' },     // Enviado, esperando respuesta
-                { estado_sri: 'Autorizado', codigo: 'SRI_AUTORIZADO' }, // Todo OK
-                { estado_sri: 'Rechazado', codigo: 'SRI_RECHAZADO' },   // Error en datos
-                { estado_sri: 'Anulado', codigo: 'SRI_ANULADO' }        // Anulado localmente
+                {
+                    codigo: 'SRI_PENDIENTE',
+                    estado_sri: 'Pendiente',
+                    descripcion: 'Factura guardada localmente, pendiente de firma y envío al SRI'
+                },
+                {
+                    codigo: 'SRI_FIRMADO',
+                    estado_sri: 'Firmado',
+                    descripcion: 'XML firmado digitalmente, listo para enviar al SRI'
+                },
+                {
+                    codigo: 'SRI_ENVIADO',
+                    estado_sri: 'Enviado',
+                    descripcion: 'Enviado al SRI, esperando respuesta'
+                },
+                {
+                    codigo: 'SRI_RECIBIDA',
+                    estado_sri: 'Recibida',
+                    descripcion: 'SRI recibió el comprobante, procesando autorización'
+                },
+                {
+                    codigo: 'SRI_AUTORIZADO',
+                    estado_sri: 'Autorizado',
+                    descripcion: 'Comprobante autorizado por el SRI'
+                },
+                {
+                    codigo: 'SRI_DEVUELTA',
+                    estado_sri: 'Devuelta',
+                    descripcion: 'SRI devolvió el comprobante por errores corregibles'
+                },
+                {
+                    codigo: 'SRI_RECHAZADO',
+                    estado_sri: 'Rechazado',
+                    descripcion: 'Comprobante rechazado por el SRI'
+                },
+                {
+                    codigo: 'SRI_ANULADO',
+                    estado_sri: 'Anulado',
+                    descripcion: 'Factura anulada localmente (no enviada al SRI)'
+                }
             ];
 
             for (const estado of estados) {
@@ -40,7 +79,7 @@ export default (sequelize, DataTypes) => {
                     defaults: estado
                 });
             }
-            console.log('✅ Estados SRI verificados');
+            console.log('✅ Estados SRI actualizados');
         } catch (error) {
             console.error('Error en afterSync de EstadoSri:', error);
         }
