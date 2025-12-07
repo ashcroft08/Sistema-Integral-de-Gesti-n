@@ -1,7 +1,7 @@
 import db from '../database/database.js';
 
 export async function createSchemas() {
-    const schemas = ['seguridad', 'ventas', 'contabilidad', 'catalogo', 'auditoria'];
+    const schemas = ['seguridad', 'ventas', 'contabilidad', 'catalogo', 'inventario', 'configuracion', 'auditoria'];
 
     for (const schema of schemas) {
         try {

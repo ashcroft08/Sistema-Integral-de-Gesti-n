@@ -34,6 +34,12 @@ const menuItems = {
       icon: "settings",
       path: "/admin/settings",
     },
+    {
+      id: "certificate",
+      label: "Certificado Digital",
+      icon: "license",
+      path: "/admin/certificate",
+    },
   ],
   seller: [
     { id: "dashboard", label: "Dashboard", icon: "dashboard", path: "/seller" },

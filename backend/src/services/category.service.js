@@ -59,7 +59,7 @@ export class CategoryProductService {
                         [
                             CategoriaProducto.sequelize.literal(`(
                                 SELECT COUNT(*) 
-                                FROM ventas.producto 
+                                FROM inventario.producto 
                                 WHERE producto.id_categoria = "CategoriaProducto"."id_categoria"
                             )`),
                             'numero_productos'

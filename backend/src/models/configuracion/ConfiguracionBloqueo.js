@@ -17,8 +17,10 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'configuracion_bloqueo',
-        schema: 'seguridad',
-        timestamps: false
+        schema: 'configuracion',
+        timestamps: true,
+        createdAt: 'fecha_creacion',
+        updatedAt: 'fecha_actualizacion'
     });
 
     // Hook para insertar valores por defecto

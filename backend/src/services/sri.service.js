@@ -1,33 +1,49 @@
 // ============================================
-// services/sri.service.js
+// services/sri.service.js - UNIFICADO
+// Detecta automáticamente BD o archivo estático
 // ============================================
 import xmlbuilder2 from 'xmlbuilder2';
 import forge from 'node-forge';
 import fs from 'fs/promises';
-import crypto from 'crypto';
 import moment from 'moment';
 import axios from 'axios';
 import FormData from 'form-data';
-import { ConfiguracionSri, Factura, Cliente, DetalleFactura, Producto, ValorIva } from '../models/index.js';
+import { ConfiguracionSri, Factura, Cliente, DetalleFactura, Producto, ValorIva, CertificadoDigital } from '../models/index.js';
+import { CertificateService } from './certificate.service.js';
 
 export class SriService {
+    constructor() {
+        this.certificateService = new CertificateService();
+
+        // Detectar modo de operación
+        this.useDbCertificates = process.env.USE_DB_CERTIFICATES === 'true';
+        this.modoMock = false; // Por defecto NO mock
+
+        // Si no hay certificado configurado, activar mock
+        if (!this.useDbCertificates && !process.env.CERTIFICADO_PATH) {
+            this.modoMock = true;
+            console.log('🧪 SRI Service en MODO PRUEBA (sin certificado)');
+        } else if (this.useDbCertificates) {
+            console.log('✅ SRI Service usando CERTIFICADOS DE BASE DE DATOS');
+        } else {
+            console.log('📁 SRI Service usando ARCHIVO ESTÁTICO');
+        }
+    }
 
     // ============================================
-    // 1. GENERAR CLAVE DE ACCESO (49 DÍGITOS)
+    // GENERAR CLAVE DE ACCESO
     // ============================================
     generarClaveAcceso(fechaEmision, tipoComprobante, ruc, ambiente, serie, secuencial, codigoNumerico, tipoEmision) {
         const fecha = moment(fechaEmision).format('DDMMYYYY');
-        const tipo = tipoComprobante.padStart(2, '0'); // 01 = Factura
+        const tipo = tipoComprobante.padStart(2, '0');
         const rucEmisor = ruc.padStart(13, '0');
         const amb = ambiente.toString();
-        const serieCompleta = serie.replace('-', ''); // 001001
+        const serieCompleta = serie.replace('-', '');
         const secuencialFormateado = secuencial.padStart(9, '0');
         const codNum = codigoNumerico.padStart(8, '0');
         const tipEmis = tipoEmision.toString();
 
         const claveBase = fecha + tipo + rucEmisor + amb + serieCompleta + secuencialFormateado + codNum + tipEmis;
-
-        // Calcular dígito verificador (Módulo 11)
         const digito = this._calcularDigitoVerificador(claveBase);
 
         return claveBase + digito;
@@ -45,12 +61,11 @@ export class SriService {
 
         const residuo = suma % 11;
         const digito = residuo === 0 ? 0 : 11 - residuo;
-
         return digito === 11 ? 0 : digito;
     }
 
     // ============================================
-    // 2. GENERAR XML DE FACTURA
+    // GENERAR XML FACTURA
     // ============================================
     async generarXmlFactura(idFactura) {
         const factura = await Factura.findByPk(idFactura, {
@@ -85,7 +100,7 @@ export class SriService {
 
             const claveAcceso = this.generarClaveAcceso(
                 factura.fecha_emision,
-                '01', // Factura
+                '01',
                 config.ruc,
                 config.ambiente,
                 `${est}${pe}`,
@@ -97,11 +112,10 @@ export class SriService {
             await factura.update({ clave_acceso_sri: claveAcceso });
         }
 
-        // Construir XML
+        // Construir XML (código igual que antes)
         const root = xmlbuilder2.create({ version: '1.0', encoding: 'UTF-8' })
             .ele('factura', { id: 'comprobante', version: '1.0.0' });
 
-        // ====== INFO TRIBUTARIA ======
         const infoTributaria = root.ele('infoTributaria');
         infoTributaria.ele('ambiente').txt(config.ambiente.toString());
         infoTributaria.ele('tipoEmision').txt(config.tipo_emision.toString());
@@ -111,13 +125,12 @@ export class SriService {
         }
         infoTributaria.ele('ruc').txt(config.ruc);
         infoTributaria.ele('claveAcceso').txt(factura.clave_acceso_sri);
-        infoTributaria.ele('codDoc').txt('01'); // Factura
+        infoTributaria.ele('codDoc').txt('01');
         infoTributaria.ele('estab').txt(config.establecimiento);
         infoTributaria.ele('ptoEmi').txt(config.punto_emision);
         infoTributaria.ele('secuencial').txt(factura.secuencial.split('-')[2]);
         infoTributaria.ele('dirMatriz').txt(config.direccion_matriz);
 
-        // ====== INFO FACTURA ======
         const infoFactura = root.ele('infoFactura');
         infoFactura.ele('fechaEmision').txt(moment(factura.fecha_emision).format('DD/MM/YYYY'));
         infoFactura.ele('dirEstablecimiento').txt(config.direccion_matriz);
@@ -126,36 +139,32 @@ export class SriService {
         }
         infoFactura.ele('obligadoContabilidad').txt(config.obligado_contabilidad ? 'SI' : 'NO');
 
-        // Cliente
         const cliente = factura.Cliente;
         infoFactura.ele('tipoIdentificacionComprador').txt(
-            cliente.identificacion.length === 10 ? '05' : // Cédula
-                cliente.identificacion.length === 13 ? '04' : // RUC
-                    '06' // Pasaporte
+            cliente.identificacion.length === 10 ? '05' :
+                cliente.identificacion.length === 13 ? '04' : '06'
         );
         infoFactura.ele('razonSocialComprador').txt(`${cliente.nombre} ${cliente.apellido}`);
         infoFactura.ele('identificacionComprador').txt(cliente.identificacion);
         infoFactura.ele('direccionComprador').txt(cliente.direccion);
 
-        // Totales
         infoFactura.ele('totalSinImpuestos').txt(
             (parseFloat(factura.subtotal_sin_iva) + parseFloat(factura.subtotal_con_iva)).toFixed(2)
         );
         infoFactura.ele('totalDescuento').txt(parseFloat(factura.total_descuento).toFixed(2));
 
-        // Impuestos totales
         const totalConImpuestos = infoFactura.ele('totalConImpuestos');
         if (parseFloat(factura.subtotal_con_iva) > 0) {
             const totalImpuesto = totalConImpuestos.ele('totalImpuesto');
-            totalImpuesto.ele('codigo').txt('2'); // IVA
-            totalImpuesto.ele('codigoPorcentaje').txt('2'); // 12%
+            totalImpuesto.ele('codigo').txt('2');
+            totalImpuesto.ele('codigoPorcentaje').txt('2');
             totalImpuesto.ele('baseImponible').txt(parseFloat(factura.subtotal_con_iva).toFixed(2));
             totalImpuesto.ele('valor').txt(parseFloat(factura.total_iva).toFixed(2));
         }
         if (parseFloat(factura.subtotal_sin_iva) > 0) {
             const totalImpuesto = totalConImpuestos.ele('totalImpuesto');
-            totalImpuesto.ele('codigo').txt('2'); // IVA
-            totalImpuesto.ele('codigoPorcentaje').txt('0'); // 0%
+            totalImpuesto.ele('codigo').txt('2');
+            totalImpuesto.ele('codigoPorcentaje').txt('0');
             totalImpuesto.ele('baseImponible').txt(parseFloat(factura.subtotal_sin_iva).toFixed(2));
             totalImpuesto.ele('valor').txt('0.00');
         }
@@ -164,7 +173,6 @@ export class SriService {
         infoFactura.ele('importeTotal').txt(parseFloat(factura.total).toFixed(2));
         infoFactura.ele('moneda').txt('DOLAR');
 
-        // ====== DETALLES ======
         const detalles = root.ele('detalles');
         for (const det of factura.DetalleFacturas) {
             const detalle = detalles.ele('detalle');
@@ -177,7 +185,7 @@ export class SriService {
 
             const impuestos = detalle.ele('impuestos');
             const impuesto = impuestos.ele('impuesto');
-            impuesto.ele('codigo').txt('2'); // IVA
+            impuesto.ele('codigo').txt('2');
             impuesto.ele('codigoPorcentaje').txt(det.ValorIva.codigo);
             impuesto.ele('tarifa').txt(det.ValorIva.porcentaje_iva.toString());
             const baseImponible = parseFloat(det.subtotal);
@@ -186,7 +194,6 @@ export class SriService {
             impuesto.ele('valor').txt(valorIva.toFixed(2));
         }
 
-        // ====== INFO ADICIONAL ======
         const infoAdicional = root.ele('infoAdicional');
         infoAdicional.ele('campoAdicional', { nombre: 'Email' }).txt(cliente.email);
 
@@ -194,27 +201,74 @@ export class SriService {
     }
 
     // ============================================
-    // 3. FIRMAR XML CON CERTIFICADO DIGITAL
+    // FIRMAR XML - MODO AUTOMÁTICO
     // ============================================
-    async firmarXml(xmlString, certificadoPath, password) {
+    async firmarXml(xmlString, idCertificado = null) {
+        // MODO MOCK
+        if (this.modoMock) {
+            console.log('🧪 MOCK: Simulando firma digital...');
+            return xmlString.replace(
+                '</factura>',
+                `<!-- FIRMA SIMULADA (MODO PRUEBA) -->
+                <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+                    <ds:SignatureValue>MOCK_SIGNATURE_${Date.now()}</ds:SignatureValue>
+                </ds:Signature>
+                </factura>`
+            );
+        }
+
         try {
-            const p12Buffer = await fs.readFile(certificadoPath);
+            let p12Buffer, password;
+
+            // MODO BASE DE DATOS
+            if (this.useDbCertificates) {
+                if (!idCertificado) {
+                    // Buscar certificado activo más reciente
+                    const cert = await CertificadoDigital.findOne({
+                        where: { activo: true },
+                        order: [['fecha_expiracion', 'DESC']]
+                    });
+
+                    if (!cert) {
+                        throw new Error('No hay certificados activos disponibles');
+                    }
+
+                    idCertificado = cert.id_certificado;
+                }
+
+                const certData = await this.certificateService.getCertificateForSigning(idCertificado);
+                p12Buffer = certData.p12Buffer;
+                password = certData.password;
+            }
+            // MODO ARCHIVO ESTÁTICO
+            else {
+                const certPath = process.env.CERTIFICADO_PATH;
+                if (!certPath) {
+                    throw new Error('CERTIFICADO_PATH no configurado');
+                }
+
+                p12Buffer = await fs.readFile(certPath);
+                password = process.env.CERTIFICADO_PASSWORD;
+
+                if (!password) {
+                    throw new Error('CERTIFICADO_PASSWORD no configurado');
+                }
+            }
+
+            // Firmar con forge
             const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString('binary'));
             const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
 
-            // Extraer certificado y clave privada
             const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
             const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
 
             const cert = certBags[forge.pki.oids.certBag][0].cert;
             const privateKey = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag][0].key;
 
-            // Crear firma
             const md = forge.md.sha256.create();
             md.update(xmlString, 'utf8');
             const signature = privateKey.sign(md);
 
-            // Construir XML firmado (simplificado - en producción usar xmldsig)
             const signatureBase64 = forge.util.encode64(signature);
             const certBase64 = forge.util.encode64(forge.asn1.toDer(forge.pki.certificateToAsn1(cert)).getBytes());
 
@@ -234,18 +288,33 @@ export class SriService {
                 </factura>`
             );
 
+            // Limpiar memoria
+            if (p12Buffer) {
+                p12Buffer.fill(0);
+            }
+
             return xmlFirmado;
+
         } catch (error) {
             throw new Error(`Error firmando XML: ${error.message}`);
         }
     }
 
     // ============================================
-    // 4. ENVIAR AL SRI
+    // ENVIAR AL SRI
     // ============================================
     async enviarAlSri(xmlFirmado) {
-        const config = await ConfiguracionSri.findOne({ where: { activo: true } });
+        if (this.modoMock) {
+            console.log('🧪 MOCK: Simulando envío al SRI...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return {
+                estado: 'RECIBIDA',
+                mensaje: 'MOCK: Comprobante recibido (simulación)',
+                claveAcceso: xmlFirmado.match(/<claveAcceso>(.*?)<\/claveAcceso>/)?.[1]
+            };
+        }
 
+        const config = await ConfiguracionSri.findOne({ where: { activo: true } });
         const formData = new FormData();
         formData.append('xml', Buffer.from(xmlFirmado), {
             filename: 'comprobante.xml',
@@ -258,7 +327,6 @@ export class SriService {
                 timeout: 30000
             });
 
-            // Parsear respuesta SOAP
             return {
                 estado: response.data.includes('RECIBIDA') ? 'RECIBIDA' : 'ERROR',
                 mensaje: response.data
@@ -269,9 +337,20 @@ export class SriService {
     }
 
     // ============================================
-    // 5. CONSULTAR AUTORIZACIÓN
+    // CONSULTAR AUTORIZACIÓN
     // ============================================
     async consultarAutorizacion(claveAcceso) {
+        if (this.modoMock) {
+            console.log('🧪 MOCK: Simulando autorización...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            return {
+                autorizado: true,
+                numeroAutorizacion: claveAcceso,
+                fechaAutorizacion: new Date(),
+                xmlRespuesta: `MOCK: Autorización simulada`
+            };
+        }
+
         const config = await ConfiguracionSri.findOne({ where: { activo: true } });
 
         try {

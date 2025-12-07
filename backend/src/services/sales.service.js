@@ -1,6 +1,3 @@
-// ============================================
-// services/sales.service.js - MEJORADO CON SRI
-// ============================================
 import {
     Factura, DetalleFactura, Producto, MovimientoInventario,
     TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente,

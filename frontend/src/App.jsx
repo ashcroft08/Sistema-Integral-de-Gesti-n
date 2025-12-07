@@ -23,6 +23,7 @@ import LocksPage from "./pages/Admin/LocksPage";
 import AdminSettingsPage from "./pages/Admin/SettingsPage";
 import DiscountPage from "./pages/Admin/DiscountPage";
 import IvaPage from "./pages/Admin/IvaPage";
+import CertificatesPage from "./pages/Admin/CertificatesPage";
 
 // Pages Vendedor
 import SellerDashboardPage from "./pages/SellerDashboardPage";
@@ -84,6 +85,7 @@ function App() {
             <Route path="discounts" element={<DiscountPage />} />
             <Route path="taxes" element={<IvaPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="certificate" element={<CertificatesPage />} />
           </Route>
 
           {/* === RUTAS PROTEGIDAS VENDEDOR === */}

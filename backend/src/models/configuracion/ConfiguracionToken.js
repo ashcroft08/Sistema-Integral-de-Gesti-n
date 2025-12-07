@@ -13,8 +13,10 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'configuracion_token',
-        schema: 'seguridad',
-        timestamps: false
+        schema: 'configuracion',
+        timestamps: true,
+        createdAt: 'fecha_creacion',
+        updatedAt: 'fecha_actualizacion'
     });
 
     // Hook para insertar tiempo inicial de expiración del token

@@ -11,8 +11,8 @@ import CantonModel from './catalogo/Canton.js';
 import EstadoCategoriaModel from './catalogo/EstadoCategoria.js';
 import CategoriaProductoModel from './inventario/CategoriaProducto.js';
 import ClienteModel from './ventas/Cliente.js';
-import ConfiguracionBloqueoModel from './seguridad/ConfiguracionBloqueo.js';
-import ConfiguracionTokenModel from './seguridad/ConfiguracionToken.js';
+import ConfiguracionBloqueoModel from './configuracion/ConfiguracionBloqueo.js';
+import ConfiguracionTokenModel from './configuracion/ConfiguracionToken.js';
 import DetalleAsientoModel from './contabilidad/DetalleAsiento.js';
 import DetalleFacturaModel from './ventas/DetalleFactura.js';
 import ErrorModel from './auditoria/Error.js';
@@ -31,6 +31,9 @@ import TipoMovimientoModel from './catalogo/TipoMovimiento.js';
 import UsuarioModel from './seguridad/Usuario.js';
 import ValorIvaModel from './catalogo/ValorIva.js';
 import DescuentoModel from './ventas/Descuento.js';
+import MetodoPagoModel from './ventas/MetodoPago.js';
+import ConfiguracionSriModel from './configuracion/ConfiguracionSri.js';
+import CertificadoDigitalModel from './configuracion/CertificadoDigital.js';
 
 // 3. Inicializa cada modelo
 const AsientoContable = AsientoContableModel(sequelize, DataTypes);
@@ -60,6 +63,9 @@ const TipoMovimiento = TipoMovimientoModel(sequelize, DataTypes);
 const Usuario = UsuarioModel(sequelize, DataTypes);
 const ValorIva = ValorIvaModel(sequelize, DataTypes);
 const Descuento = DescuentoModel(sequelize, DataTypes);
+const MetodoPago = MetodoPagoModel(sequelize, DataTypes);
+const ConfiguracionSri = ConfiguracionSriModel(sequelize, DataTypes);
+const CertificadoDigital = CertificadoDigitalModel(sequelize, DataTypes);
 
 // 4. Agrupa todos los modelos en un objeto
 // Esto permite que el bucle de asociaciones funcione
@@ -90,7 +96,10 @@ const models = {
     TipoMovimiento,
     Usuario,
     ValorIva,
-    Descuento
+    Descuento,
+    MetodoPago,
+    ConfiguracionSri,
+    CertificadoDigital
 };
 
 // 5. Ejecuta el método .associate() de cada modelo (si existe)
@@ -129,7 +138,10 @@ export {
     TipoMovimiento,
     Usuario,
     ValorIva,
-    Descuento
+    Descuento,
+    MetodoPago,
+    ConfiguracionSri,
+    CertificadoDigital
 };
 
 // Exporta también la instancia de conexión de sequelize

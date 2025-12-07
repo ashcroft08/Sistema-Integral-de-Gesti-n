@@ -14,6 +14,7 @@ import clientRoutes from './routes/client.routes.js';
 import ivaRoutes from './routes/iva.routes.js';
 import discountRoutes from './routes/discount.routes.js';
 import locationRoutes from './routes/location.routes.js';
+import certicateRoutes from './routes/certificate.routes.js';
 
 const app = express();
 
@@ -41,5 +42,6 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/taxes', ivaRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/certificates', certicateRoutes);
 
 export default app;

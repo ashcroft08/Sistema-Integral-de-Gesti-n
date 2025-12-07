@@ -1,8 +1,9 @@
 // src/scripts/import-locations.mjs
 
-import 'dotenv/config';
+import './load-env.js';
 import readXlsxFile from 'read-excel-file/node';
 import db from '../database/database.js';
+import { Provincia, Canton, Parroquia } from '../models/index.js';
 import fs from 'fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -17,7 +18,7 @@ if (!fs.existsSync(EXCEL_PATH)) {
     process.exit(1);
 }
 
-const { sequelize, Provincia, Canton, Parroquia } = db;
+const { sequelize } = db;
 
 async function importLocations() {
     console.log('▶️ Iniciando importación de ubicaciones desde Excel...');
@@ -82,7 +83,7 @@ async function importLocations() {
             }
         }
     });
-    
+
     const cantones = Array.from(cantMap.values())
         .map(c => ({
             canton: c.canton,
@@ -93,7 +94,7 @@ async function importLocations() {
         .filter(c => c.id_provincia != null);
 
     const insertedCant = await Canton.bulkCreate(cantones, { returning: true });
-    
+
     // ⬅️ CORRECCIÓN: Crear el mapeo correcto usando provCode del array original
     const cantKeyToId = {};
     insertedCant.forEach((canton, idx) => {
@@ -102,7 +103,7 @@ async function importLocations() {
         const key = `${provCode}-${cantonCode}`;
         cantKeyToId[key] = canton.id_canton;
     });
-    
+
     console.log(`✅ Insertados ${cantones.length} cantones.`);
 
     // --- 5. Insertar PARROQUIAS ---
@@ -114,12 +115,12 @@ async function importLocations() {
             const cantonCode = r.DPA_CANTON.trim();
             const key = `${provCode}-${cantonCode}`;
             const idCanton = cantKeyToId[key];
-            
+
             if (!idCanton) {
                 console.warn(`⚠️ Parroquia "${r.DPA_DESPAR}" no encontró su cantón (${key})`);
                 return null;
             }
-            
+
             return {
                 parroquia: r.DPA_DESPAR,
                 codigo: r.DPA_PARROQ,
