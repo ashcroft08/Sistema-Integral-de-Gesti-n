@@ -1,12 +1,22 @@
+// ============================================
+// services/sales.service.js - MEJORADO CON SRI
+// ============================================
 import {
     Factura, DetalleFactura, Producto, MovimientoInventario,
-    TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente, Usuario
+    TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente,
+    Usuario, MetodoPago
 } from '../models/index.js';
 import db from '../database/database.js';
+import { SriService } from './sri.service.js';
+import { StorageService } from './storage.service.js'; // Backblaze
 
 const { sequelize } = db;
 
 export class SalesService {
+    constructor() {
+        this.sriService = new SriService();
+        this.storageService = new StorageService();
+    }
 
     _redondear(valor) {
         return Math.round(valor * 100) / 100;
@@ -29,23 +39,31 @@ export class SalesService {
         return `001-001-${secuencia.toString().padStart(9, '0')}`;
     }
 
+    // ============================================
+    // CREAR VENTA - MEJORADO
+    // ============================================
     async createSale(data) {
         const t = await sequelize.transaction();
 
         try {
-            const { id_cliente, id_vendedor, productos } = data;
+            const { id_cliente, id_vendedor, id_metodo_pago, productos } = data;
 
-            // Validaciones
+            // ====== VALIDACIONES ======
             const clienteExiste = await Cliente.findByPk(id_cliente, { transaction: t });
             if (!clienteExiste) {
                 throw new Error('Cliente no encontrado.');
+            }
+
+            const metodoPagoExiste = await MetodoPago.findByPk(id_metodo_pago, { transaction: t });
+            if (!metodoPagoExiste || !metodoPagoExiste.activo) {
+                throw new Error('Método de pago no válido.');
             }
 
             if (!productos || productos.length === 0) {
                 throw new Error('Debe incluir al menos un producto en la venta.');
             }
 
-            // Configuraciones
+            // ====== CONFIGURACIONES ======
             const estadoPendiente = await EstadoSri.findOne({
                 where: { codigo: 'SRI_PENDIENTE' },
                 transaction: t
@@ -59,28 +77,42 @@ export class SalesService {
                 throw new Error('Error de configuración: Faltan estados SRI o Tipos de Movimiento.');
             }
 
-            // Generar secuencial
+            // ====== GENERAR SECUENCIAL ======
             const nuevoSecuencial = await this._generarSecuencial(t);
 
-            // Crear factura
+            // ====== DETERMINAR IVA PRINCIPAL (el más usado) ======
+            const ivaMap = {};
+            for (const item of productos) {
+                ivaMap[item.id_valor_iva] = (ivaMap[item.id_valor_iva] || 0) + 1;
+            }
+            const ivaPrincipal = Object.keys(ivaMap).reduce((a, b) =>
+                ivaMap[a] > ivaMap[b] ? a : b
+            );
+
+            // ====== CREAR FACTURA ======
             const nuevaFactura = await Factura.create({
                 id_cliente,
                 id_vendedor,
                 id_estado_sri: estadoPendiente.id_estado_sri,
+                id_valor_iva: parseInt(ivaPrincipal),
+                id_metodo_pago,
                 secuencial: nuevoSecuencial,
                 fecha_emision: new Date(),
                 total_descuento: 0,
                 subtotal_sin_iva: 0,
                 subtotal_con_iva: 0,
+                total_iva: 0,
                 total: 0
             }, { transaction: t });
 
+            // ====== TOTALIZADORES ======
             let totalSubtotalSinIva = 0;
             let totalSubtotalConIva = 0;
             let totalDescuentos = 0;
+            let totalIva = 0;
             let totalPagarFinal = 0;
 
-            // Procesar productos
+            // ====== PROCESAR PRODUCTOS ======
             for (const item of productos) {
                 if (!item.cantidad || item.cantidad <= 0) {
                     throw new Error('La cantidad de cada producto debe ser mayor a cero.');
@@ -112,7 +144,7 @@ export class SalesService {
                     throw new Error(`Stock insuficiente para "${productoDb.nombre}". Disponible: ${productoDb.stock_actual}`);
                 }
 
-                // Cálculos
+                // ====== CÁLCULOS ======
                 const cantidad = parseInt(item.cantidad);
                 const precio = parseFloat(productoDb.precio);
                 const subtotalBruto = this._redondear(precio * cantidad);
@@ -123,6 +155,7 @@ export class SalesService {
                 const totalLinea = this._redondear(baseImponible + valorIva);
 
                 totalDescuentos = this._redondear(totalDescuentos + valorDescuento);
+                totalIva = this._redondear(totalIva + valorIva);
                 totalPagarFinal = this._redondear(totalPagarFinal + totalLinea);
 
                 if (porcentajeIva > 0) {
@@ -131,7 +164,7 @@ export class SalesService {
                     totalSubtotalSinIva = this._redondear(totalSubtotalSinIva + baseImponible);
                 }
 
-                // Guardar detalle
+                // ====== GUARDAR DETALLE ======
                 const detalleCreado = await DetalleFactura.create({
                     id_factura: nuevaFactura.id_factura,
                     id_producto: productoDb.id_producto,
@@ -145,7 +178,7 @@ export class SalesService {
                     total: totalLinea
                 }, { transaction: t });
 
-                // Movimiento inventario
+                // ====== MOVIMIENTO INVENTARIO ======
                 const stockAnterior = productoDb.stock_actual;
                 const stockNuevo = stockAnterior - cantidad;
 
@@ -162,57 +195,29 @@ export class SalesService {
                 await productoDb.update({ stock_actual: stockNuevo }, { transaction: t });
             }
 
-            // Actualizar totales
+            // ====== ACTUALIZAR TOTALES ======
             await nuevaFactura.update({
                 subtotal_sin_iva: totalSubtotalSinIva,
                 subtotal_con_iva: totalSubtotalConIva,
                 total_descuento: totalDescuentos,
+                total_iva: totalIva,
                 total: totalPagarFinal
             }, { transaction: t });
 
-            // ✅ GUARDAR ID ANTES DEL COMMIT
             const idFacturaCreada = nuevaFactura.id_factura;
 
             await t.commit();
 
-            // ✅ CARGAR FACTURA DESPUÉS DEL COMMIT (SIN TRANSACCIÓN)
-            return await Factura.findByPk(idFacturaCreada, {
-                include: [
-                    {
-                        model: Cliente,
-                        attributes: ['id_cliente', 'nombre', 'identificacion', 'email']
-                    },
-                    {
-                        model: Usuario,
-                        as: 'Usuario', // ✅ USA EL ALIAS CORRECTO SEGÚN TU ASOCIACIÓN
-                        attributes: ['id_usuario', 'nombre', 'apellido', 'email']
-                    },
-                    {
-                        model: EstadoSri,
-                        attributes: ['id_estado_sri', 'codigo', 'estado_sri'] // ✅ CORREGIDO
-                    },
-                    {
-                        model: DetalleFactura,
-                        include: [
-                            {
-                                model: Producto,
-                                attributes: ['id_producto', 'nombre', 'codigo_producto', 'precio']
-                            },
-                            {
-                                model: ValorIva,
-                                attributes: ['id_iva', 'porcentaje_iva']
-                            },
-                            {
-                                model: Descuento,
-                                attributes: ['id_descuento', 'descuento', 'porcentaje_descuento']
-                            }
-                        ]
-                    }
-                ]
+            // ====== POST-COMMIT: PROCESO SRI (ASÍNCRONO) ======
+            // No bloqueamos la respuesta al usuario
+            this._procesarSriAsync(idFacturaCreada).catch(err => {
+                console.error(`Error procesando SRI para factura ${idFacturaCreada}:`, err);
             });
 
+            // ====== RETORNAR FACTURA ======
+            return await this._cargarFacturaCompleta(idFacturaCreada);
+
         } catch (error) {
-            // ✅ SOLO HACER ROLLBACK SI LA TRANSACCIÓN NO ESTÁ FINALIZADA
             if (!t.finished) {
                 await t.rollback();
             }
@@ -220,35 +225,189 @@ export class SalesService {
         }
     }
 
+    // ============================================
+    // PROCESO SRI ASÍNCRONO (NO BLOQUEA RESPUESTA)
+    // ============================================
+    async _procesarSriAsync(idFactura) {
+        try {
+            // 1. Generar XML
+            const xml = await this.sriService.generarXmlFactura(idFactura);
+
+            // 2. Firmar XML
+            const config = await ConfiguracionSri.findOne({ where: { activo: true } });
+            const xmlFirmado = await this.sriService.firmarXml(
+                xml,
+                config.certificado_path,
+                config.certificado_password
+            );
+
+            // 3. Subir a Backblaze
+            const factura = await Factura.findByPk(idFactura);
+            const nombreArchivo = `facturas/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${factura.secuencial}.xml`;
+            const urlXml = await this.storageService.uploadFile(nombreArchivo, xmlFirmado);
+
+            // 4. Actualizar estado a FIRMADO
+            const estadoFirmado = await EstadoSri.findOne({ where: { codigo: 'SRI_FIRMADO' } });
+            await factura.update({
+                xml_firmado_url: urlXml,
+                id_estado_sri: estadoFirmado.id_estado_sri
+            });
+
+            // 5. Enviar al SRI
+            const respuesta = await this.sriService.enviarAlSri(xmlFirmado);
+
+            if (respuesta.estado === 'RECIBIDA') {
+                const estadoRecibida = await EstadoSri.findOne({ where: { codigo: 'SRI_RECIBIDA' } });
+                await factura.update({
+                    id_estado_sri: estadoRecibida.id_estado_sri,
+                    xml_respuesta_sri: respuesta.mensaje
+                });
+
+                // 6. Consultar autorización (después de 2 segundos)
+                setTimeout(async () => {
+                    await this._verificarAutorizacion(idFactura);
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Error en proceso SRI:', error);
+            const estadoRechazado = await EstadoSri.findOne({ where: { codigo: 'SRI_RECHAZADO' } });
+            await Factura.update(
+                {
+                    id_estado_sri: estadoRechazado.id_estado_sri,
+                    mensaje_sri: error.message
+                },
+                { where: { id_factura: idFactura } }
+            );
+        }
+    }
+
+    async _verificarAutorizacion(idFactura) {
+        try {
+            const factura = await Factura.findByPk(idFactura);
+            const resultado = await this.sriService.consultarAutorizacion(factura.clave_acceso_sri);
+
+            if (resultado.autorizado) {
+                const estadoAutorizado = await EstadoSri.findOne({ where: { codigo: 'SRI_AUTORIZADO' } });
+                await factura.update({
+                    id_estado_sri: estadoAutorizado.id_estado_sri,
+                    numero_autorizacion: resultado.numeroAutorizacion,
+                    fecha_autorizacion: resultado.fechaAutorizacion,
+                    xml_respuesta_sri: resultado.xmlRespuesta
+                });
+            }
+        } catch (error) {
+            console.error('Error verificando autorización:', error);
+        }
+    }
+
+    // ============================================
+    // HELPER: CARGAR FACTURA COMPLETA
+    // ============================================
+    async _cargarFacturaCompleta(idFactura) {
+        return await Factura.findByPk(idFactura, {
+            include: [
+                {
+                    model: Cliente,
+                    attributes: ['id_cliente', 'nombre', 'apellido', 'identificacion', 'email']
+                },
+                {
+                    model: Usuario,
+                    as: 'Usuario',
+                    attributes: ['id_usuario', 'nombre', 'apellido', 'email']
+                },
+                {
+                    model: EstadoSri,
+                    attributes: ['id_estado_sri', 'codigo', 'estado_sri', 'descripcion']
+                },
+                {
+                    model: MetodoPago,
+                    attributes: ['id_metodo_pago', 'metodo_pago', 'codigo']
+                },
+                {
+                    model: DetalleFactura,
+                    include: [
+                        {
+                            model: Producto,
+                            attributes: ['id_producto', 'nombre', 'codigo_producto', 'precio']
+                        },
+                        {
+                            model: ValorIva,
+                            attributes: ['id_iva', 'porcentaje_iva', 'codigo']
+                        },
+                        {
+                            model: Descuento,
+                            attributes: ['id_descuento', 'descuento', 'porcentaje_descuento']
+                        }
+                    ]
+                }
+            ]
+        });
+    }
+
+    // ============================================
+    // CATÁLOGOS PARA FRONTEND
+    // ============================================
     async getSalesCatalogs() {
         const descuentos = await Descuento.findAll({
             where: { activo: true },
             order: [['porcentaje_descuento', 'DESC']]
         });
         const impuestos = await ValorIva.findAll({
+            where: { activo: true },
             order: [['porcentaje_iva', 'ASC']]
         });
+        const metodosPago = await MetodoPago.findAll({
+            where: { activo: true },
+            order: [['metodo_pago', 'ASC']]
+        });
 
-        return { descuentos, impuestos };
+        return { descuentos, impuestos, metodosPago };
     }
 
+    // ============================================
+    // HISTORIAL DE VENTAS
+    // ============================================
     async getSalesHistory(filtros = {}) {
-        const { fecha_desde, fecha_hasta, id_vendedor, limit = 50 } = filtros;
+        const { fecha_desde, fecha_hasta, id_vendedor, id_estado_sri, limit = 50 } = filtros;
 
         const where = {};
         if (fecha_desde) where.fecha_emision = { [sequelize.Sequelize.Op.gte]: fecha_desde };
         if (fecha_hasta) where.fecha_emision = { ...where.fecha_emision, [sequelize.Sequelize.Op.lte]: fecha_hasta };
         if (id_vendedor) where.id_vendedor = id_vendedor;
+        if (id_estado_sri) where.id_estado_sri = id_estado_sri;
 
         return await Factura.findAll({
             where,
             include: [
-                { model: Cliente, attributes: ['nombre', 'identificacion'] },
+                { model: Cliente, attributes: ['nombre', 'apellido', 'identificacion'] },
                 { model: Usuario, as: 'Usuario', attributes: ['nombre', 'apellido'] },
-                { model: EstadoSri }
+                { model: EstadoSri, attributes: ['estado_sri', 'codigo'] },
+                { model: MetodoPago, attributes: ['metodo_pago'] }
             ],
-            order: [['fecha_emision', 'DESC']],
+            order: [['fecha_emision', 'DESC'], ['id_factura', 'DESC']],
             limit
         });
+    }
+
+    // ============================================
+    // REENVIAR AL SRI (PARA FACTURAS RECHAZADAS)
+    // ============================================
+    async reenviarAlSri(idFactura) {
+        const factura = await Factura.findByPk(idFactura);
+
+        if (!factura) {
+            throw new Error('Factura no encontrada');
+        }
+
+        const estadosPermitidos = ['SRI_RECHAZADO', 'SRI_DEVUELTA', 'SRI_PENDIENTE'];
+        const estadoActual = await EstadoSri.findByPk(factura.id_estado_sri);
+
+        if (!estadosPermitidos.includes(estadoActual.codigo)) {
+            throw new Error('La factura no puede ser reenviada en su estado actual');
+        }
+
+        await this._procesarSriAsync(idFactura);
+
+        return { mensaje: 'Factura enviada al SRI para reprocesamiento' };
     }
 }
