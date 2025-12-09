@@ -1,11 +1,13 @@
 import {
     Factura, DetalleFactura, Producto, MovimientoInventario,
     TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente,
-    Usuario, MetodoPago, CuentaPorCobrar, PagoCuentaCobrar, ConfiguracionSri
+    Usuario, MetodoPago, CuentaPorCobrar, PagoCuentaCobrar,
+    ConfiguracionSri, NotificacionesStock
 } from '../models/index.js';
 import db from '../database/database.js';
 import { SriService } from './sri.service.js';
 import { StorageService } from './storage.service.js'; // Cloudinary
+import { Op } from 'sequelize';
 
 const { sequelize } = db;
 
@@ -201,6 +203,7 @@ export class SalesService {
                 }, { transaction: t });
 
                 // ====== MOVIMIENTO INVENTARIO ======
+                const stockMinimo = productoDb.stock_minimo;
                 const stockAnterior = productoDb.stock_actual;
                 const stockNuevo = stockAnterior - cantidad;
 
@@ -215,6 +218,21 @@ export class SalesService {
                 }, { transaction: t });
 
                 await productoDb.update({ stock_actual: stockNuevo }, { transaction: t });
+
+                // Notificación si se agota
+                if (stockNuevo === 0) {
+                    await NotificacionesStock.create({
+                        id_producto: productoDb.id_producto,
+                        mensaje: `AGOTADO: El producto "${productoDb.nombre}" se ha agotado. Aumentar stock.`
+                    }, { transaction: t });
+                }
+                else if (stockNuevo < stockMinimo) { // Notificación si se baja el stock
+                    await NotificacionesStock.create({
+                        id_producto: productoDb.id_producto,
+                        mensaje: `BAJO STOCK: "${productoDb.nombre}" tiene solo ${productoDb.stock_actual} unidades (mínimo: ${productoDb.stock_minimo})`
+                    }, { transaction: t });
+                }
+
             }
 
             // ====== ACTUALIZAR TOTALES ======
@@ -607,5 +625,48 @@ export class SalesService {
                 }
             ]
         });
+    }
+
+    /**
+ * NUEVO: Helper para verificar y notificar stock bajo
+ */
+    async _verificarStockBajo(producto) {
+        try {
+            // Solo notificar si stock está bajo pero no agotado
+            if (producto.stock_actual > 0 && producto.stock_actual <= producto.stock_minimo) {
+
+                // Evitar duplicados: verificar si ya hay notificación reciente no leída
+                const hace24Horas = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+                const notificacionExistente = await NotificacionesStock.findOne({
+                    where: {
+                        id_producto: producto.id_producto,
+                        leido: false,
+                        fecha_creacion: {
+                            [Op.gte]: hace24Horas
+                        },
+                        mensaje: {
+                            [Op.like]: '%Stock bajo%'
+                        }
+                    }
+                });
+
+                if (notificacionExistente) {
+                    console.log(`ℹ️  Ya existe notificación reciente para: ${producto.nombre}`);
+                    return;
+                }
+
+                // Crear nueva notificación
+                await NotificacionesStock.create({
+                    id_producto: producto.id_producto,
+                    mensaje: `⚠️ Stock bajo: "${producto.nombre}" tiene solo ${producto.stock_actual} unidades (mínimo: ${producto.stock_minimo})`
+                });
+
+                console.log(`✅ Notificación de stock bajo creada para: ${producto.nombre}`);
+            }
+        } catch (error) {
+            console.error('Error verificando stock bajo:', error);
+            // No lanzar error para no interrumpir el flujo principal
+        }
     }
 }

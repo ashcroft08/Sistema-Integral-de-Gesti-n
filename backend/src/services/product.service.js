@@ -134,6 +134,7 @@ export class ProductService {
 
             // Manejar cambio de stock_actual (si cambia)
             if (stock_actual !== undefined && stock_actual !== producto.stock_actual) {
+                const stockMinimo = producto.stock_minimo;
                 const stockAnterior = producto.stock_actual;
                 const diferencia = stock_actual - stockAnterior;
                 const idMovAjuste = await this._getTipoMovimientoId('MOV_AJUSTE');
@@ -150,7 +151,12 @@ export class ProductService {
                 if (stock_actual === 0) {
                     await NotificacionesStock.create({
                         id_producto: producto.id_producto,
-                        mensaje: `ALERTA: El producto "${producto.nombre}" se ha agotado.`
+                        mensaje: `AGOTADO: El producto "${producto.nombre}" se ha agotado. Aumentar stock.`
+                    }, { transaction: t });
+                } else if (stock_actual < stockMinimo) {// Notificación si se baja el stock
+                    await NotificacionesStock.create({
+                        id_producto: producto.id_producto,
+                        mensaje: `BAJO STOCK: "${producto.nombre}" tiene solo ${producto.stock_actual} unidades (mínimo: ${producto.stock_minimo})`
                     }, { transaction: t });
                 }
             }
@@ -164,6 +170,9 @@ export class ProductService {
                     { model: EstadoProducto, attributes: ['estado_producto', 'codigo'] }
                 ]
             });
+
+            // ✅ NUEVO: Verificar stock bajo DESPUÉS del commit
+            await this._verificarStockBajo(producto);
 
             return producto;
         } catch (error) {
@@ -337,11 +346,56 @@ export class ProductService {
 
             // Recargar para devolver actualizado
             await producto.reload();
+
+            await this._verificarStockBajo(producto);
+
             return producto;
 
         } catch (error) {
             await t.rollback();
             throw error;
+        }
+    }
+
+    /**
+ * Helper: Verificar y crear notificación si stock es bajo
+ */
+    async _verificarStockBajo(producto) {
+        try {
+            // Solo notificar si:
+            // 1. Stock actual <= stock mínimo
+            // 2. Stock actual > 0 (si es 0, ya hay otra notificación de agotado)
+            if (producto.stock_actual > 0 && producto.stock_actual <= producto.stock_minimo) {
+
+                // Verificar si ya existe una notificación NO LEÍDA reciente (últimas 24 horas)
+                const hace24Horas = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+                const notificacionExistente = await NotificacionesStock.findOne({
+                    where: {
+                        id_producto: producto.id_producto,
+                        leido: false,
+                        fecha_creacion: {
+                            [Op.gte]: hace24Horas
+                        }
+                    }
+                });
+
+                // Si ya existe una notificación reciente no leída, no crear otra
+                if (notificacionExistente) {
+                    return;
+                }
+
+                // Crear nueva notificación
+                await NotificacionesStock.create({
+                    id_producto: producto.id_producto,
+                    mensaje: `BAJO STOCK: "${producto.nombre}" tiene solo ${producto.stock_actual} unidades (mínimo: ${producto.stock_minimo})`
+                });
+
+                //console.log(`✅ Notificación de stock bajo creada para: ${producto.nombre}`);
+            }
+        } catch (error) {
+            console.error('Error verificando stock bajo:', error);
+            // No lanzar error para no interrumpir el flujo principal
         }
     }
 }
