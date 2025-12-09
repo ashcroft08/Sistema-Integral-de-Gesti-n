@@ -109,7 +109,7 @@ const SettingsPage = () => {
       });
 
     } catch (error) {
-      console.error("Error al guardar configuración:", error);
+      console.error("Error al guardar la información:", error);
       // Los errores ya se muestran en el hook con toast
     }
   };
@@ -147,7 +147,7 @@ const SettingsPage = () => {
     <AdminLayout>
       <div className="flex flex-col gap-1">
         <h1 className="font-heading text-4xl font-bold tracking-tight text-text-primary dark:text-background-light">
-          Configuración de Cuenta
+          Perfil de Cuenta
         </h1>
         <p className="text-base font-normal leading-normal text-text-secondary dark:text-background-light/70">
           Administra tu información personal y de seguridad.

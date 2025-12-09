@@ -280,22 +280,23 @@ const ClientsPage = () => {
             keyField="id_cliente"
             sortConfig={sortConfig}
             onSort={setSortConfig}
-            // --- 5. AGREGADO: Paginación inyectada
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
+          />
+        </div>
+
+        {/* PAGINACIÓN */}
+        <div className="mt-2">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            limit={itemsPerPage}
+            onLimitChange={(newLimit) => {
+              setItemsPerPage(newLimit);
+              setCurrentPage(1);
+            }}
+            totalItems={totalItems}
+            showingFrom={indexOfFirstItem + 1}
+            showingTo={Math.min(indexOfLastItem, totalItems)}
           />
         </div>
       </div>

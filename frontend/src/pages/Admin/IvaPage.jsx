@@ -315,25 +315,23 @@ const IvaPage = () => {
             keyField="id_iva"
             sortConfig={sortConfig}
             onSort={handleSort}
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
             emptyText="No hay valores de IVA configurados."
           />
         </div>
       </div>
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        limit={itemsPerPage}
+        onLimitChange={(newLimit) => {
+          setItemsPerPage(newLimit);
+          setCurrentPage(1);
+        }}
+        totalItems={totalItems}
+        showingFrom={indexOfFirstItem + 1}
+        showingTo={Math.min(indexOfLastItem, totalItems)}
+      />
 
       {/* Modal de Crear/Editar */}
       <IvaFormModal

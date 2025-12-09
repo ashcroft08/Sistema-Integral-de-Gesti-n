@@ -479,22 +479,24 @@ const InventoryPage = () => {
             keyField="id_producto"
             sortConfig={sortConfig}
             onSort={handleSort}
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
             emptyText="No se encontraron productos con los filtros actuales."
+          />
+        </div>
+
+        {/* PAGINACIÓN */}
+        <div className="mt-2">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            limit={itemsPerPage}
+            onLimitChange={(newLimit) => {
+              setItemsPerPage(newLimit);
+              setCurrentPage(1);
+            }}
+            totalItems={totalItems}
+            showingFrom={indexOfFirstItem + 1}
+            showingTo={Math.min(indexOfLastItem, totalItems)}
           />
         </div>
       </div>

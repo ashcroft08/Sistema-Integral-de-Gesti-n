@@ -321,25 +321,24 @@ const DiscountPage = () => {
             keyField="id_descuento"
             sortConfig={sortConfig}
             onSort={handleSort}
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
             emptyText="No se encontraron descuentos registrados."
           />
         </div>
       </div>
+
+      <TablePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        limit={itemsPerPage}
+        onLimitChange={(newLimit) => {
+          setItemsPerPage(newLimit);
+          setCurrentPage(1);
+        }}
+        totalItems={totalItems}
+        showingFrom={indexOfFirstItem + 1}
+        showingTo={Math.min(indexOfLastItem, totalItems)}
+      />
 
       {/* Modal de Crear/Editar */}
       <DiscountFormModal

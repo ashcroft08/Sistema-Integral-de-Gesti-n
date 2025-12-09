@@ -25,22 +25,27 @@ export class SalesController {
 
             const factura = await salesService.createSale(dataWithSeller);
 
+            // ✅ FIX: Cargar factura completa con DetalleFactura
+            const facturaCompleta = await salesService._cargarFacturaCompleta(factura.id_factura);
+
             res.status(201).json({
                 success: true,
                 message: 'Venta registrada correctamente. Procesando factura electrónica...',
-                factura,
+                data: facturaCompleta, // ✅ CAMBIO: antes era "factura", ahora es "data"
+                factura: facturaCompleta, // ✅ MANTENER RETROCOMPATIBILIDAD
                 info: {
-                    estado_sri: factura.EstadoSri?.estado_sri,
-                    secuencial: factura.secuencial,
-                    total: factura.total,
-                    xml_url: factura.xml_firmado_url || 'Procesando...'
+                    estado_sri: facturaCompleta.EstadoSri?.estado_sri,
+                    secuencial: facturaCompleta.secuencial,
+                    total: facturaCompleta.total,
+                    xml_url: facturaCompleta.xml_firmado_url || 'Procesando...',
+                    productos_vendidos: facturaCompleta.DetalleFactura?.length || 0
                 }
             });
 
         } catch (error) {
             console.error('Error creating sale:', error);
             res.status(400).json({
-                success: false,
+                success: true,
                 message: error.message,
                 error: process.env.NODE_ENV === 'development' ? error.stack : undefined
             });

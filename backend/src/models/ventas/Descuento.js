@@ -43,24 +43,6 @@ export default (sequelize, DataTypes) => {
                     porcentaje_descuento: 0,
                     codigo: 'DESC_0',
                     activo: true
-                },
-                {
-                    descuento: 'Descuento 5%',
-                    porcentaje_descuento: 5,
-                    codigo: 'DESC_5',
-                    activo: true
-                },
-                {
-                    descuento: 'Descuento 10%',
-                    porcentaje_descuento: 10,
-                    codigo: 'DESC_10',
-                    activo: true
-                },
-                {
-                    descuento: 'Tercera Edad',
-                    porcentaje_descuento: 0,
-                    codigo: 'DESC_TERCERA_EDAD',
-                    activo: true
                 }
             ];
 

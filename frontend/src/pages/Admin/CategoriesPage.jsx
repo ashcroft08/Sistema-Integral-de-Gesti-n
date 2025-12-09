@@ -356,27 +356,26 @@ const CategoriesPage = () => {
             keyField="id_categoria"
             sortConfig={sortConfig} // ✅ Pasamos config de orden
             onSort={handleSort} // ✅ Pasamos handler de orden
-            // --- 5. AGREGADO: Paginación inyectada ---
-            pagination={
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                limit={itemsPerPage}
-                onLimitChange={(newLimit) => {
-                  setItemsPerPage(newLimit);
-                  setCurrentPage(1);
-                }}
-                totalItems={totalItems}
-                showingFrom={indexOfFirstItem + 1}
-                showingTo={Math.min(indexOfLastItem, totalItems)}
-              />
-            }
             emptyText={
               categories.length === 0
                 ? "No hay categorías registradas."
                 : "No hay categorías que coincidan con la búsqueda."
             }
+          />
+        </div>
+        <div className="mt-2">
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            limit={itemsPerPage}
+            onLimitChange={(newLimit) => {
+              setItemsPerPage(newLimit);
+              setCurrentPage(1);
+            }}
+            totalItems={totalItems}
+            showingFrom={indexOfFirstItem + 1}
+            showingTo={Math.min(indexOfLastItem, totalItems)}
           />
         </div>
       </div>

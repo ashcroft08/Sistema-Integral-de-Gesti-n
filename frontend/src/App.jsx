@@ -31,6 +31,8 @@ import SellerSettingsPage from "./pages/Seller/SettingsPage";
 import InventoryPage from "./pages/Seller/InventoryPage";
 import ClientsPage from "./pages/Seller/ClientsPage";
 import SalesPage from "./pages/Seller/SalesPage";
+import CheckoutPage from "./pages/Seller/CheckoutPage";
+import SaleSuccessPage from "./pages/Seller/SaleSuccessPage";
 
 function App() {
   return (
@@ -84,7 +86,7 @@ function App() {
             <Route path="locks" element={<LocksPage />} />
             <Route path="discounts" element={<DiscountPage />} />
             <Route path="taxes" element={<IvaPage />} />
-            <Route path="settings" element={<AdminSettingsPage />} />
+            <Route path="profile" element={<AdminSettingsPage />} />
             <Route path="certificate" element={<CertificatesPage />} />
           </Route>
 
@@ -94,12 +96,14 @@ function App() {
             element={<ProtectedRoute allowedRoles={["Vendedor"]} />}
           >
             <Route index element={<SellerDashboardPage />} />
-            <Route path="settings" element={<SellerSettingsPage />} />
+            <Route path="profile" element={<SellerSettingsPage />} />
             <Route path="inventory" element={<InventoryPage />} />
             {/* 👇 Nueva ruta de categorías - accesible por URL pero sidebar lo oculta para vendedores */}
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="clients" element={<ClientsPage />} />
             <Route path="sales" element={<SalesPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="sale-success" element={<SaleSuccessPage />} />
           </Route>
 
           {/* === CATCH ALL === */}

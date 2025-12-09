@@ -74,6 +74,7 @@ export class SriService {
                 },
                 {
                     model: DetalleFactura,
+                    as: 'DetalleFactura',
                     include: [
                         { model: Producto, attributes: ['codigo_producto', 'nombre', 'precio'] },
                         { model: ValorIva, attributes: ['codigo', 'porcentaje_iva'] }
@@ -172,7 +173,7 @@ export class SriService {
         infoFactura.ele('moneda').txt('DOLAR');
 
         const detalles = root.ele('detalles');
-        for (const det of factura.DetalleFacturas) {
+        for (const det of factura.DetalleFactura) {
             const detalle = detalles.ele('detalle');
             detalle.ele('codigoPrincipal').txt(det.Producto.codigo_producto);
             detalle.ele('descripcion').txt(det.Producto.nombre);

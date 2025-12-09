@@ -12,9 +12,10 @@ const TablePagination = ({
   showingTo,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-between gap-4 py-4 sm:flex-row">
-      {/* SECCIÓN IZQUIERDA: Información y Selector */}
-      <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-text-secondary dark:text-background-light/70 sm:justify-start">
+    <div className="flex flex-col items-center justify-end gap-6 py-4 sm:flex-row w-full">
+      {/* SECCIÓN INFORMACIÓN Y SELECTOR */}
+      {/* Quitamos sm:justify-start porque ahora todo va alineado por el padre */}
+      <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-text-secondary dark:text-background-light/70">
         {/* Texto de información */}
         <span>
           Mostrando{" "}
@@ -32,7 +33,7 @@ const TablePagination = ({
           resultados
         </span>
 
-        {/* Separador vertical (Línea gris delgada) */}
+        {/* Separador vertical */}
         <span className="hidden h-4 w-px bg-gray-300 dark:bg-gray-600 sm:block"></span>
 
         {/* SELECTOR DE FILAS */}
@@ -58,7 +59,6 @@ const TablePagination = ({
               <option value={50}>50</option>
             </select>
 
-            {/* Flecha personalizada (Material Symbols) */}
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
               <span className="material-symbols-outlined text-lg">
                 expand_more
@@ -68,9 +68,8 @@ const TablePagination = ({
         </div>
       </div>
 
-      {/* SECCIÓN DERECHA: Botones de Paginación */}
+      {/* SECCIÓN BOTONES (Se mantiene igual, solo se mueve por el padre) */}
       <div className="flex items-center gap-1">
-        {/* Botón Anterior */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -81,7 +80,6 @@ const TablePagination = ({
           </span>
         </button>
 
-        {/* Números de Página */}
         {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
           <button
             key={page}
@@ -96,7 +94,6 @@ const TablePagination = ({
           </button>
         ))}
 
-        {/* Botón Siguiente */}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}

@@ -19,7 +19,7 @@ import ErrorModel from './auditoria/Error.js';
 import EstadoSriModel from './catalogo/EstadoSri.js';
 import EstadoUsuarioModel from './seguridad/EstadoUsuario.js';
 import FacturaModel from './ventas/Factura.js';
-import MovimientoInventarioModel from './ventas/MovimientoInventario.js';
+import MovimientoInventarioModel from './inventario/MovimientoInventario.js';
 import PlanCuentaModel from './contabilidad/PlanCuenta.js';
 import EstadoProductoModel from './catalogo/EstadoProducto.js';
 import ProductoModel from './inventario/Producto.js';
@@ -31,9 +31,11 @@ import TipoMovimientoModel from './catalogo/TipoMovimiento.js';
 import UsuarioModel from './seguridad/Usuario.js';
 import ValorIvaModel from './catalogo/ValorIva.js';
 import DescuentoModel from './ventas/Descuento.js';
-import MetodoPagoModel from './ventas/MetodoPago.js';
+import MetodoPagoModel from './catalogo/MetodoPago.js';
 import ConfiguracionSriModel from './configuracion/ConfiguracionSri.js';
 import CertificadoDigitalModel from './configuracion/CertificadoDigital.js';
+import CuentaPorCobrarModel from './contabilidad/CuentaPorCobrar.js';
+import PagoCuentaCobrarModel from './contabilidad/PagoCuentaCobrar.js';
 
 // 3. Inicializa cada modelo
 const AsientoContable = AsientoContableModel(sequelize, DataTypes);
@@ -66,6 +68,8 @@ const Descuento = DescuentoModel(sequelize, DataTypes);
 const MetodoPago = MetodoPagoModel(sequelize, DataTypes);
 const ConfiguracionSri = ConfiguracionSriModel(sequelize, DataTypes);
 const CertificadoDigital = CertificadoDigitalModel(sequelize, DataTypes);
+const CuentaPorCobrar = CuentaPorCobrarModel(sequelize, DataTypes);
+const PagoCuentaCobrar = PagoCuentaCobrarModel(sequelize, DataTypes);
 
 // 4. Agrupa todos los modelos en un objeto
 // Esto permite que el bucle de asociaciones funcione
@@ -99,7 +103,9 @@ const models = {
     Descuento,
     MetodoPago,
     ConfiguracionSri,
-    CertificadoDigital
+    CertificadoDigital,
+    CuentaPorCobrar,
+    PagoCuentaCobrar
 };
 
 // 5. Ejecuta el método .associate() de cada modelo (si existe)
@@ -141,7 +147,9 @@ export {
     Descuento,
     MetodoPago,
     ConfiguracionSri,
-    CertificadoDigital
+    CertificadoDigital,
+    CuentaPorCobrar,
+    PagoCuentaCobrar
 };
 
 // Exporta también la instancia de conexión de sequelize

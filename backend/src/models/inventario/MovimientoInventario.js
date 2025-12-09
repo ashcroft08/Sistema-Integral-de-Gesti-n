@@ -31,7 +31,7 @@ export default (sequelize, DataTypes) => {
         }
     }, {
         tableName: 'movimiento_inventario',
-        schema: 'ventas',
+        schema: 'inventario',
         timestamps: false
     });
 
