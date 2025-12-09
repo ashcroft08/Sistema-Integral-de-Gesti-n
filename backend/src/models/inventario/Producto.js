@@ -26,6 +26,10 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false
         },
+        stock_inicial: {
+            type: DataTypes.INTEGER,
+            allowNull: false        //'Stock con el que se creó el producto (inmutable)'
+        },
         stock_actual: {
             type: DataTypes.INTEGER,
             allowNull: false,

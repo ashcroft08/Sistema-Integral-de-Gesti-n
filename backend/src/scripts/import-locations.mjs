@@ -1,6 +1,6 @@
 // src/scripts/import-locations.mjs
 
-import './load-env.js';
+import 'dotenv/config';
 import readXlsxFile from 'read-excel-file/node';
 import db from '../database/database.js';
 import { Provincia, Canton, Parroquia } from '../models/index.js';
@@ -75,9 +75,15 @@ async function importLocations() {
             const cantonCode = r.DPA_CANTON.trim();
             const key = `${provCode}-${cantonCode}`;
             if (!cantMap.has(key)) {
+                // Limpieza específica para Quito
+                let nombreCanton = r.DPA_DESCAN;
+                if (nombreCanton === 'DISTRITO METROPOLITANO DE QUITO') {
+                    nombreCanton = 'QUITO';
+                }
+
                 cantMap.set(key, {
                     codigo: cantonCode,
-                    canton: r.DPA_DESCAN,
+                    canton: nombreCanton,
                     provCode: provCode
                 });
             }
@@ -108,26 +114,36 @@ async function importLocations() {
 
     // --- 5. Insertar PARROQUIAS ---
     console.log('📍 Extrayendo y guardando parroquias...');
-    const parroquias = data
-        .filter(r => r.DPA_PARROQ && r.DPA_DESPAR && r.DPA_CANTON && r.DPA_PROVIN)
-        .map(r => {
+    const parrMap = new Map();
+
+    data.forEach(r => {
+        if (r.DPA_PARROQ && r.DPA_DESPAR && r.DPA_CANTON && r.DPA_PROVIN) {
             const provCode = r.DPA_PROVIN.trim();
             const cantonCode = r.DPA_CANTON.trim();
-            const key = `${provCode}-${cantonCode}`;
-            const idCanton = cantKeyToId[key];
+            const parroquiaCode = r.DPA_PARROQ.trim();
+
+            // Clave única para la parroquia: Prov-Canton-Parroquia
+            const uniqueKey = `${provCode}-${cantonCode}-${parroquiaCode}`;
+
+            if (parrMap.has(uniqueKey)) return; // Ya existe, saltar
+
+            const cantonKey = `${provCode}-${cantonCode}`;
+            const idCanton = cantKeyToId[cantonKey];
 
             if (!idCanton) {
-                console.warn(`⚠️ Parroquia "${r.DPA_DESPAR}" no encontró su cantón (${key})`);
-                return null;
+                console.warn(`⚠️ Parroquia "${r.DPA_DESPAR}" no encontró su cantón (${cantonKey})`);
+                return;
             }
 
-            return {
+            parrMap.set(uniqueKey, {
                 parroquia: r.DPA_DESPAR,
-                codigo: r.DPA_PARROQ,
+                codigo: parroquiaCode,
                 id_canton: idCanton
-            };
-        })
-        .filter(Boolean);
+            });
+        }
+    });
+
+    const parroquias = Array.from(parrMap.values());
 
     await Parroquia.bulkCreate(parroquias);
     console.log(`✅ Insertadas ${parroquias.length} parroquias.`);

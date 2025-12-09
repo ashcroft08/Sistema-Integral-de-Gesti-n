@@ -3,14 +3,14 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useProducts } from "../../hooks/useProducts";
 import AdminLayout from "../../components/Layout/AdminLayout";
-import Button from "../../components/UI/Button";
+import Button from "../../components/ui/Button";
 import Table from "../../components/UI/Table";
 import TablePagination from "../../components/UI/TablePagination";
 import { toast } from "react-toastify";
 import { ESTADOS_PRODUCTO } from "../../constants/statuses";
 
 // Modales
-import ProductFormModal from "../../components/UI/ProductFormModal";
+import ProductFormModal from "../../components/ui/ProductFormModal";
 import ProductStatusConfirmationModal from "../../components/UI/ProductStatusConfirmationModal";
 import RestockModal from "../../components/ui/RestockModal";
 
@@ -289,7 +289,19 @@ const InventoryPage = () => {
       render: (row) => `$${parseFloat(row.precio).toFixed(2)}`,
     },
     {
-      header: "Stock",
+      header: "Stock Inicial",
+      accessorKey: "stock_inicial",
+      sortable: true,
+      render: (row) => (
+        <div className="flex flex-col">
+          <span className="font-mono text-gray-600 dark:text-gray-400">
+            {row.stock_inicial} uds
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Stock Actual",
       accessorKey: "stock_actual",
       sortable: true,
       render: (row) => (
@@ -299,7 +311,7 @@ const InventoryPage = () => {
               isLowStock(row) ? "text-red-600 font-bold" : ""
             }`}
           >
-            {row.stock_actual}
+            {row.stock_actual} uds
           </span>
           {isLowStock(row) && !isDiscontinued(row) && (
             <span

@@ -175,20 +175,26 @@ export class ClientService {
     }
 
 
-    // Obtener catálogos para llenar los Selects del Frontend
+    // Obtener catálogos para llenar los Selects del Frontend (Excluyendo Consumidor Final)
     async getFormCatalogs() {
         try {
-            // Solo devolvemos tipos de identificación
-            // Las ubicaciones ahora se cargan desde /api/locations
+            // Solo devolvemos tipos de identificación, excluyendo 'Consumidor Final'
+            // Usamos el código 'SRI_CONSUMIDOR_FINAL' para identificarlo de forma segura
             const types = await TipoIdentificacion.findAll({
                 attributes: ['id_tipo_identificacion', 'tipo_identificacion', 'codigo'],
+                where: {
+                    codigo: { [Op.ne]: 'SRI_CONSUMIDOR_FINAL' } // Op.ne significa "not equal"
+                },
                 order: [['tipo_identificacion', 'ASC']]
             });
 
             return {
-                types: types.map(t => t.toJSON())
+                types: types.map(t => t.toJSON()) // Convierte cada instancia a objeto plano
             };
         } catch (error) {
+            // Es buena práctica registrar el error en el servidor
+            console.error('Error en getFormCatalogs:', error);
+            // Lanza el error para que sea manejado por el middleware de errores del Express
             throw error;
         }
     }

@@ -7,9 +7,9 @@ import Modal from "./Modal";
 import InputFieldForm from "./InputFieldForm";
 import Button from "./Button";
 import {
-  CreateProductSchema, // Asegúrate que este schema tenga codigo_producto
-  UpdateProductSchema, // Asegúrate que este schema tenga codigo_producto
-} from "../../schemas/product.schemas"; // Asegúrate que los schemas estén actualizados
+  CreateProductSchema,
+  UpdateProductSchema,
+} from "../../schemas/product.schemas";
 
 const ProductFormModal = ({
   isOpen,
@@ -20,7 +20,6 @@ const ProductFormModal = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const isEditMode = !!product;
-  // Usa el schema correcto según sea edición o creación
   const schema = isEditMode ? UpdateProductSchema : CreateProductSchema;
 
   const {
@@ -31,9 +30,8 @@ const ProductFormModal = ({
     watch,
     setError,
     clearErrors,
-    setValue, // Agregamos setValue
   } = useForm({
-    resolver: zodResolver(schema), // Utiliza el schema dinámico
+    resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: {
       nombre: "",
@@ -41,11 +39,10 @@ const ProductFormModal = ({
       precio: "",
       stock_actual: "",
       stock_minimo: "",
-      codigo_producto: "", // Agregamos el valor por defecto para codigo_producto
+      codigo_producto: "",
     },
   });
 
-  // Observar cambios en stock para validaciones dinámicas
   const stockActual = watch("stock_actual");
   const stockMinimo = watch("stock_minimo");
 
@@ -57,7 +54,7 @@ const ProductFormModal = ({
       if (stockActualNum !== 0 && stockMinimoNum > stockActualNum) {
         setError("stock_minimo", {
           type: "manual",
-          message: "El stock mínimo no puede ser mayor al stock actual",
+          message: "El stock mínimo no puede ser mayor al stock actual.",
         });
       } else {
         clearErrors("stock_minimo");
@@ -65,11 +62,10 @@ const ProductFormModal = ({
     }
   }, [stockActual, stockMinimo, setError, clearErrors]);
 
-  // Resetear formulario cuando cambia el producto o se abre/cierra el modal
+  // Resetear formulario cuando cambia el producto
   useEffect(() => {
     if (isOpen) {
       if (product) {
-        // Modo edición: Rellenar datos, incluyendo codigo_producto
         reset({
           nombre: product.nombre || "",
           id_categoria:
@@ -79,17 +75,16 @@ const ProductFormModal = ({
           precio: product.precio || 0,
           stock_actual: product.stock_actual || 0,
           stock_minimo: product.stock_minimo || 0,
-          codigo_producto: product.codigo_producto || "", // Rellenar codigo_producto
+          codigo_producto: product.codigo_producto || "",
         });
       } else {
-        // Modo creación: Limpiar, incluyendo codigo_producto
         reset({
           nombre: "",
           id_categoria: "",
           precio: "",
           stock_actual: "",
           stock_minimo: "",
-          codigo_producto: "", // Limpiar codigo_producto
+          codigo_producto: "",
         });
       }
     }
@@ -98,21 +93,17 @@ const ProductFormModal = ({
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      // Conversión de tipos con validación
-      // Asegúrate de incluir codigo_producto en los datos a enviar
       const dataToSend = {
         nombre: data.nombre.trim(),
         id_categoria: Number(data.id_categoria),
         precio: Number(data.precio),
         stock_actual: Number(data.stock_actual),
         stock_minimo: Number(data.stock_minimo),
-        // Agregamos codigo_producto. Si es una cadena vacía o null, el schema lo transformará a null.
         codigo_producto: data.codigo_producto
           ? data.codigo_producto.trim()
           : null,
       };
 
-      // Validación adicional antes de enviar (opcional, pero útil)
       if (isNaN(dataToSend.id_categoria) || dataToSend.id_categoria <= 0) {
         toast.error("Selecciona una categoría válida");
         setIsSubmitting(false);
@@ -126,24 +117,23 @@ const ProductFormModal = ({
 
       const result = await onSave(dataToSend);
       if (result && !result.success && result.error) {
-        // Manejar errores específicos del backend
         if (result.error.includes("ya está registrado")) {
           setError("nombre", {
             type: "manual",
             message: result.error,
           });
         } else if (result.error.includes("código de barras")) {
-          // Añadido manejo de error por código duplicado
           setError("codigo_producto", {
             type: "manual",
             message: result.error,
           });
+        } else if (result.error.includes("stock inicial")) {
+          toast.error(result.error);
         } else {
           toast.error(result.error);
         }
         setIsSubmitting(false);
       } else {
-        // Éxito - el modal se cierra desde InventoryPage
         setIsSubmitting(false);
       }
     } catch (error) {
@@ -155,7 +145,7 @@ const ProductFormModal = ({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      reset(); // Esto restablecerá todos los campos, incluido codigo_producto
+      reset();
       onClose();
     }
   };
@@ -216,7 +206,7 @@ const ProductFormModal = ({
           {...register("nombre")}
         />
 
-        {/* Código de Producto - Agregado aquí */}
+        {/* Código de Producto */}
         <InputFieldForm
           label="Código de Producto / Barras"
           name="codigo_producto"
@@ -246,6 +236,7 @@ const ProductFormModal = ({
               </option>
             ))}
           </InputFieldForm>
+
           {/* Precio */}
           <InputFieldForm
             label="Precio ($)"
@@ -262,10 +253,30 @@ const ProductFormModal = ({
             })}
           />
         </div>
+
+        {/* ✅ Mostrar Stock Inicial HISTÓRICO en modo EDICIÓN (solo lectura) */}
+        {isEditMode && product?.stock_inicial !== undefined && (
+          <div className="rounded-lg bg-gray-50 dark:bg-gray-900/20 p-4 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Stock Inicial
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Stock con el que se creó el producto (inmutable)
+                </p>
+              </div>
+              <span className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                {product.stock_inicial} uds.
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Stock Actual */}
+          {/* ✅ Stock Inicial (crear) / Stock Actual (editar) */}
           <InputFieldForm
-            label="Stock Actual"
+            label={isEditMode ? "Stock Actual" : "Stock Inicial"}
             name="stock_actual"
             type="number"
             min="0"
@@ -277,6 +288,7 @@ const ProductFormModal = ({
               setValueAs: (v) => (v === "" ? "" : Number(v)),
             })}
           />
+
           {/* Stock Mínimo */}
           <InputFieldForm
             label="Stock Mínimo (Alerta)"
@@ -292,6 +304,7 @@ const ProductFormModal = ({
             })}
           />
         </div>
+
         {/* Hint informativo */}
         <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-200 dark:border-blue-800">
           <div className="flex items-start gap-2">
@@ -301,6 +314,11 @@ const ProductFormModal = ({
             <div className="text-sm text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1">Nota sobre el stock:</p>
               <ul className="list-disc list-inside space-y-1">
+                {!isEditMode && (
+                  <li>
+                    El stock inicial se guardará automáticamente para auditoría
+                  </li>
+                )}
                 <li>
                   Si el stock llega a 0, el producto se marcará automáticamente
                   como "Agotado"

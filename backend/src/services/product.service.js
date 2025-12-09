@@ -17,36 +17,47 @@ export class ProductService {
         return tipo ? tipo.id_tipo_movimiento : null;
     }
 
+    // services/product.service.js
     async createProduct(productData) {
         const t = await Producto.sequelize.transaction();
         try {
-            const { nombre, id_categoria, stock_actual, codigo_producto } = productData; // Extraer codigo_producto
-            // 1. Verificar duplicados por nombre
+            const {
+                nombre,
+                id_categoria,
+                stock_actual,
+                codigo_producto
+            } = productData;
+
+            // 1. Verificar duplicados
             const productExistsByName = await Producto.findOne({
                 where: { nombre: { [Op.iLike]: nombre } }
             });
             if (productExistsByName) throw new Error('El producto ya está registrado.');
 
-            // 1.1. Verificar duplicados por código de producto (si se proporciona)
             if (codigo_producto) {
                 const productExistsByCode = await Producto.findOne({
                     where: { codigo_producto: codigo_producto }
                 });
-                if (productExistsByCode) throw new Error('Ya existe un producto con este código de barras.');
+                if (productExistsByCode) {
+                    throw new Error('Ya existe un producto con este código de barras.');
+                }
             }
 
             // 2. Validar Categoría
             const category = await CategoriaProducto.findByPk(id_categoria);
             if (!category) throw new Error('La categoría seleccionada no existe.');
 
-            // 3. Asignar estado por defecto (SIEMPRE ACTIVO)
+            // 3. Asignar estado ACTIVO
             const estadoActivoId = await this._getEstadoIdByCode(ESTADOS_PRODUCTO.ACTIVO);
+
+            // ✅ NUEVO: Asignar stock_inicial = stock_actual al crear
             const newProduct = await Producto.create({
-                ...productData, // Incluye codigo_producto si está presente
+                ...productData,
+                stock_inicial: stock_actual,  // ← CLAVE: Copiar stock_actual como inicial
                 id_estado_producto: estadoActivoId
             }, { transaction: t });
 
-            // 4. Registrar Stock Inicial (HISTORIAL)
+            // 4. Registrar Movimiento Inicial
             const idMovInicial = await this._getTipoMovimientoId('MOV_INICIAL');
             if (idMovInicial) {
                 await MovimientoInventario.create({
@@ -75,11 +86,17 @@ export class ProductService {
         }
     }
 
+    // services/product.service.js
     async updateProduct(productId, updateData) {
         const t = await Producto.sequelize.transaction();
         try {
-            const { nombre, stock_actual, codigo_producto } = updateData; // Extraer codigo_producto
-            // 1. Obtener producto original
+            const { nombre, stock_actual, codigo_producto } = updateData;
+
+            // ❌ BLOQUEAR: No permitir modificar stock_inicial
+            if (updateData.hasOwnProperty('stock_inicial')) {
+                throw new Error('No se puede modificar el stock inicial. Este valor es inmutable.');
+            }
+
             const producto = await Producto.findByPk(productId, {
                 include: [{ model: EstadoProducto }]
             });
@@ -88,10 +105,10 @@ export class ProductService {
             // REGLA: No editar descontinuados
             const idDescontinuado = await this._getEstadoIdByCode(ESTADOS_PRODUCTO.DESCONTINUADO);
             if (producto.id_estado_producto === idDescontinuado) {
-                throw new Error('No se pueden modificar productos descontinuados. Primero debe reactivarlos.');
+                throw new Error('No se pueden modificar productos descontinuados.');
             }
 
-            // Validar nombre único (si cambia)
+            // Validar nombre único
             if (nombre && nombre !== producto.nombre) {
                 const productExists = await Producto.findOne({
                     where: {
@@ -102,7 +119,7 @@ export class ProductService {
                 if (productExists) throw new Error('Ya existe otro producto con ese nombre.');
             }
 
-            // Validar código único (si cambia)
+            // Validar código único
             if (codigo_producto && codigo_producto !== producto.codigo_producto) {
                 const productExistsByCode = await Producto.findOne({
                     where: {
@@ -110,15 +127,17 @@ export class ProductService {
                         id_producto: { [Op.ne]: productId }
                     }
                 });
-                if (productExistsByCode) throw new Error('Ya existe un producto con este código de barras.');
+                if (productExistsByCode) {
+                    throw new Error('Ya existe un producto con este código de barras.');
+                }
             }
 
-
-            // ... resto de la lógica de actualización (stock, movimientos, etc.) ...
+            // Manejar cambio de stock_actual (si cambia)
             if (stock_actual !== undefined && stock_actual !== producto.stock_actual) {
                 const stockAnterior = producto.stock_actual;
                 const diferencia = stock_actual - stockAnterior;
                 const idMovAjuste = await this._getTipoMovimientoId('MOV_AJUSTE');
+
                 await MovimientoInventario.create({
                     id_producto: producto.id_producto,
                     id_tipo_movimiento: idMovAjuste,
@@ -137,14 +156,15 @@ export class ProductService {
             }
 
             await producto.update(updateData, { transaction: t });
-
             await t.commit();
+
             await producto.reload({
                 include: [
                     { model: CategoriaProducto, attributes: ['categoria'] },
                     { model: EstadoProducto, attributes: ['estado_producto', 'codigo'] }
                 ]
             });
+
             return producto;
         } catch (error) {
             await t.rollback();
