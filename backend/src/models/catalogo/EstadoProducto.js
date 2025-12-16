@@ -24,26 +24,5 @@ export default (sequelize, DataTypes) => {
         EstadoProducto.hasMany(models.Producto, { foreignKey: 'id_estado_producto' });
     };
 
-    EstadoProducto.afterSync(async (options) => {
-        try {
-            const estados = [
-                { nombre: 'Activo', codigo: 'PRO_ACTIVA' },
-                //{ nombre: 'Inactivo', codigo: 'PRO_INACTIVA' }, <-- ELIMINAR (Lo maneja la categoría)
-                //{ nombre: 'Agotado', codigo: 'PRO_AGOTADO' },   <-- ELIMINAR (Es stock 0)
-                { nombre: 'Descontinuado', codigo: 'PRO_DESCONTINUADO' },
-            ];
-
-            for (const e of estados) {
-                await EstadoProducto.findOrCreate({
-                    where: { codigo: e.codigo },
-                    defaults: { estado_producto: e.nombre, codigo: e.codigo }
-                });
-            }
-            console.log('✅ Estados de producto verificados');
-        } catch (error) {
-            console.error('Error en afterSync de EstadoProducto:', error);
-        }
-    });
-
     return EstadoProducto;
 };

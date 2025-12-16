@@ -33,30 +33,5 @@ export default (sequelize, DataTypes) => {
         Descuento.hasMany(models.DetalleFactura, { foreignKey: 'id_descuento' });
     };
 
-    // Datos iniciales (Seed)
-    // Datos iniciales (Seed)
-    Descuento.afterSync(async () => {
-        try {
-            const descuentos = [
-                {
-                    descuento: 'Ninguno',
-                    porcentaje_descuento: 0,
-                    codigo: 'DESC_0',
-                    activo: true
-                }
-            ];
-
-            for (const d of descuentos) {
-                await Descuento.findOrCreate({
-                    where: { codigo: d.codigo },
-                    defaults: d
-                });
-            }
-            console.log('✅ Descuentos iniciales verificados');
-        } catch (error) {
-            console.error('Error seeding Descuento:', error);
-        }
-    });
-
     return Descuento;
 };

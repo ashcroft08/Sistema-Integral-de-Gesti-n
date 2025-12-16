@@ -70,37 +70,5 @@ export default (sequelize, DataTypes) => {
         updatedAt: 'fecha_actualizacion'
     });
 
-    // ✅ AGREGAR: Seed inicial
-    ConfiguracionSri.afterSync(async () => {
-        try {
-            const exists = await ConfiguracionSri.findOne();
-
-            if (!exists) {
-                const ambiente = process.env.SRI_ENVIRONMENT || '1';
-                const urlBase = ambiente === '1'
-                    ? 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws'
-                    : 'https://cel.sri.gob.ec/comprobantes-electronicos-ws';
-
-                await ConfiguracionSri.create({
-                    razon_social: 'ASOCIACIÓN KALLARI',
-                    ruc: '1234567890001', // ⚠️ CAMBIAR por el RUC real
-                    direccion_matriz: 'Dirección de la asociación', // ⚠️ CAMBIAR
-                    establecimiento: '001',
-                    punto_emision: '001',
-                    ambiente: parseInt(ambiente),
-                    tipo_emision: 1,
-                    obligado_contabilidad: true,
-                    url_recepcion: `${urlBase}/RecepcionComprobantesOffline?wsdl`,
-                    url_autorizacion: `${urlBase}/AutorizacionComprobantesOffline?wsdl`,
-                    activo: true
-                });
-
-                console.log('✅ Configuración SRI inicial creada');
-            }
-        } catch (error) {
-            console.error('Error en afterSync ConfiguracionSri:', error);
-        }
-    });
-
     return ConfiguracionSri;
 };

@@ -34,32 +34,5 @@ export default (sequelize, DataTypes) => {
         ValorIva.hasMany(models.DetalleFactura, { foreignKey: 'id_valor_iva' });
     };
 
-    ValorIva.afterSync(async () => {
-        try {
-            const ivas = [
-                { codigo: '0', porcentaje: 0, descripcion: 'IVA 0%', activo: true },
-                { codigo: '2', porcentaje: 12, descripcion: 'IVA 12%', activo: true },
-                { codigo: '3', porcentaje: 14, descripcion: 'IVA 14%', activo: false }, // Histórico (Inactivo)
-                { codigo: '4', porcentaje: 15, descripcion: 'IVA 15%', activo: true },
-                { codigo: '5', porcentaje: 5, descripcion: 'IVA 5% (Materiales)', activo: true }
-            ];
-
-            for (const iva of ivas) {
-                await ValorIva.findOrCreate({
-                    where: { codigo: iva.codigo },
-                    defaults: {
-                        codigo: iva.codigo,
-                        porcentaje_iva: iva.porcentaje,
-                        descripcion: iva.descripcion,
-                        activo: iva.activo
-                    }
-                });
-            }
-            console.log('✅ Valores de IVA verificados');
-        } catch (error) {
-            console.error('Error en afterSync de ValorIva:', error);
-        }
-    });
-
     return ValorIva;
 };

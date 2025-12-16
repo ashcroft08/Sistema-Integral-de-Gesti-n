@@ -19,20 +19,5 @@ export default (sequelize, DataTypes) => {
         updatedAt: 'fecha_actualizacion'
     });
 
-    // Hook para insertar tiempo inicial de expiración del token
-    ConfiguracionToken.afterSync(async (options) => {
-        try {
-            // Verificar si ya existe un registro en la tabla
-            const count = await ConfiguracionToken.count();
-            if (count === 0) {
-                // Insertar un valor inicial
-                await ConfiguracionToken.create({ tiempo_expiracion: '2h' });
-                console.log('✅ Configuración de token inicial creada.');
-            }
-        } catch (error) {
-            console.error('Error al insertar el valor inicial:', error)
-        }
-    })
-
     return ConfiguracionToken;
 };

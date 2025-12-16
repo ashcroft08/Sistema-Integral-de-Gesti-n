@@ -25,25 +25,5 @@ export default (sequelize, DataTypes) => {
         EstadoCategoria.hasMany(models.CategoriaProducto, { foreignKey: 'id_estado_categoria' });
     };
 
-    EstadoCategoria.afterSync(async (options) => {
-        try {
-            // ✨ DEFINICIÓN CON CÓDIGOS
-            const estados = [
-                { nombre: 'Activo', codigo: 'CAT_ACTIVA' },
-                { nombre: 'Inactivo', codigo: 'CAT_INACTIVA' },
-            ];
-
-            for (const e of estados) {
-                await EstadoCategoria.findOrCreate({
-                    where: { codigo: e.codigo },
-                    defaults: { estado_categoria: e.nombre, codigo: e.codigo }
-                });
-            }
-            console.log('✅ Estados de categoría verificados');
-        } catch (error) {
-            console.error('Error en afterSync de EstadoCategoria:', error);
-        }
-    });
-
     return EstadoCategoria;
 };

@@ -23,22 +23,5 @@ export default (sequelize, DataTypes) => {
         updatedAt: 'fecha_actualizacion'
     });
 
-    // Hook para insertar valores por defecto
-    ConfiguracionBloqueo.afterSync(async (options) => {
-        try {
-            const config = await ConfiguracionBloqueo.findByPk(1);
-            if (!config) {
-                await ConfiguracionBloqueo.create({
-                    id_config_bloqueo: 1,
-                    intentos_maximos: 3,
-                    duracion_bloqueo_minutos: 15
-                });
-                console.log('✅ Configuración de bloqueo inicial creada.');
-            }
-        } catch (error) {
-            console.error('Error en afterSync hook de ConfiguracionBloqueo:', error);
-        }
-    });
-
     return ConfiguracionBloqueo;
 };

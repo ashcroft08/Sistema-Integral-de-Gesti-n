@@ -25,26 +25,5 @@ export default (sequelize, DataTypes) => {
         EstadoUsuario.hasMany(models.Usuario, { foreignKey: 'id_estado_usuario' });
     };
 
-    EstadoUsuario.afterSync(async (options) => {
-        try {
-            // ✨ DEFINICIÓN CON CÓDIGOS
-            const estados = [
-                { nombre: 'Activo', codigo: 'ESTADO_ACTIVO' },
-                { nombre: 'Inactivo', codigo: 'ESTADO_INACTIVO' },
-                { nombre: 'Bloqueado', codigo: 'ESTADO_BLOQUEADO' },
-            ];
-
-            for (const e of estados) {
-                await EstadoUsuario.findOrCreate({
-                    where: { codigo: e.codigo },
-                    defaults: { estado_usuario: e.nombre, codigo: e.codigo }
-                });
-            }
-            console.log('✅ Estados de usuario verificados correctamente');
-        } catch (error) {
-            console.error('Error en afterSync de EstadoUsuario:', error);
-        }
-    });
-
     return EstadoUsuario;
 };

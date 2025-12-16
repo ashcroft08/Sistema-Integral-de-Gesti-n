@@ -29,33 +29,5 @@ export default (sequelize, DataTypes) => {
         EstadoCliente.hasMany(models.Cliente, { foreignKey: 'id_estado_cliente' });
     };
 
-    // Seed automático con afterSync
-    EstadoCliente.afterSync(async (options) => {
-        try {
-            const estados = [
-                {
-                    codigo: 'CLIENTE_ACTIVO',
-                    nombre: 'Activo',
-                    descripcion: 'Cliente activo y operativo'
-                },
-                {
-                    codigo: 'CLIENTE_INACTIVO',
-                    nombre: 'Inactivo',
-                    descripcion: 'Cliente temporalmente inactivo (ej: moroso)'
-                }
-            ];
-
-            for (const estado of estados) {
-                await EstadoCliente.findOrCreate({
-                    where: { codigo: estado.codigo },
-                    defaults: estado
-                });
-            }
-            console.log('✅ Estados de cliente verificados en catálogo');
-        } catch (error) {
-            console.error('❌ Error en afterSync de EstadoCliente:', error);
-        }
-    });
-
     return EstadoCliente;
 };
