@@ -26,20 +26,8 @@ export const validarIdentificacion = (numero, tipo) => {
         // Los 3 últimos deben ser 001 (generalmente, aunque puede variar en sucursales, validemos != 000)
         if (n.slice(10, 13) === '000') return false;
 
-        // El tercer dígito define el tipo de RUC
-        const tercerDigito = parseInt(n[2]);
-
-        if (tercerDigito < 6) {
-            // RUC Persona Natural (Misma lógica que cédula + 001)
-            return validarCedula(n.substring(0, 10));
-        } else if (tercerDigito === 9) {
-            // RUC Sociedad Privada (Módulo 11)
-            return validarRucSociedadPrivada(n);
-        } else if (tercerDigito === 6) {
-            // RUC Sociedad Pública (Módulo 11 con dígitos diferentes)
-            return validarRucSociedadPublica(n);
-        }
-        return false; // Tercer dígito inválido
+        // Validación relajada: Se acepta cualquier estructura válida (13 dígitos, no termina en 000)
+        return true;
     }
 
     return true; // Por defecto si no coincide tipo

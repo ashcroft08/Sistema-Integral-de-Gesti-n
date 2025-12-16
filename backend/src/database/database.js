@@ -26,25 +26,36 @@ const db = { sequelize, Sequelize };
 // Ruta a la carpeta models
 const modelDir = join(__dirname, '..', 'models');
 
+// Función recursiva para obtener archivos de modelos
+async function getModelFiles(dir) {
+    const dirents = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(dirents.map((dirent) => {
+        const res = join(dir, dirent.name);
+        return dirent.isDirectory() ? getModelFiles(res) : res;
+    }));
+    return files.flat();
+}
+
 try {
-    const files = await readdir(modelDir);
+    const files = await getModelFiles(modelDir);
 
     for (const file of files) {
-        if (file.endsWith('.js') && file !== 'index.js') {
-            const modelPath = join(modelDir, file);
+        // Ignorar index.js y archivos que no sean .js
+        if (file.endsWith('.js') && !file.endsWith('index.js')) {
             // Convertir ruta a URL para dynamic import en ESM
-            const modelUrl = pathToFileURL(modelPath).href;
+            const modelUrl = pathToFileURL(file).href;
             const modelDef = (await import(modelUrl)).default;
-            const model = modelDef(sequelize, Sequelize.DataTypes);
-            db[model.name] = model;
+
+            // Verificar que sea una función (modelo válido)
+            if (typeof modelDef === 'function') {
+                const model = modelDef(sequelize, Sequelize.DataTypes);
+                db[model.name] = model;
+            }
         }
     }
 } catch (err) {
-    if (err.code === 'ENOENT') {
-        console.warn('⚠️ Carpeta models no encontrada. ¿La creaste?');
-    } else {
-        throw err;
-    }
+    console.error('❌ Error cargando modelos:', err);
+    throw err;
 }
 
 // Asociaciones

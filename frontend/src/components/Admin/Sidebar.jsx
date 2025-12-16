@@ -39,7 +39,7 @@ const menuItems = {
     { id: "dashboard", label: "Dashboard", icon: "dashboard", path: "/seller" },
     {
       id: "sales",
-      label: "Venta",
+      label: "Punto de Venta",
       icon: "shopping_cart",
       path: "/seller/sales",
     },

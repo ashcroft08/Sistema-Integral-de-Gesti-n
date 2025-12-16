@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { ClientController } from '../controllers/client.controller.js';
 import { verifyToken, checkRole } from '../middleware/auth.middleware.js';
 import { validateRequest, validateParams } from '../middleware/validation.middleware.js';
-import { CreateClientSchema, UpdateClientSchema, ClientIdSchema } from '../schemas/client.schema.js';
+import { CreateClientSchema, UpdateClientSchema, ClientIdSchema, ChangeStateClientSchema } from '../schemas/client.schema.js';
 import { ROLES } from '../constants/codigos.js';
 
 const router = Router();
@@ -34,6 +34,13 @@ router.put(
     validateParams(ClientIdSchema),
     validateRequest(UpdateClientSchema),
     (req, res) => clientController.updateClient(req, res)
+);
+
+router.patch(
+    '/:id/state',
+    validateParams(ClientIdSchema),
+    validateRequest(ChangeStateClientSchema),
+    (req, res) => clientController.changeState(req, res)
 );
 
 export default router;

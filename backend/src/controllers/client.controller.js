@@ -69,4 +69,24 @@ export class ClientController {
             res.status(500).json({ success: false, message: error.message });
         }
     }
+
+    async changeState(req, res) {
+        try {
+            const { id } = req.validatedParams;
+            const { estado_codigo } = req.validatedData;
+
+            const cliente = await clientService.changeState(id, estado_codigo);
+
+            res.status(200).json({
+                success: true,
+                message: `Estado del cliente actualizado a: ${cliente.estado_cliente.nombre}`,
+                client: cliente
+            });
+        } catch (error) {
+            if (error.message.includes('no encontrado') || error.message.includes('no válido')) {
+                return res.status(404).json({ success: false, message: error.message });
+            }
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
 }

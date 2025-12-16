@@ -42,7 +42,19 @@ class ClientService {
         }
     }
 
-    // Obtener catálogos (tipos de identificación y ubicaciones)
+    // ✅ NUEVO: Cambiar estado del cliente
+    async changeClientState(id, estadoCodigo) {
+        try {
+            const response = await axiosInstance.patch(`/clients/${id}/state`, {
+                estado_codigo: estadoCodigo
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    // Obtener catálogos (tipos de identificación)
     async getFormCatalogs() {
         try {
             const response = await axiosInstance.get('/clients/catalogs');

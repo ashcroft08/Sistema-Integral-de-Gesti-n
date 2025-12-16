@@ -1,16 +1,15 @@
-import { Cliente, TipoIdentificacion, Parroquia, Canton, Provincia } from '../models/index.js';
+import db, { Cliente, ClienteIdentificacion, TipoIdentificacion, Parroquia, Canton, Provincia, EstadoCliente } from '../models/index.js';
 import { Op } from 'sequelize';
 import { validarIdentificacion } from '../utils/identificacion.validator.js';
 
+const { sequelize } = db;
+
 export class ClientService {
 
-    // Helper para validar identificación usando BD + Algoritmo
     async _validarDocumento(idTipo, numeroIdentificacion) {
-        // 1. Buscar qué tipo es en la BD (ej. SRI_RUC)
         const tipoDoc = await TipoIdentificacion.findByPk(idTipo);
         if (!tipoDoc) throw new Error("El tipo de identificación seleccionado no existe.");
 
-        // 2. Mapear códigos de BD a tipos del validador
         const mapaCodigos = {
             'SRI_RUC': 'RUC',
             'SRI_CEDULA': 'CEDULA',
@@ -19,182 +18,173 @@ export class ClientService {
         };
 
         const tipoParaValidar = mapaCodigos[tipoDoc.codigo];
-
-        // 3. Ejecutar validación matemática
         if (!validarIdentificacion(numeroIdentificacion, tipoParaValidar)) {
             throw new Error(`El número ${numeroIdentificacion} no es válido para el tipo ${tipoDoc.tipo_identificacion}.`);
         }
     }
 
-    async createClient(data) {
+    async createClient(data, transaction) {
+        const t = transaction || await sequelize.transaction();
         try {
-            // Desestructuramos para validar explícitamente
-            const { identificacion, email, id_tipo_identificacion, id_parroquia } = data;
+            const { identificaciones, id_parroquia, id_estado_cliente, ...clienteData } = data;
 
-            // 1. Validar Documento (Algoritmo Ecuador)
-            await this._validarDocumento(id_tipo_identificacion, identificacion);
+            // 1. Validar parroquia
+            const parroquiaExiste = await Parroquia.findByPk(id_parroquia, { transaction: t });
+            if (!parroquiaExiste) throw new Error("La ubicación (parroquia) seleccionada no es válida.");
 
-            // 2. ✨ VALIDACIÓN NUEVA: Verificar que la Parroquia existe
-            const parroquiaExiste = await Parroquia.findByPk(id_parroquia);
-            if (!parroquiaExiste) {
-                throw new Error("La ubicación (parroquia) seleccionada no es válida.");
+            // 2. Si no se envió estado, usar ACTIVO por defecto
+            let estadoId;
+            if (id_estado_cliente) {
+                const estadoExiste = await EstadoCliente.findByPk(id_estado_cliente, { transaction: t });
+                if (!estadoExiste) throw new Error("El estado de cliente no es válido.");
+                estadoId = id_estado_cliente;
+            } else {
+                const estadoActivo = await EstadoCliente.findOne({
+                    where: { codigo: 'CLIENTE_ACTIVO' },
+                    transaction: t
+                });
+                if (!estadoActivo) throw new Error("No se encontró el estado 'CLIENTE_ACTIVO'.");
+                estadoId = estadoActivo.id_estado_cliente;
             }
 
-            // 3. Verificar duplicados
-            const existingClient = await Cliente.findOne({
-                where: {
-                    [Op.or]: [
-                        { identificacion: identificacion },
-                        { email: email }
-                    ]
-                }
-            });
+            // 3. Crear cliente con estado correcto
+            const cliente = await Cliente.create({
+                ...clienteData,
+                id_parroquia,
+                id_estado_cliente: estadoId
+            }, { transaction: t });
 
-            if (existingClient) {
-                if (existingClient.identificacion === identificacion) throw new Error(`Ya existe un cliente con la identificación ${identificacion}.`);
-                if (existingClient.email === email) throw new Error(`El correo ${email} ya está registrado.`);
+            // 4. Crear identificaciones
+            for (const ident of identificaciones) {
+                await this._validarDocumento(ident.id_tipo_identificacion, ident.identificacion);
+
+                await ClienteIdentificacion.create({
+                    id_cliente: cliente.id_cliente,
+                    id_tipo_identificacion: ident.id_tipo_identificacion,
+                    identificacion: ident.identificacion,
+                    es_principal: ident.es_principal
+                }, { transaction: t });
             }
 
-            // 4. Crear (Sequelize mapeará id_parroquia automáticamente del objeto data)
-            return await Cliente.create(data);
+            await t.commit();
+            return cliente;
 
         } catch (error) {
+            await t.rollback();
             throw error;
         }
     }
 
     async updateClient(id, data) {
+        const t = await sequelize.transaction();
         try {
-            const client = await Cliente.findByPk(id);
-            if (!client) throw new Error('Cliente no encontrado.');
+            const { identificaciones, id_parroquia, id_estado_cliente, ...clienteData } = data;
 
-            // 1. Si cambia la parroquia, validamos que exista
-            if (data.id_parroquia) {
-                const parroquiaExiste = await Parroquia.findByPk(data.id_parroquia);
-                if (!parroquiaExiste) throw new Error("La ubicación (parroquia) seleccionada no es válida.");
+            const cliente = await Cliente.findByPk(id, { transaction: t });
+            if (!cliente) throw new Error("Cliente no encontrado");
+
+            if (id_parroquia) {
+                const parroquiaExiste = await Parroquia.findByPk(id_parroquia, { transaction: t });
+                if (!parroquiaExiste) throw new Error("La ubicación (parroquia) no es válida.");
             }
 
-            // 2. Si cambia la identificación, validarla matemáticamente
-            if (data.identificacion && data.id_tipo_identificacion) {
-                await this._validarDocumento(data.id_tipo_identificacion, data.identificacion);
-            } else if (data.identificacion) {
-                // Si solo cambia el número pero no el tipo, usamos el tipo que ya tenía
-                await this._validarDocumento(client.id_tipo_identificacion, data.identificacion);
+            if (id_estado_cliente) {
+                const estadoExiste = await EstadoCliente.findByPk(id_estado_cliente, { transaction: t });
+                if (!estadoExiste) throw new Error("El estado de cliente no es válido.");
             }
 
-            // 3. Verificar duplicados
-            if (data.identificacion || data.email) {
-                const exists = await Cliente.findOne({
-                    where: {
-                        [Op.and]: [
-                            { id_cliente: { [Op.ne]: id } },
-                            {
-                                [Op.or]: [
-                                    { identificacion: data.identificacion || '' },
-                                    { email: data.email || '' }
-                                ]
-                            }
-                        ]
-                    }
-                });
-                if (exists) throw new Error('La identificación o correo ya pertenecen a otro cliente.');
+            // Actualizar datos del cliente
+            await cliente.update(clienteData, { transaction: t });
+
+            // Reemplazar identificaciones
+            await ClienteIdentificacion.destroy({ where: { id_cliente: id }, transaction: t });
+            for (const ident of identificaciones) {
+                await this._validarDocumento(ident.id_tipo_identificacion, ident.identificacion);
+
+                await ClienteIdentificacion.create({
+                    id_cliente: cliente.id_cliente,
+                    id_tipo_identificacion: ident.id_tipo_identificacion,
+                    identificacion: ident.identificacion,
+                    es_principal: ident.es_principal
+                }, { transaction: t });
             }
 
-            await client.update(data);
-            return client;
+            await t.commit();
+            return cliente;
+
         } catch (error) {
+            await t.rollback();
             throw error;
         }
     }
 
     async getAllClients() {
-        try {
-            // Cambiar 'Parroquia' por 'parroquia' (el alias)
-            // Cambiar 'Canton' por 'canton' (el alias)
-            // Cambiar 'Provincia' por 'provincia' (el alias)
-            return await Cliente.findAll({
-                include: [
-                    { model: TipoIdentificacion, attributes: ['tipo_identificacion', 'codigo'] },
-                    {
-                        // Alias definido en Cliente.belongsTo(Parroquia, { as: 'parroquia' })
-                        model: Parroquia,
-                        as: 'parroquia', // <-- Agregar 'as'
-                        attributes: ['parroquia'],
-                        include: [{
-                            // Alias definido en Parroquia.belongsTo(Canton, { as: 'canton' })
-                            model: Canton,
-                            as: 'canton', // <-- Agregar 'as'
-                            attributes: ['canton'],
-                            include: [
-                                // Alias definido en Canton.belongsTo(Provincia, { as: 'provincia' })
-                                {
-                                    model: Provincia,
-                                    as: 'provincia', // <-- Agregar 'as'
-                                    attributes: ['provincia']
-                                }
-                            ]
-                        }]
-                    }
-                ],
-                order: [['apellido', 'ASC']]
-            });
-        } catch (error) {
-            throw error;
-        }
+        return await Cliente.findAll({
+            include: [
+                { model: ClienteIdentificacion, include: [{ model: TipoIdentificacion }] },
+                {
+                    model: Parroquia,
+                    as: 'parroquia',
+                    include: [{
+                        model: Canton,
+                        as: 'canton',
+                        include: [{ model: Provincia, as: 'provincia' }]
+                    }]
+                },
+                { model: EstadoCliente, as: 'estado_cliente' }
+            ],
+            order: [['id_cliente', 'DESC']]
+        });
     }
 
     async getClientById(id) {
-        try {
-            const client = await Cliente.findByPk(id, {
-                include: [
-                    { model: TipoIdentificacion },
-                    {
-                        // Alias definido en Cliente.belongsTo(Parroquia, { as: 'parroquia' })
-                        model: Parroquia,
-                        as: 'parroquia', // <-- Agregar 'as'
-                        include: [{
-                            // Alias definido en Parroquia.belongsTo(Canton, { as: 'canton' })
-                            model: Canton,
-                            as: 'canton', // <-- Agregar 'as'
-                            include: [
-                                // Alias definido en Canton.belongsTo(Provincia, { as: 'provincia' })
-                                {
-                                    model: Provincia,
-                                    as: 'provincia' // <-- Agregar 'as'
-                                }
-                            ]
-                        }]
-                    }
-                ]
-            });
-            if (!client) throw new Error('Cliente no encontrado');
-            return client;
-        } catch (error) {
-            throw error;
-        }
+        const cliente = await Cliente.findByPk(id, {
+            include: [
+                { model: ClienteIdentificacion, include: [{ model: TipoIdentificacion }] },
+                {
+                    model: Parroquia,
+                    as: 'parroquia',
+                    include: [{
+                        model: Canton,
+                        as: 'canton',
+                        include: [{ model: Provincia, as: 'provincia' }]
+                    }]
+                },
+                { model: EstadoCliente, as: 'estado_cliente' }
+            ]
+        });
+        if (!cliente) throw new Error("Cliente no encontrado");
+        return cliente;
     }
 
-
-    // Obtener catálogos para llenar los Selects del Frontend (Excluyendo Consumidor Final)
     async getFormCatalogs() {
-        try {
-            // Solo devolvemos tipos de identificación, excluyendo 'Consumidor Final'
-            // Usamos el código 'SRI_CONSUMIDOR_FINAL' para identificarlo de forma segura
-            const types = await TipoIdentificacion.findAll({
-                attributes: ['id_tipo_identificacion', 'tipo_identificacion', 'codigo'],
-                where: {
-                    codigo: { [Op.ne]: 'SRI_CONSUMIDOR_FINAL' } // Op.ne significa "not equal"
-                },
-                order: [['tipo_identificacion', 'ASC']]
-            });
+        const tipos = await TipoIdentificacion.findAll({
+            where: { codigo: { [Op.ne]: 'SRI_CONSUMIDOR_FINAL' } },
+            order: [['tipo_identificacion', 'ASC']]
+        });
 
-            return {
-                types: types.map(t => t.toJSON()) // Convierte cada instancia a objeto plano
-            };
+        return { tipos: tipos.map(t => t.toJSON()) };
+    }
+
+    // Cambia el estado del cliente
+    async changeState(id, codigoEstado) {
+        try {
+            // Buscar cliente
+            const cliente = await Cliente.findByPk(id);
+            if (!cliente) throw new Error("Cliente no encontrado");
+
+            // Buscar estado por código
+            const estado = await EstadoCliente.findOne({ where: { codigo: codigoEstado } });
+            if (!estado) throw new Error("Estado no válido");
+
+            // Actualizar estado
+            await cliente.update({ id_estado_cliente: estado.id_estado_cliente });
+
+            // Recargar para obtener la asociación
+            await cliente.reload({ include: [{ model: EstadoCliente, as: 'estado_cliente' }] });
+
+            return cliente;
         } catch (error) {
-            // Es buena práctica registrar el error en el servidor
-            console.error('Error en getFormCatalogs:', error);
-            // Lanza el error para que sea manejado por el middleware de errores del Express
             throw error;
         }
     }

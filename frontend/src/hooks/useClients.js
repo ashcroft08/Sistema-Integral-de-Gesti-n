@@ -1,37 +1,35 @@
-// hooks/useClients.js - ACTUALIZADO
+// hooks/useClients.js
 import { useState, useEffect, useCallback } from 'react';
 import { clientService } from '../services/client.service';
 import { toast } from 'react-toastify';
 
 export const useClients = () => {
     const [clients, setClients] = useState([]);
-    const [catalogs, setCatalogs] = useState({ types: [] }); // ⚠️ Solo types, locations ya no
+    const [catalogs, setCatalogs] = useState({ types: [] });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Cargar datos (Clientes + Tipos de Identificación)
     const loadClientData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            // Ejecutamos ambas peticiones en paralelo
             const [clientsResponse, catalogsResponse] = await Promise.all([
                 clientService.getAllClients(),
                 clientService.getFormCatalogs()
             ]);
 
-            // Setear Clientes
             if (clientsResponse?.clients) {
                 setClients(clientsResponse.clients);
             } else {
                 setClients([]);
             }
 
-            // Setear Catálogos (Solo tipos de identificación)
-            if (catalogsResponse?.types) {
-                setCatalogs({
-                    types: catalogsResponse.types
-                });
+            // ✅ CORREGIDO: El backend envía 'tipos'
+            if (catalogsResponse?.tipos) {
+                setCatalogs({ types: catalogsResponse.tipos });
+            } else if (catalogsResponse?.types) {
+                // Por si acaso el backend envía 'types'
+                setCatalogs({ types: catalogsResponse.types });
             } else {
                 setCatalogs({ types: [] });
             }
@@ -45,19 +43,17 @@ export const useClients = () => {
         }
     }, []);
 
-    // Crear Cliente
     const createClient = async (clientData) => {
         try {
             const response = await clientService.createClient(clientData);
-            await loadClientData(); // Recargar lista
+            await loadClientData();
             return { success: true, data: response };
         } catch (err) {
             console.error("Error al crear cliente:", err);
-            throw err; // Lanzar error para que ClientFormModal lo maneje
+            throw err;
         }
     };
 
-    // Actualizar Cliente
     const updateClient = async (id, clientData) => {
         try {
             const response = await clientService.updateClient(id, clientData);
@@ -65,11 +61,21 @@ export const useClients = () => {
             return { success: true, data: response };
         } catch (err) {
             console.error("Error al actualizar cliente:", err);
-            throw err; // Lanzar error para que ClientFormModal lo maneje
+            throw err;
         }
     };
 
-    // Carga inicial
+    const changeClientState = async (id, estadoCodigo) => {
+        try {
+            const response = await clientService.changeClientState(id, estadoCodigo);
+            await loadClientData();
+            return { success: true, data: response };
+        } catch (err) {
+            console.error("Error al cambiar estado:", err);
+            throw err;
+        }
+    };
+
     useEffect(() => {
         loadClientData();
     }, [loadClientData]);
@@ -81,6 +87,7 @@ export const useClients = () => {
         error,
         createClient,
         updateClient,
+        changeClientState,
         refresh: loadClientData
     };
 };

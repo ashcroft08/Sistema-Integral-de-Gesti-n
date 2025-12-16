@@ -10,6 +10,7 @@ import Button from "../../components/UI/Button";
 import Table from "../../components/UI/Table";
 import TablePagination from "../../components/UI/TablePagination";
 import ClientSearchModal from "../../components/UI/ClientSearchModal";
+import QuantityControl from "../../components/UI/QuantityControl";
 
 const STORAGE_KEY = "salesPage_state";
 
@@ -706,37 +707,13 @@ const SalesPage = () => {
                     {/* Controles */}
                     <div className="flex items-center gap-2">
                       {/* Cantidad */}
-                      <div className="flex items-center border border-primary/20 rounded-lg">
-                        <button
-                          onClick={() =>
-                            updateCartItemQuantity(
-                              item.id_producto,
-                              item.quantity - 1
-                            )
-                          }
-                          className="p-1 hover:bg-primary/5"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            remove
-                          </span>
-                        </button>
-                        <span className="px-2 text-xs font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateCartItemQuantity(
-                              item.id_producto,
-                              item.quantity + 1
-                            )
-                          }
-                          className="p-1 hover:bg-primary/5"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            add
-                          </span>
-                        </button>
-                      </div>
+                      <QuantityControl
+                        quantity={item.quantity}
+                        onChange={(newVal) =>
+                          updateCartItemQuantity(item.id_producto, newVal)
+                        }
+                        max={item.stock_actual} // Optional: pass max stock if you want to disable + button at limit
+                      />
 
                       {/* IVA */}
                       <select

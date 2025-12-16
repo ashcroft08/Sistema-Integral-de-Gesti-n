@@ -9,7 +9,6 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(255),
             allowNull: false
         },
-        // ✨ NUEVO CAMPO: Código inmutable para referencia segura
         codigo: {
             type: DataTypes.STRING(20),
             allowNull: false,
@@ -26,7 +25,7 @@ export default (sequelize, DataTypes) => {
     });
 
     TipoIdentificacion.associate = (models) => {
-        TipoIdentificacion.hasMany(models.Cliente, { foreignKey: 'id_tipo_identificacion' });
+        TipoIdentificacion.hasMany(models.ClienteIdentificacion, { foreignKey: 'id_tipo_identificacion' });
     };
 
     // Hook mejorado con Códigos

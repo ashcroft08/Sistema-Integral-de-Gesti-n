@@ -6,10 +6,10 @@ import db from './database/database.js';
 async function main() {
     try {
         // 1. Crear esquemas en PostgreSQL
-        //await createSchemas();
+        await createSchemas();
 
         // 2. Migra modelos a la base de datos
-        //await db.sequelize.sync({ alter: false }); // ⚠️ Solo en desarrollo
+        await db.sequelize.sync({ alter: false }); // ⚠️ Solo en desarrollo
         console.log('✅ Base de datos sincronizada.');
 
         // 3. Levantar servidor

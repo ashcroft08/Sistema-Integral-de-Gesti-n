@@ -1,4 +1,3 @@
-// models/cliente.js
 export default (sequelize, DataTypes) => {
     const Cliente = sequelize.define('Cliente', {
         id_cliente: {
@@ -6,26 +5,18 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
-        id_tipo_identificacion: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        id_parroquia: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        identificacion: {
-            type: DataTypes.STRING(50),
-            allowNull: false,
-            unique: true
-        },
         nombre: {
             type: DataTypes.STRING(255),
             allowNull: false
         },
         apellido: {
             type: DataTypes.STRING(255),
-            allowNull: false
+            allowNull: true
+        },
+        es_empresa: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         },
         celular: {
             type: DataTypes.STRING(10),
@@ -33,24 +24,34 @@ export default (sequelize, DataTypes) => {
         },
         email: {
             type: DataTypes.STRING(255),
-            allowNull: false,
-            unique: true
+            allowNull: false
         },
         direccion: {
             type: DataTypes.STRING(255),
             allowNull: false
+        },
+        id_parroquia: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        id_estado_cliente: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
         }
     }, {
         tableName: 'cliente',
         schema: 'ventas',
-        timestamps: false
+        timestamps: true,
+        createdAt: 'fecha_creacion',
+        updatedAt: 'fecha_actualizacion'
     });
 
     Cliente.associate = (models) => {
-        Cliente.belongsTo(models.TipoIdentificacion, { foreignKey: 'id_tipo_identificacion' });
         // Usar 'as' aquí define cómo se llamará la relación en el JSON
         Cliente.belongsTo(models.Parroquia, { foreignKey: 'id_parroquia', as: 'parroquia' });
         Cliente.hasMany(models.Factura, { foreignKey: 'id_cliente' });
+        Cliente.belongsTo(models.EstadoCliente, { foreignKey: 'id_estado_cliente', as: 'estado_cliente' });
+        Cliente.hasMany(models.ClienteIdentificacion, { foreignKey: 'id_cliente' });
     };
 
     // Hook para inicializar datos (Seed)
@@ -58,67 +59,62 @@ export default (sequelize, DataTypes) => {
         try {
             console.log('🔍 Iniciando seed del Consumidor Final...');
 
-            // 1. Obtener la ID del Tipo de Identificación para "Consumidor Final"
-            const TipoIdentificacion = sequelize.models.TipoIdentificacion; // Accede al modelo desde sequelize
-            const tipoIdentificacionCF = await TipoIdentificacion.findOne({
+            // 1. Obtener IDs necesarias
+            const TipoIdentificacion = sequelize.models.TipoIdentificacion;
+            const tipoCF = await TipoIdentificacion.findOne({ where: { codigo: 'SRI_CONSUMIDOR_FINAL' } });
+            if (!tipoCF) throw new Error('No se encontró tipo "Consumidor Final"');
+
+            const Parroquia = sequelize.models.Parroquia;
+            const parroquia = await Parroquia.findOne({ where: { codigo: '170150' } });
+            if (!parroquia) throw new Error('No se encontró parroquia 170150');
+
+            const EstadoCliente = sequelize.models.EstadoCliente;
+            const estadoActivo = await EstadoCliente.findOne({ where: { codigo: 'CLIENTE_ACTIVO' } });
+            if (!estadoActivo) throw new Error('No se encontró estado "CLIENTE_ACTIVO"');
+
+            // 2. Buscar o crear el CLIENTE (sin identificación)
+            let clienteCF = await Cliente.findOne({
                 where: {
-                    codigo: 'SRI_CONSUMIDOR_FINAL' // Usamos el código definido en el modelo TipoIdentificacion
+                    nombre: 'CONSUMIDOR FINAL',
+                    apellido: 'FINAL'
                 }
             });
 
-            if (!tipoIdentificacionCF) {
-                throw new Error('No se encontró el Tipo de Identificación con código SRI_CONSUMIDOR_FINAL. Asegúrate de que el modelo TipoIdentificacion y su hook afterSync se hayan ejecutado correctamente.');
+            if (!clienteCF) {
+                clienteCF = await Cliente.create({
+                    nombre: 'CONSUMIDOR FINAL',
+                    apellido: 'FINAL',
+                    es_empresa: false,
+                    celular: 'N/A',
+                    email: 'N/A',
+                    direccion: 'N/A',
+                    id_parroquia: parroquia.id_parroquia,
+                    id_estado_cliente: estadoActivo.id_estado_cliente
+                });
+                console.log(`✅ Cliente Consumidor Final creado con ID: ${clienteCF.id_cliente}`);
             }
-            const idTipoIdentificacionCF = tipoIdentificacionCF.id_tipo_identificacion;
-            console.log(`✅ Tipo de identificación 'Consumidor Final' encontrado: ID ${idTipoIdentificacionCF}`);
 
-            // 2. Obtener la ID de una Parroquia (ej: San Francisco de Quito)
-            const Parroquia = sequelize.models.Parroquia; // Accede al modelo desde sequelize
-            const parroquiaDefault = await Parroquia.findOne({
+            // 3. Crear su identificación (si no existe)
+            const ClienteIdentificacion = sequelize.models.ClienteIdentificacion;
+            const identificacionExistente = await ClienteIdentificacion.findOne({
                 where: {
-                    codigo: '170150' // Código INEC de San Francisco de Quito
+                    id_cliente: clienteCF.id_cliente,
+                    id_tipo_identificacion: tipoCF.id_tipo_identificacion
                 }
             });
 
-            if (!parroquiaDefault) {
-                throw new Error('No se encontró la Parroquia con código 170150 (San Francisco de Quito). Asegúrate de que los datos DPA estén cargados.');
-            }
-            const idParroquiaDefault = parroquiaDefault.id_parroquia;
-            console.log(`✅ Parroquia 'San Francisco de Quito' encontrada: ID ${idParroquiaDefault}`);
-
-            // 3. Datos del Consumidor Final
-            const consumidorFinal = {
-                id_tipo_identificacion: idTipoIdentificacionCF,
-                id_parroquia: idParroquiaDefault,
-                identificacion: 'CF', // Identificación estándar
-                nombre: 'CONSUMIDOR FINAL',
-                apellido: 'FINAL',
-                celular: 'N/A',
-                email: 'N/A',
-                direccion: 'N/A'
-            };
-
-            // 4. Buscar si ya existe el cliente CF
-            const clienteExistente = await Cliente.findOne({
-                where: {
-                    identificacion: 'CF'
-                }
-            });
-
-            if (clienteExistente) {
-                console.log(`⚠️  El cliente Consumidor Final (ID: ${clienteExistente.id_cliente}) ya existe.`);
-                // Opcional: Verificar si los datos son correctos y actualizar si es necesario
-                // await clienteExistente.update({...});
-            } else {
-                // 5. Crear el cliente si no existe
-                await Cliente.create(consumidorFinal);
-                console.log(`✅ Cliente Consumidor Final creado exitosamente.`);
+            if (!identificacionExistente) {
+                await ClienteIdentificacion.create({
+                    id_cliente: clienteCF.id_cliente,
+                    id_tipo_identificacion: tipoCF.id_tipo_identificacion,
+                    identificacion: 'CF',
+                    es_principal: true
+                });
+                console.log(`✅ Identificación 'CF' asignada al cliente.`);
             }
 
         } catch (error) {
-            console.error('❌ Error en el hook afterSync de Cliente (seed Consumidor Final):', error);
-            // Opcional: Lanzar el error para detener la sincronización si es crítico
-            // throw error;
+            console.error('❌ Error en seed del Consumidor Final:', error);
         }
     });
 

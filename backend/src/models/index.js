@@ -36,6 +36,8 @@ import ConfiguracionSriModel from './configuracion/ConfiguracionSri.js';
 import CertificadoDigitalModel from './configuracion/CertificadoDigital.js';
 import CuentaPorCobrarModel from './contabilidad/CuentaPorCobrar.js';
 import PagoCuentaCobrarModel from './contabilidad/PagoCuentaCobrar.js';
+import ClienteIdentificacionModel from './ventas/ClienteIdentificacion.js';
+import EstadoClienteModel from './catalogo/EstadoCliente.js';
 
 // 3. Inicializa cada modelo
 const AsientoContable = AsientoContableModel(sequelize, DataTypes);
@@ -70,6 +72,8 @@ const ConfiguracionSri = ConfiguracionSriModel(sequelize, DataTypes);
 const CertificadoDigital = CertificadoDigitalModel(sequelize, DataTypes);
 const CuentaPorCobrar = CuentaPorCobrarModel(sequelize, DataTypes);
 const PagoCuentaCobrar = PagoCuentaCobrarModel(sequelize, DataTypes);
+const ClienteIdentificacion = ClienteIdentificacionModel(sequelize, DataTypes);
+const EstadoCliente = EstadoClienteModel(sequelize, DataTypes);
 
 // 4. Agrupa todos los modelos en un objeto
 // Esto permite que el bucle de asociaciones funcione
@@ -105,7 +109,9 @@ const models = {
     ConfiguracionSri,
     CertificadoDigital,
     CuentaPorCobrar,
-    PagoCuentaCobrar
+    PagoCuentaCobrar,
+    ClienteIdentificacion,
+    EstadoCliente
 };
 
 // 5. Ejecuta el método .associate() de cada modelo (si existe)
@@ -149,7 +155,9 @@ export {
     ConfiguracionSri,
     CertificadoDigital,
     CuentaPorCobrar,
-    PagoCuentaCobrar
+    PagoCuentaCobrar,
+    ClienteIdentificacion,
+    EstadoCliente
 };
 
 // Exporta también la instancia de conexión de sequelize
