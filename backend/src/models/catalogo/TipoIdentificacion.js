@@ -28,44 +28,5 @@ export default (sequelize, DataTypes) => {
         TipoIdentificacion.hasMany(models.ClienteIdentificacion, { foreignKey: 'id_tipo_identificacion' });
     };
 
-    // Hook mejorado con Códigos
-    TipoIdentificacion.afterSync(async (options) => {
-        try {
-            const tiposIdentificacion = [
-                {
-                    tipo_identificacion: 'RUC',
-                    codigo: 'SRI_RUC', // Código fijo
-                    descripcion: 'Registro Único de Contribuyentes'
-                },
-                {
-                    tipo_identificacion: 'Cédula',
-                    codigo: 'SRI_CEDULA',
-                    descripcion: 'Cédula de identidad'
-                },
-                {
-                    tipo_identificacion: 'Pasaporte',
-                    codigo: 'SRI_PASAPORTE',
-                    descripcion: 'Documento para extranjeros'
-                },
-                {
-                    tipo_identificacion: 'Consumidor Final',
-                    codigo: 'SRI_CONSUMIDOR_FINAL',
-                    descripcion: 'Ventas menores'
-                }
-            ];
-
-            for (const tipo of tiposIdentificacion) {
-                // Buscamos por CÓDIGO, no por nombre
-                await TipoIdentificacion.findOrCreate({
-                    where: { codigo: tipo.codigo },
-                    defaults: tipo
-                });
-            }
-            console.log('✅ Tipos de identificación verificados');
-        } catch (error) {
-            console.error('Error en afterSync de TipoIdentificacion:', error);
-        }
-    });
-
     return TipoIdentificacion;
 };

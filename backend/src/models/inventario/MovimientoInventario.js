@@ -28,6 +28,10 @@ export default (sequelize, DataTypes) => {
         stock_nuevo: {
             type: DataTypes.INTEGER,
             allowNull: false,
+        },
+        detalle: {
+            type: DataTypes.TEXT,
+            allowNull: true,
         }
     }, {
         tableName: 'movimiento_inventario',

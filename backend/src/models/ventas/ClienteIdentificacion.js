@@ -9,21 +9,10 @@ export default (sequelize, DataTypes) => {
         id_cliente: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            references: {
-                model: 'cliente',
-                key: 'id_cliente'
-            }
         },
         id_tipo_identificacion: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            references: {
-                model: {
-                    tableName: 'tipo_identificacion',
-                    schema: 'catalogo'
-                },
-                key: 'id_tipo_identificacion'
-            }
         },
         identificacion: {
             type: DataTypes.STRING(50),
@@ -37,15 +26,6 @@ export default (sequelize, DataTypes) => {
         tableName: 'cliente_identificacion',
         schema: 'ventas',
         timestamps: false,
-        indexes: [ // ✅ Índices se definen AQUÍ
-            {
-                unique: true,
-                fields: ['id_tipo_identificacion', 'identificacion']
-            },
-            {
-                fields: ['id_cliente'] // Índice para mejorar joins
-            }
-        ]
     });
 
     ClienteIdentificacion.associate = (models) => {
@@ -53,14 +33,5 @@ export default (sequelize, DataTypes) => {
         ClienteIdentificacion.belongsTo(models.TipoIdentificacion, { foreignKey: 'id_tipo_identificacion' });
     }
 
-    // Índice único compuesto: evitar duplicados por tipo + valor
-    ClienteIdentificacion.addScope('defaultScope', {
-        indexes: [
-            {
-                unique: true,
-                fields: ['id_tipo_identificacion', 'identificacion']
-            }
-        ]
-    }, { override: true });
     return ClienteIdentificacion;
 }
