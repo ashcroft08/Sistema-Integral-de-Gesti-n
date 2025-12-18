@@ -18,8 +18,9 @@
     "seed:undo": "sequelize-cli db:seed:undo:all",
     "seed:undo:last": "sequelize-cli db:seed:undo",
     "db:init": "npm run create-schemas",
-    "db:setup": "npm run create-schemas && npm run migrate && npm run seed",
-    "db:refresh": "npm run migrate:undo:all && npm run migrate && npm run seed",
+    "db:import-locations": "node src/scripts/import-locations.mjs",
+    "db:setup": "npm run create-schemas && npm run migrate && npm run db:import-locations && npm run seed",
+    "db:refresh": "npm run migrate:undo:all && npm run migrate && npm run db:import-locations && npm run seed",
     "db:reset": "npm run seed:undo && npm run migrate:undo:all"
   },
   "keywords": [],

@@ -29,6 +29,10 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+        id_detalle_factura: {
+            type: DataTypes.INTEGER,
+            allowNull: true // <-- Permite nulos
+        },
         detalle: {
             type: DataTypes.TEXT,
             allowNull: true,

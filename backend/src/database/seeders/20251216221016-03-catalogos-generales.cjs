@@ -16,10 +16,12 @@ module.exports = {
 
     // 2. Tipo Movimiento
     const tiposMovimiento = [
-      { tipo_movimiento: 'Ingreso', descripcion: 'Entrada de productos' },
-      { tipo_movimiento: 'Egreso', descripcion: 'Salida de productos' },
-      { tipo_movimiento: 'Ajuste', descripcion: 'Ajuste de inventario' }
+      { tipo_movimiento: 'MOV_INICIAL', descripcion: 'Inventario Inicial' },
+      { tipo_movimiento: 'MOV_COMPRA', descripcion: 'Compra / Reabastecimiento' },
+      { tipo_movimiento: 'MOV_VENTA', descripcion: 'Venta' },
+      { tipo_movimiento: 'MOV_AJUSTE', descripcion: 'Ajuste / Pérdida' }
     ];
+
     for (const t of tiposMovimiento) {
       await queryInterface.bulkInsert({ tableName: 'tipo_movimiento', schema: 'catalogo' }, [t], { ignoreDuplicates: true });
     }
@@ -37,9 +39,8 @@ module.exports = {
 
     // 4. Estado Producto
     const estadosProducto = [
-      { estado_producto: 'Activo', codigo: 'PROD_ACTIVO' },
-      { estado_producto: 'Inactivo', codigo: 'PROD_INACTIVO' },
-      { estado_producto: 'Agotado', codigo: 'PROD_AGOTADO' }
+      { estado_producto: 'Activo', codigo: 'PRO_ACTIVO' },
+      { estado_producto: 'Descontinuado', codigo: 'PRO_DESCONTINUADO' }
     ];
     for (const e of estadosProducto) {
       await queryInterface.bulkInsert({ tableName: 'estado_producto', schema: 'catalogo' }, [e], { ignoreDuplicates: true });

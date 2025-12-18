@@ -60,13 +60,17 @@ export class ProductService {
             // 4. Registrar Movimiento Inicial
             const idMovInicial = await this._getTipoMovimientoId('MOV_INICIAL');
             if (idMovInicial) {
+                // Formatear la fecha en español (DD/MM/YYYY)
+                const now = new Date();
+                const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
                 await MovimientoInventario.create({
                     id_producto: newProduct.id_producto,
                     id_tipo_movimiento: idMovInicial,
                     cantidad: stock_actual,
                     stock_anterior: 0,
                     stock_nuevo: stock_actual,
-                    fecha_movimiento: new Date()
+                    fecha_movimiento: now,
+                    detalle: `${formattedDate}: Inventario inicial de ${stock_actual} unidades.` // Aquí usamos la fecha formateada
                 }, { transaction: t });
             }
 
@@ -139,13 +143,18 @@ export class ProductService {
                 const diferencia = stock_actual - stockAnterior;
                 const idMovAjuste = await this._getTipoMovimientoId('MOV_AJUSTE');
 
+                // Formatear la fecha en español (DD/MM/YYYY)
+                const now = new Date();
+                const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+                // Detalle del ajuste
                 await MovimientoInventario.create({
                     id_producto: producto.id_producto,
                     id_tipo_movimiento: idMovAjuste,
                     cantidad: Math.abs(diferencia),
                     stock_anterior: stockAnterior,
                     stock_nuevo: stock_actual,
-                    fecha_movimiento: new Date()
+                    fecha_movimiento: now,
+                    detalle: `${formattedDate}: Ajuste de inventario de ${diferencia > 0 ? '+' : ''}${diferencia} unidades.`
                 }, { transaction: t });
 
                 if (stock_actual === 0) {
@@ -186,7 +195,8 @@ export class ProductService {
             return await Producto.findAll({
                 include: [
                     { model: CategoriaProducto, attributes: ['id_categoria', 'categoria'] },
-                    { model: EstadoProducto, attributes: ['id_estado_producto', 'estado_producto', 'codigo'] }
+                    { model: EstadoProducto, attributes: ['id_estado_producto', 'estado_producto', 'codigo'] },
+                    { model: MovimientoInventario, attributes: ['detalle'] }
                 ],
                 order: [['nombre', 'ASC']]
             });

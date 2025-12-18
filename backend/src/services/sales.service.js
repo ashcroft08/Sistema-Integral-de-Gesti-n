@@ -207,14 +207,19 @@ export class SalesService {
                 const stockAnterior = productoDb.stock_actual;
                 const stockNuevo = stockAnterior - cantidad;
 
+                // Formatear la fecha en español (DD/MM/YYYY)
+                const now = new Date();
+                const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+
                 await MovimientoInventario.create({
                     id_producto: productoDb.id_producto,
                     id_tipo_movimiento: tipoMovVenta.id_tipo_movimiento,
                     cantidad: cantidad,
                     stock_anterior: stockAnterior,
                     stock_nuevo: stockNuevo,
-                    fecha_movimiento: new Date(),
-                    id_detalle_factura: detalleCreado.id_detalle_factura
+                    fecha_movimiento: now,
+                    id_detalle_factura: detalleCreado.id_detalle_factura,
+                    detalle: `${formattedDate}: Venta de ${cantidad} unidades. Factura ${nuevaFactura.secuencial}`
                 }, { transaction: t });
 
                 await productoDb.update({ stock_actual: stockNuevo }, { transaction: t });

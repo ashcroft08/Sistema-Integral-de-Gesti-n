@@ -52,6 +52,10 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false
       },
+      id_detalle_factura: {
+        type: Sequelize.INTEGER,
+        allowNull: true // <-- Permite nulos
+      },
       detalle: {
         type: Sequelize.TEXT,
         allowNull: true
