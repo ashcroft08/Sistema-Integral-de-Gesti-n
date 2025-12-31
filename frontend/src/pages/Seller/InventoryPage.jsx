@@ -13,6 +13,7 @@ import { ESTADOS_PRODUCTO } from "../../constants/statuses";
 import ProductFormModal from "../../components/ui/ProductFormModal";
 import ProductStatusConfirmationModal from "../../components/UI/ProductStatusConfirmationModal";
 import RestockModal from "../../components/ui/RestockModal";
+import KardexModal from "../../components/ui/KardexModal";
 
 const InventoryPage = () => {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ const InventoryPage = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDiscontinueModalOpen, setIsDiscontinueModalOpen] = useState(false);
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false); // ✨ Estado modal restock
+  const [isKardexModalOpen, setIsKardexModalOpen] = useState(false);
 
   const [currentProduct, setCurrentProduct] = useState(null);
   const [productToDiscontinue, setProductToDiscontinue] = useState(null);
@@ -165,6 +167,11 @@ const InventoryPage = () => {
     }
     setCurrentProduct(product);
     setIsFormModalOpen(true);
+  };
+
+  const handleOpenKardex = (product) => {
+    setCurrentProduct(product);
+    setIsKardexModalOpen(true);
   };
 
   const handleSaveProduct = async (formData) => {
@@ -398,6 +405,18 @@ const InventoryPage = () => {
                 </span>
               </button>
             )}
+
+            {/* Botón historial movimientos (Kardex) */}
+            <button
+              onClick={() => handleOpenKardex(row)}
+              disabled={isDisc}
+              className={`p-2 text-text-secondary/80 hover:text-blue-600 dark:text-background-light/70 dark:hover:text-blue-400 rounded-lg transition-colors ${
+                isDisc ? "cursor-not-allowed opacity-50" : ""
+              }`}
+              title="Historial de Movimientos (Kardex)"
+            >
+              <span className="material-symbols-outlined text-lg">overview</span>
+            </button>
           </div>
         );
       },
@@ -527,6 +546,12 @@ const InventoryPage = () => {
         onClose={() => setIsRestockModalOpen(false)}
         onConfirm={handleConfirmRestock}
         product={productToRestock}
+      />
+
+      <KardexModal
+        isOpen={isKardexModalOpen}
+        onClose={() => setIsKardexModalOpen(false)}
+        product={currentProduct} // Usamos currentProduct que seteaste en handleOpenKardex
       />
 
       <ProductStatusConfirmationModal
