@@ -2,11 +2,11 @@ import {
     Factura, DetalleFactura, Producto, MovimientoInventario,
     TipoMovimiento, EstadoSri, ValorIva, Descuento, Cliente,
     Usuario, MetodoPago, CuentaPorCobrar, PagoCuentaCobrar,
-    ConfiguracionSri, NotificacionesStock
+    ConfiguracionSri, NotificacionesStock, ClienteIdentificacion, TipoIdentificacion
 } from '../models/index.js';
 import db from '../database/database.js';
 import { SriService } from './sri.service.js';
-import { StorageService } from './storage.service.js'; // Cloudinary
+import { StorageService } from './storage.service.js';
 import { Op } from 'sequelize';
 
 const { sequelize } = db;
@@ -66,7 +66,6 @@ export class SalesService {
                 throw new Error('Método de pago no válido.');
             }
 
-            // Validar tipo de venta
             if (tipo_venta === 'CREDITO' && (!plazo_credito_dias || plazo_credito_dias <= 0)) {
                 throw new Error('Las ventas a crédito requieren un plazo en días mayor a 0.');
             }
@@ -89,10 +88,8 @@ export class SalesService {
                 throw new Error('Error de configuración: Faltan estados SRI o Tipos de Movimiento.');
             }
 
-            // ====== GENERAR SECUENCIAL ======
             const nuevoSecuencial = await this._generarSecuencial(t);
 
-            // ====== DETERMINAR IVA PRINCIPAL ======
             const ivaMap = {};
             for (const item of productos) {
                 ivaMap[item.id_valor_iva] = (ivaMap[item.id_valor_iva] || 0) + 1;
@@ -101,14 +98,12 @@ export class SalesService {
                 ivaMap[a] > ivaMap[b] ? a : b
             );
 
-            // ====== CALCULAR FECHA VENCIMIENTO (si es crédito) ======
             let fechaVencimiento = null;
             if (tipo_venta === 'CREDITO') {
                 fechaVencimiento = new Date();
                 fechaVencimiento.setDate(fechaVencimiento.getDate() + plazo_credito_dias);
             }
 
-            // ====== CREAR FACTURA ======
             const nuevaFactura = await Factura.create({
                 id_cliente,
                 id_vendedor,
@@ -129,14 +124,12 @@ export class SalesService {
                 saldo_pendiente: 0
             }, { transaction: t });
 
-            // ====== TOTALIZADORES ======
             let totalSubtotalSinIva = 0;
             let totalSubtotalConIva = 0;
             let totalDescuentos = 0;
             let totalIva = 0;
             let totalPagarFinal = 0;
 
-            // ====== PROCESAR PRODUCTOS ======
             for (const item of productos) {
                 if (!item.cantidad || item.cantidad <= 0) {
                     throw new Error('La cantidad de cada producto debe ser mayor a cero.');
@@ -168,7 +161,6 @@ export class SalesService {
                     throw new Error(`Stock insuficiente para "${productoDb.nombre}". Disponible: ${productoDb.stock_actual}`);
                 }
 
-                // ====== CÁLCULOS ======
                 const cantidad = parseInt(item.cantidad);
                 const precio = parseFloat(productoDb.precio);
                 const subtotalBruto = this._redondear(precio * cantidad);
@@ -188,7 +180,6 @@ export class SalesService {
                     totalSubtotalSinIva = this._redondear(totalSubtotalSinIva + baseImponible);
                 }
 
-                // ====== GUARDAR DETALLE ======
                 const detalleCreado = await DetalleFactura.create({
                     id_factura: nuevaFactura.id_factura,
                     id_producto: productoDb.id_producto,
@@ -202,12 +193,10 @@ export class SalesService {
                     total: totalLinea
                 }, { transaction: t });
 
-                // ====== MOVIMIENTO INVENTARIO ======
                 const stockMinimo = productoDb.stock_minimo;
                 const stockAnterior = productoDb.stock_actual;
                 const stockNuevo = stockAnterior - cantidad;
 
-                // Formatear la fecha en español (DD/MM/YYYY)
                 const now = new Date();
                 const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
@@ -224,23 +213,20 @@ export class SalesService {
 
                 await productoDb.update({ stock_actual: stockNuevo }, { transaction: t });
 
-                // Notificación si se agota
                 if (stockNuevo === 0) {
                     await NotificacionesStock.create({
                         id_producto: productoDb.id_producto,
                         mensaje: `AGOTADO: El producto "${productoDb.nombre}" se ha agotado. Aumentar stock.`
                     }, { transaction: t });
                 }
-                else if (stockNuevo < stockMinimo) { // Notificación si se baja el stock
+                else if (stockNuevo < stockMinimo) {
                     await NotificacionesStock.create({
                         id_producto: productoDb.id_producto,
                         mensaje: `BAJO STOCK: "${productoDb.nombre}" tiene solo ${productoDb.stock_actual} unidades (mínimo: ${productoDb.stock_minimo})`
                     }, { transaction: t });
                 }
-
             }
 
-            // ====== ACTUALIZAR TOTALES ======
             const saldoPendiente = tipo_venta === 'CREDITO' ? totalPagarFinal : 0;
 
             await nuevaFactura.update({
@@ -252,7 +238,6 @@ export class SalesService {
                 saldo_pendiente: saldoPendiente
             }, { transaction: t });
 
-            // ====== CREAR CUENTA POR COBRAR (si es crédito) ======
             if (tipo_venta === 'CREDITO') {
                 await CuentaPorCobrar.create({
                     id_factura: nuevaFactura.id_factura,
@@ -270,16 +255,12 @@ export class SalesService {
 
             await t.commit();
 
-            // ====== POST-COMMIT: PROCESO SRI (ASÍNCRONO) ======
             this._procesarSriAsync(idFacturaCreada).catch(err => {
                 console.error(`Error procesando SRI para factura ${idFacturaCreada}:`, err);
             });
 
-            // ====== RETORNAR FACTURA COMPLETA ======
-            // ✅ IMPORTANTE: Esperar a que se cargue completamente
             const facturaCompleta = await this._cargarFacturaCompleta(idFacturaCreada);
 
-            // ✅ DEBUG: Verificar que DetalleFactura esté presente
             if (!facturaCompleta.DetalleFactura || facturaCompleta.DetalleFactura.length === 0) {
                 console.error('⚠️ WARNING: DetalleFactura no cargado en factura', idFacturaCreada);
             }
@@ -294,15 +275,10 @@ export class SalesService {
         }
     }
 
-    // ============================================
-    // PROCESO SRI ASÍNCRONO CON CLOUDINARY
-    // ============================================
     async _procesarSriAsync(idFactura) {
         try {
-            // 1. Generar XML
             const xml = await this.sriService.generarXmlFactura(idFactura);
 
-            // 2. Firmar XML
             const config = await ConfiguracionSri.findOne({ where: { activo: true } });
             const xmlFirmado = await this.sriService.firmarXml(
                 xml,
@@ -310,7 +286,6 @@ export class SalesService {
                 config.certificado_password
             );
 
-            // 3. Subir a Cloudinary
             const factura = await Factura.findByPk(idFactura);
             const nombreArchivo = `facturas/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}/${factura.secuencial}.xml`;
 
@@ -325,14 +300,12 @@ export class SalesService {
                 }
             );
 
-            // 4. Actualizar estado a FIRMADO
             const estadoFirmado = await EstadoSri.findOne({ where: { codigo: 'SRI_FIRMADO' } });
             await factura.update({
                 xml_firmado_url: urlXml,
                 id_estado_sri: estadoFirmado.id_estado_sri
             });
 
-            // 5. Enviar al SRI
             const respuesta = await this.sriService.enviarAlSri(xmlFirmado);
 
             if (respuesta.estado === 'RECIBIDA') {
@@ -379,14 +352,26 @@ export class SalesService {
     }
 
     // ============================================
-    // HELPER: CARGAR FACTURA COMPLETA
+    // ✅ HELPER ACTUALIZADO: CARGAR FACTURA COMPLETA CON IDENTIFICACIONES
     // ============================================
     async _cargarFacturaCompleta(idFactura) {
         const factura = await Factura.findByPk(idFactura, {
             include: [
                 {
                     model: Cliente,
-                    attributes: ['id_cliente', 'nombre', 'apellido', 'identificacion', 'email', 'celular']
+                    attributes: ['id_cliente', 'nombre', 'apellido', 'email', 'celular'],
+                    // ✅ INCLUIR LAS IDENTIFICACIONES
+                    include: [
+                        {
+                            model: ClienteIdentificacion,
+                            include: [
+                                {
+                                    model: TipoIdentificacion,
+                                    attributes: ['id_tipo_identificacion', 'tipo_identificacion', 'codigo']
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     model: Usuario,
@@ -401,7 +386,6 @@ export class SalesService {
                     model: MetodoPago,
                     attributes: ['id_metodo_pago', 'metodo_pago', 'codigo', 'codigo_sri']
                 },
-                // ✅ AGREGAR ESTO: ValorIva de la factura
                 {
                     model: ValorIva,
                     attributes: ['id_iva', 'porcentaje_iva', 'codigo', 'descripcion']
@@ -415,7 +399,7 @@ export class SalesService {
                             attributes: ['id_producto', 'nombre', 'codigo_producto', 'precio']
                         },
                         {
-                            model: ValorIva,  // IVA de cada detalle
+                            model: ValorIva,
                             attributes: ['id_iva', 'porcentaje_iva', 'codigo', 'descripcion']
                         },
                         {
@@ -428,13 +412,18 @@ export class SalesService {
             ]
         });
 
-        // ✅ DEBUG mejorado
         if (factura) {
+            // ✅ Obtener identificación principal
+            const identificacionPrincipal = factura.Cliente?.ClienteIdentificacions?.find(i => i.es_principal)
+                || factura.Cliente?.ClienteIdentificacions?.[0];
+
             console.log('✅ Factura cargada:', {
                 id: factura.id_factura,
                 secuencial: factura.secuencial,
                 detalles: factura.DetalleFactura?.length || 0,
                 cliente: `${factura.Cliente?.nombre || ''} ${factura.Cliente?.apellido || ''}`.trim(),
+                identificacion: identificacionPrincipal?.identificacion || 'N/A',
+                tipoId: identificacionPrincipal?.TipoIdentificacion?.tipo_identificacion || 'N/A',
                 iva: factura.ValorIva?.descripcion || `${factura.ValorIva?.porcentaje_iva}%` || 'N/A'
             });
         }
@@ -442,9 +431,6 @@ export class SalesService {
         return factura;
     }
 
-    // ============================================
-    // CATÁLOGOS PARA FRONTEND
-    // ============================================
     async getSalesCatalogs() {
         const descuentos = await Descuento.findAll({
             where: { activo: true },
@@ -463,7 +449,7 @@ export class SalesService {
     }
 
     // ============================================
-    // HISTORIAL DE VENTAS
+    // ✅ HISTORIAL ACTUALIZADO CON IDENTIFICACIONES
     // ============================================
     async getSalesHistory(filtros = {}) {
         const { fecha_desde, fecha_hasta, id_vendedor, id_estado_sri, tipo_venta, limit = 50 } = filtros;
@@ -478,7 +464,17 @@ export class SalesService {
         return await Factura.findAll({
             where,
             include: [
-                { model: Cliente, attributes: ['nombre', 'apellido', 'identificacion'] },
+                {
+                    model: Cliente,
+                    attributes: ['nombre', 'apellido'],
+                    // ✅ INCLUIR IDENTIFICACIONES
+                    include: [
+                        {
+                            model: ClienteIdentificacion,
+                            include: [{ model: TipoIdentificacion }]
+                        }
+                    ]
+                },
                 { model: Usuario, as: 'Usuario', attributes: ['nombre', 'apellido'] },
                 { model: EstadoSri, attributes: ['estado_sri', 'codigo'] },
                 { model: MetodoPago, attributes: ['metodo_pago', 'codigo_sri'] }
@@ -488,9 +484,6 @@ export class SalesService {
         });
     }
 
-    // ============================================
-    // REENVIAR AL SRI
-    // ============================================
     async reenviarAlSri(idFactura) {
         const factura = await Factura.findByPk(idFactura);
 
@@ -511,7 +504,7 @@ export class SalesService {
     }
 
     // ============================================
-    // GESTIÓN DE CUENTAS POR COBRAR
+    // ✅ CUENTAS POR COBRAR ACTUALIZADO
     // ============================================
     async getCuentasPorCobrar(filtros = {}) {
         const { estado, id_cliente, vencidas, limit = 50 } = filtros;
@@ -529,8 +522,14 @@ export class SalesService {
             include: [
                 {
                     model: Cliente,
-                    // ✅ CORRECCIÓN: celular en vez de telefono
-                    attributes: ['nombre', 'apellido', 'identificacion', 'celular']
+                    attributes: ['nombre', 'apellido', 'celular'],
+                    // ✅ INCLUIR IDENTIFICACIONES
+                    include: [
+                        {
+                            model: ClienteIdentificacion,
+                            include: [{ model: TipoIdentificacion }]
+                        }
+                    ]
                 },
                 {
                     model: Factura,
@@ -597,13 +596,22 @@ export class SalesService {
         }
     }
 
+    // ============================================
+    // ✅ DETALLE CUENTA POR COBRAR ACTUALIZADO
+    // ============================================
     async getCuentaPorCobrarDetalle(idCuentaCobrar) {
         return await CuentaPorCobrar.findByPk(idCuentaCobrar, {
             include: [
                 {
                     model: Cliente,
-                    // ✅ CORRECCIÓN: celular en vez de telefono
-                    attributes: ['nombre', 'apellido', 'identificacion', 'email', 'celular']
+                    attributes: ['nombre', 'apellido', 'email', 'celular'],
+                    // ✅ INCLUIR IDENTIFICACIONES
+                    include: [
+                        {
+                            model: ClienteIdentificacion,
+                            include: [{ model: TipoIdentificacion }]
+                        }
+                    ]
                 },
                 {
                     model: Factura,
@@ -632,15 +640,9 @@ export class SalesService {
         });
     }
 
-    /**
- * NUEVO: Helper para verificar y notificar stock bajo
- */
     async _verificarStockBajo(producto) {
         try {
-            // Solo notificar si stock está bajo pero no agotado
             if (producto.stock_actual > 0 && producto.stock_actual <= producto.stock_minimo) {
-
-                // Evitar duplicados: verificar si ya hay notificación reciente no leída
                 const hace24Horas = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
                 const notificacionExistente = await NotificacionesStock.findOne({
@@ -661,7 +663,6 @@ export class SalesService {
                     return;
                 }
 
-                // Crear nueva notificación
                 await NotificacionesStock.create({
                     id_producto: producto.id_producto,
                     mensaje: `⚠️ Stock bajo: "${producto.nombre}" tiene solo ${producto.stock_actual} unidades (mínimo: ${producto.stock_minimo})`
@@ -671,7 +672,6 @@ export class SalesService {
             }
         } catch (error) {
             console.error('Error verificando stock bajo:', error);
-            // No lanzar error para no interrumpir el flujo principal
         }
     }
 }
