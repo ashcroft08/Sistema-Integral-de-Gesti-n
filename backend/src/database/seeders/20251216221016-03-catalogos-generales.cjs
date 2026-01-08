@@ -28,13 +28,21 @@ module.exports = {
 
     // 3. Estado SRI
     const estadosSri = [
-      { estado_sri: 'Pendiente', codigo: 'SRI_PENDIENTE', descripcion: 'Pendiente de envío' },
+      { estado_sri: 'Pendiente', codigo: 'SRI_PENDIENTE', descripcion: 'Pendiente de envío al SRI' },
+      { estado_sri: 'Firmado', codigo: 'SRI_FIRMADO', descripcion: 'XML firmado digitalmente' }, // ✅ AGREGAR
+      { estado_sri: 'Recibida', codigo: 'SRI_RECIBIDA', descripcion: 'Recibida por el SRI' }, // ✅ AGREGAR
       { estado_sri: 'Autorizado', codigo: 'SRI_AUTORIZADO', descripcion: 'Autorizado por el SRI' },
       { estado_sri: 'Rechazado', codigo: 'SRI_RECHAZADO', descripcion: 'Rechazado por el SRI' },
+      { estado_sri: 'Devuelta', codigo: 'SRI_DEVUELTA', descripcion: 'Devuelta por el SRI' }, // ✅ AGREGAR (opcional)
       { estado_sri: 'Anulado', codigo: 'SRI_ANULADO', descripcion: 'Anulado' }
     ];
+
     for (const e of estadosSri) {
-      await queryInterface.bulkInsert({ tableName: 'estado_sri', schema: 'catalogo' }, [e], { ignoreDuplicates: true });
+      await queryInterface.bulkInsert(
+        { tableName: 'estado_sri', schema: 'catalogo' },
+        [e],
+        { ignoreDuplicates: true }
+      );
     }
 
     // 4. Estado Producto

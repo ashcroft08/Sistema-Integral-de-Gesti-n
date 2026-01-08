@@ -7,7 +7,7 @@ import fs from 'fs/promises';
 import moment from 'moment';
 import axios from 'axios';
 import FormData from 'form-data';
-import { ConfiguracionSri, Factura, Cliente, DetalleFactura, Producto, ValorIva, CertificadoDigital } from '../models/index.js';
+import { ConfiguracionSri, Factura, Cliente, DetalleFactura, Producto, ValorIva, CertificadoDigital, ClienteIdentificacion, TipoIdentificacion } from '../models/index.js';
 import { CertificateService } from './certificate.service.js';
 
 export class SriService {
@@ -65,12 +65,25 @@ export class SriService {
     // ============================================
     // GENERAR XML FACTURA
     // ============================================
+    // services/sri.service.js
     async generarXmlFactura(idFactura) {
         const factura = await Factura.findByPk(idFactura, {
             include: [
                 {
                     model: Cliente,
-                    attributes: ['identificacion', 'nombre', 'apellido', 'email', 'direccion']
+                    attributes: ['nombre', 'apellido', 'email', 'direccion'],
+                    // ✅ INCLUIR IDENTIFICACIONES DEL CLIENTE
+                    include: [
+                        {
+                            model: ClienteIdentificacion,
+                            include: [
+                                {
+                                    model: TipoIdentificacion,
+                                    attributes: ['tipo_identificacion', 'codigo']
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     model: DetalleFactura,
@@ -92,6 +105,39 @@ export class SriService {
             throw new Error('Configuración SRI no encontrada');
         }
 
+        // ✅ OBTENER IDENTIFICACIÓN PRINCIPAL DEL CLIENTE
+        const cliente = factura.Cliente;
+        const identificacionPrincipal = cliente.ClienteIdentificacions?.find(i => i.es_principal)
+            || cliente.ClienteIdentificacions?.[0];
+
+        if (!identificacionPrincipal) {
+            throw new Error('El cliente no tiene ninguna identificación registrada');
+        }
+
+        const identificacion = identificacionPrincipal.identificacion;
+        const tipoIdentificacion = identificacionPrincipal.TipoIdentificacion;
+
+        // ✅ DETERMINAR CÓDIGO SRI DEL TIPO DE IDENTIFICACIÓN
+        let tipoIdentificacionSri;
+        switch (tipoIdentificacion.codigo) {
+            case 'SRI_RUC':
+                tipoIdentificacionSri = '04'; // RUC
+                break;
+            case 'SRI_CEDULA':
+                tipoIdentificacionSri = '05'; // Cédula
+                break;
+            case 'SRI_PASAPORTE':
+                tipoIdentificacionSri = '06'; // Pasaporte
+                break;
+            case 'SRI_CONSUMIDOR_FINAL':
+                tipoIdentificacionSri = '07'; // Consumidor Final
+                break;
+            default:
+                // Fallback basado en longitud (por si acaso)
+                tipoIdentificacionSri = identificacion.length === 10 ? '05' :
+                    identificacion.length === 13 ? '04' : '06';
+        }
+
         // Generar clave de acceso si no existe
         if (!factura.clave_acceso_sri) {
             const [est, pe, sec] = factura.secuencial.split('-');
@@ -111,7 +157,7 @@ export class SriService {
             await factura.update({ clave_acceso_sri: claveAcceso });
         }
 
-        // Construir XML (código igual que antes)
+        // Construir XML
         const root = xmlbuilder2.create({ version: '1.0', encoding: 'UTF-8' })
             .ele('factura', { id: 'comprobante', version: '1.0.0' });
 
@@ -138,13 +184,10 @@ export class SriService {
         }
         infoFactura.ele('obligadoContabilidad').txt(config.obligado_contabilidad ? 'SI' : 'NO');
 
-        const cliente = factura.Cliente;
-        infoFactura.ele('tipoIdentificacionComprador').txt(
-            cliente.identificacion.length === 10 ? '05' :
-                cliente.identificacion.length === 13 ? '04' : '06'
-        );
+        // ✅ USAR TIPO DE IDENTIFICACIÓN CORRECTO
+        infoFactura.ele('tipoIdentificacionComprador').txt(tipoIdentificacionSri);
         infoFactura.ele('razonSocialComprador').txt(`${cliente.nombre} ${cliente.apellido}`);
-        infoFactura.ele('identificacionComprador').txt(cliente.identificacion);
+        infoFactura.ele('identificacionComprador').txt(identificacion);
         infoFactura.ele('direccionComprador').txt(cliente.direccion);
 
         infoFactura.ele('totalSinImpuestos').txt(
