@@ -5,11 +5,7 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const schemas = [
             'seguridad',
-            'catalogo',
             'configuracion',
-            'inventario',
-            'ventas',
-            'contabilidad',
             'auditoria'
         ];
 
@@ -21,11 +17,7 @@ module.exports = {
     async down(queryInterface, Sequelize) {
         const schemas = [
             'auditoria',
-            'contabilidad',
-            'ventas',
-            'inventario',
             'configuracion',
-            'catalogo',
             'seguridad'
         ];
 

@@ -25,8 +25,8 @@ module.exports = {
     const roles = [
       { rol: 'Superusuario', codigo: 'ROL_SUPER' },
       { rol: 'Administrador', codigo: 'ROL_ADMIN' },
-      { rol: 'Vendedor', codigo: 'ROL_VENDEDOR' },
-      { rol: 'Contador', codigo: 'ROL_CONTADOR' }
+      { rol: 'Ventas', codigo: 'ROL_VENTAS' },
+      { rol: 'Bodega', codigo: 'ROL_BODEGA' }
     ];
 
     for (const rol of roles) {
@@ -41,20 +41,26 @@ module.exports = {
 
     // 3. Usuario Admin
     if (rolSuper && estadoActivo) {
-      const hashedPassword = await bcrypt.hash('Admin08_*', 10);
+      const email = process.env.DEFAULT_SUPERUSER_EMAIL || 'admin@gmail.com';
+      const password = process.env.DEFAULT_SUPERUSER_PASSWORD || 'Admin08_*';
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Verificar si existe
       const [users] = await queryInterface.sequelize.query(
-        `SELECT id_usuario FROM seguridad.usuario WHERE email = 'admin@gmail.com'`
+        `SELECT id_usuario FROM seguridad.usuario WHERE email = :email`,
+        {
+          replacements: { email },
+          type: queryInterface.sequelize.QueryTypes.SELECT
+        }
       );
 
-      if (users.length === 0) {
+      if (!users || users.length === 0) {
         await queryInterface.bulkInsert({ tableName: 'usuario', schema: 'seguridad' }, [{
           id_rol: rolSuper.id_rol,
           id_estado_usuario: estadoActivo.id_estado_usuario,
           nombre: 'Administrador',
           apellido: 'Sistema',
-          email: 'admin@gmail.com',
+          email,
           password: hashedPassword,
           primer_ingreso: true,
           intentos_fallidos: 0
@@ -64,7 +70,8 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete({ tableName: 'usuario', schema: 'seguridad' }, { email: 'admin@gmail.com' }, {});
+    const email = process.env.DEFAULT_SUPERUSER_EMAIL || 'admin@gmail.com';
+    await queryInterface.bulkDelete({ tableName: 'usuario', schema: 'seguridad' }, { email }, {});
     await queryInterface.bulkDelete({ tableName: 'rol', schema: 'seguridad' }, null, {});
     await queryInterface.bulkDelete({ tableName: 'estado_usuario', schema: 'seguridad' }, null, {});
   }

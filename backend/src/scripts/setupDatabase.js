@@ -38,7 +38,7 @@ async function setupDatabase() {
         console.log('   npm run db:setup');
 
         console.log('\n✅ Setup de base de datos completado');
-        console.log('📊 Esquemas creados: seguridad, ventas, contabilidad, catalogo, inventario, configuracion, auditoria');
+        console.log('📊 Esquemas creados: seguridad, configuracion, auditoria');
 
         process.exit(0);
 

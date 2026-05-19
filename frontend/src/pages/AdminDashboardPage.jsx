@@ -5,14 +5,13 @@ import AdminLayout from "../components/Layout/AdminLayout";
 import DashboardStats from "../components/Admin/DashboardStats";
 import Button from "../components/UI/Button";
 import axiosInstance from "../services/axios";
-import { categoryService } from "../services/category.service";
 import { Link } from "react-router-dom";
 
 const AdminDashboardPage = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // Para estadísticas completas
-  const [categories, setCategories] = useState([]);
+  const categories = []; // Las categorías se implementarán en la refactorización
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -23,7 +22,7 @@ const AdminDashboardPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      await Promise.all([fetchUsers(), fetchCategories()]);
+      await fetchUsers();
     } catch (error) {
       console.error('Error al cargar datos:', error);
       setError('Error al cargar los datos del dashboard');
@@ -50,18 +49,6 @@ const AdminDashboardPage = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await categoryService.getAllCategories();
-      if (response.success) {
-        setCategories(response.categorias || []);
-      }
-    } catch (error) {
-      console.error('Error al obtener categorías:', error);
-      // No establecer error global, solo log
-    }
-  };
-
   // Formatear nombre completo
   const getFullName = (user) => {
     return `${user.nombre || ''} ${user.apellido || ''}`.trim() || 'Sin nombre';
@@ -83,13 +70,6 @@ const AdminDashboardPage = () => {
       icon: "manage_accounts",
       link: "/admin/users",
       color: "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-    },
-    {
-      title: "Gestionar Categorías",
-      description: "Crear y editar categorías de productos",
-      icon: "category",
-      link: "/admin/categories",
-      color: "bg-purple-500/10 text-purple-600 dark:text-purple-400"
     },
     {
       title: "Configuración de Tokens",
@@ -120,15 +100,6 @@ const AdminDashboardPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <Link to="/admin/categories">
-            <Button
-              variant="outline"
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm"
-            >
-              <span className="material-symbols-outlined text-lg">category</span>
-              Categorías
-            </Button>
-          </Link>
           <Link to="/admin/users">
             <Button className="inline-flex items-center gap-2 px-4 py-2 text-sm">
               <span className="material-symbols-outlined text-lg">person_add</span>
@@ -243,8 +214,8 @@ const AdminDashboardPage = () => {
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">
-                          {userItem.Rol?.rol === 'Vendedor' ? 'storefront' : 
-                           userItem.Rol?.rol === 'Contador' ? 'receipt_long' : 
+                          {userItem.Rol?.rol === 'Ventas' ? 'shopping_cart' : 
+                           userItem.Rol?.rol === 'Bodega' ? 'inventory_2' : 
                            'admin_panel_settings'}
                         </span>
                         {userItem.Rol?.rol || 'Sin rol'}

@@ -4,8 +4,8 @@ import React, { useMemo } from "react";
 const DashboardStats = ({ users = [], categories = [] }) => {
   const stats = useMemo(() => {
     const activeUsers = users.filter(u => u.id_estado_usuario === 1).length;
-    const sellers = users.filter(u => u.Rol?.rol === 'Vendedor').length;
-    const accountants = users.filter(u => u.Rol?.rol === 'Contador').length;
+    const ventasCount = users.filter(u => u.Rol?.rol === 'Ventas').length;
+    const bodegaCount = users.filter(u => u.Rol?.rol === 'Bodega').length;
     const pendingFirstLogin = users.filter(u => u.primer_ingreso === true).length;
     
     // Estadísticas de categorías
@@ -37,14 +37,14 @@ const DashboardStats = ({ users = [], categories = [] }) => {
         subtitle: `${Math.round((activeUsers / users.length) * 100) || 0}% del total`
       },
       { 
-        title: "Vendedores", 
-        value: sellers.toString(), 
-        icon: "storefront" 
+        title: "Ventas", 
+        value: ventasCount.toString(), 
+        icon: "shopping_cart" 
       },
       { 
-        title: "Contadores", 
-        value: accountants.toString(), 
-        icon: "receipt_long" 
+        title: "Bodega", 
+        value: bodegaCount.toString(), 
+        icon: "inventory_2" 
       },
       { 
         title: "Pendientes Primer Login", 

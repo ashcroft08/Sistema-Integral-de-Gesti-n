@@ -16,84 +16,12 @@ const menuItems = {
     },
     { id: "tokens", label: "Token", icon: "token", path: "/admin/tokens" },
     { id: "locks", label: "Bloqueo", icon: "lock_clock", path: "/admin/locks" },
-    {
-      id: "taxes",
-      label: "Impuestos (IVA)",
-      icon: "percent",
-      path: "/admin/taxes",
-    },
-    {
-      id: "discounts",
-      label: "Descuentos",
-      icon: "sell",
-      path: "/admin/discounts",
-    },
-    {
-      id: "certificate",
-      label: "Certificado Digital",
-      icon: "license",
-      path: "/admin/certificate",
-    },
   ],
-  seller: [
-    { id: "dashboard", label: "Dashboard", icon: "dashboard", path: "/seller" },
-    {
-      id: "sales",
-      label: "Punto de Venta",
-      icon: "shopping_cart",
-      path: "/seller/sales",
-    },
-    {
-      id: "clients",
-      label: "Clientes",
-      icon: "group",
-      path: "/seller/clients",
-    },
-        {
-      id: "invoices",
-      label: "Facturas",
-      icon: "receipt_long",
-      path: "/seller/invoices",
-    },
-    {
-      id: "categories",
-      label: "Categorías",
-      icon: "category",
-      path: "/seller/categories",
-      adminOnly: true,
-    },
-    {
-      id: "inventory",
-      label: "Inventario",
-      icon: "inventory_2",
-      path: "/seller/inventory",
-    },
+  ventas: [
+    { id: "dashboard", label: "Dashboard", icon: "dashboard", path: "/ventas" },
   ],
-  accountant: [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: "dashboard",
-      path: "/contador",
-    },
-    {
-      id: "sales",
-      label: "Ventas",
-      icon: "shopping_cart",
-      path: "/contador/sales",
-    },
-    {
-      id: "reports",
-      label: "Reportes",
-      icon: "assessment",
-      path: "/contador/reports",
-    },
-    {
-      id: "clients",
-      label: "Clientes",
-      icon: "group",
-      path: "/contador/clients",
-    },
+  bodega: [
+    { id: "dashboard", label: "Dashboard", icon: "dashboard", path: "/bodega" },
   ],
 };
 
@@ -142,8 +70,8 @@ const Sidebar = () => {
 
   const getCurrentRole = () => {
     const path = location.pathname;
-    if (path.startsWith("/seller")) return "seller";
-    if (path.startsWith("/contador")) return "accountant";
+    if (path.startsWith("/ventas")) return "ventas";
+    if (path.startsWith("/bodega")) return "bodega";
     return "admin";
   };
 
@@ -164,11 +92,11 @@ const Sidebar = () => {
   const handleRoleChange = (newRole) => {
     setShowUserMenu(false);
     switch (newRole) {
-      case "seller":
-        navigate("/seller");
+      case "ventas":
+        navigate("/ventas");
         break;
-      case "accountant":
-        navigate("/contador");
+      case "bodega":
+        navigate("/bodega");
         break;
       case "admin":
         navigate("/admin");
@@ -187,17 +115,17 @@ const Sidebar = () => {
     const basePath =
       currentRole === "admin"
         ? "/admin"
-        : currentRole === "seller"
-        ? "/seller"
-        : "/contador";
+        : currentRole === "ventas"
+        ? "/ventas"
+        : "/bodega";
     navigate(`${basePath}/profile`);
     setShowUserMenu(false);
   };
 
   const getRoleDisplayName = (role) => {
     const roles = {
-      seller: "Vendedor",
-      accountant: "Contador",
+      ventas: "Ventas",
+      bodega: "Bodega",
       admin: "Administrador",
     };
     return roles[role] || "Administrador";
@@ -334,9 +262,9 @@ const Sidebar = () => {
                   >
                     <div className="flex items-center gap-3">
                       <span className="material-symbols-outlined text-xl text-primary/80">
-                        switch_account
+                        visibility
                       </span>
-                      <span>Cambiar Rol</span>
+                      <span>Cambiar Vista</span>
                     </div>
                     <span className="material-symbols-outlined text-sm text-text-secondary">
                       {showRoleSubmenu ? "expand_less" : "chevron_right"}
@@ -345,7 +273,7 @@ const Sidebar = () => {
 
                   {showRoleSubmenu && (
                     <div className="pl-4 mt-1 space-y-1 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
-                      {["admin", "seller", "accountant"].map((role) => (
+                      {["admin", "ventas", "bodega"].map((role) => (
                         <button
                           key={role}
                           onClick={() => handleRoleChange(role)}
@@ -357,9 +285,9 @@ const Sidebar = () => {
                         >
                           {role === "admin"
                             ? "Administrador"
-                            : role === "seller"
-                            ? "Vendedor"
-                            : "Contador"}
+                            : role === "ventas"
+                            ? "Ventas"
+                            : "Bodega"}
                         </button>
                       ))}
                     </div>

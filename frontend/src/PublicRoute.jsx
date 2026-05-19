@@ -16,8 +16,8 @@ const PublicRoute = () => {
     const roleRoutes = {
       Superusuario: "/admin",
       Administrador: "/admin",
-      Vendedor: "/seller",
-      Contador: "/admin",
+      Ventas: "/ventas",
+      Bodega: "/bodega",
     };
 
     const destination = roleRoutes[user.rol] || "/admin";

@@ -18,21 +18,12 @@ import UpdatePasswordPage from "./pages/UpdatePasswordPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import TokenSettingsPage from "./pages/Admin/TokenSettingsPage";
 import UsersPage from "./pages/Admin/UsersPage";
-import CategoriesPage from "./pages/Admin/CategoriesPage";
 import LocksPage from "./pages/Admin/LocksPage";
 import AdminSettingsPage from "./pages/Admin/SettingsPage";
-import DiscountPage from "./pages/Admin/DiscountPage";
-import IvaPage from "./pages/Admin/IvaPage";
-import CertificatesPage from "./pages/Admin/CertificatesPage";
 
-// Pages Vendedor
-import SellerDashboardPage from "./pages/SellerDashboardPage";
-import SellerSettingsPage from "./pages/Seller/SettingsPage";
-import InventoryPage from "./pages/Seller/InventoryPage";
-import ClientsPage from "./pages/Seller/ClientsPage";
-import SalesPage from "./pages/Seller/SalesPage";
-import CheckoutPage from "./pages/Seller/CheckoutPage";
-import SaleSuccessPage from "./pages/Seller/SaleSuccessPage";
+// Pages Ventas / Bodega
+import VentasDashboardPage from "./pages/Ventas/VentasDashboardPage";
+import BodegaDashboardPage from "./pages/Bodega/BodegaDashboardPage";
 
 function App() {
   return (
@@ -81,29 +72,35 @@ function App() {
             <Route index element={<AdminDashboardPage />} />
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="users" element={<UsersPage />} />
-            <Route path="categories" element={<CategoriesPage />} />
             <Route path="tokens" element={<TokenSettingsPage />} />
             <Route path="locks" element={<LocksPage />} />
-            <Route path="discounts" element={<DiscountPage />} />
-            <Route path="taxes" element={<IvaPage />} />
             <Route path="profile" element={<AdminSettingsPage />} />
-            <Route path="certificate" element={<CertificatesPage />} />
           </Route>
 
-          {/* === RUTAS PROTEGIDAS VENDEDOR === */}
+          {/* === RUTAS PROTEGIDAS VENTAS === */}
           <Route
-            path="/seller"
-            element={<ProtectedRoute allowedRoles={["Vendedor"]} />}
+            path="/ventas"
+            element={
+              <ProtectedRoute
+                allowedRoles={["Ventas", "Administrador", "Superusuario"]}
+              />
+            }
           >
-            <Route index element={<SellerDashboardPage />} />
-            <Route path="profile" element={<SellerSettingsPage />} />
-            <Route path="inventory" element={<InventoryPage />} />
-            {/* 👇 Nueva ruta de categorías - accesible por URL pero sidebar lo oculta para vendedores */}
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="clients" element={<ClientsPage />} />
-            <Route path="sales" element={<SalesPage />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="sale-success" element={<SaleSuccessPage />} />
+            <Route index element={<VentasDashboardPage />} />
+            <Route path="dashboard" element={<VentasDashboardPage />} />
+          </Route>
+
+          {/* === RUTAS PROTEGIDAS BODEGA === */}
+          <Route
+            path="/bodega"
+            element={
+              <ProtectedRoute
+                allowedRoles={["Bodega", "Administrador", "Superusuario"]}
+              />
+            }
+          >
+            <Route index element={<BodegaDashboardPage />} />
+            <Route path="dashboard" element={<BodegaDashboardPage />} />
           </Route>
 
           {/* === CATCH ALL === */}

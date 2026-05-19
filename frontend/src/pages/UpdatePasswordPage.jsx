@@ -57,8 +57,8 @@ const UpdatePasswordPage = () => {
   // Si el usuario ya cambió la contraseña, redirigir
   useEffect(() => {
     if (user && !tempToken) {
-      if (user.rol === "Vendedor") {
-        navigate("/seller");
+      if (user.rol === "Ventas") {
+        navigate("/ventas");
       } else {
         navigate("/admin");
       }
@@ -100,8 +100,8 @@ const UpdatePasswordPage = () => {
 
       if (result.success && result.code === "LOGIN_SUCCESS") {
         localStorage.removeItem("tempToken");
-        if (result.usuario.rol === "Vendedor") {
-          navigate("/seller");
+        if (result.usuario.rol === "Ventas") {
+          navigate("/ventas");
         } else {
           navigate("/admin");
         }
