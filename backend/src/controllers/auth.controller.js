@@ -1,142 +1,86 @@
 // src/controllers/auth.controller.js
 import { AuthService } from '../services/auth.service.js';
-import {
-    LoginSchema,
-    ChangePasswordSchema,
-    ForgotPasswordSchema,
-    ResetPasswordSchema
-} from '../schemas/auth.schemas.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/apiResponse.js';
 
 const authService = new AuthService();
 
 export class AuthController {
+    getCurrentUser = asyncHandler(async (req, res) => {
+        // El ID del usuario viene del middleware verifyToken (req.user.id)
+        const userId = req.user.id;
 
-    async getCurrentUser(req, res) {
-        try {
-            // El ID del usuario viene del middleware verifyToken (req.user.id)
-            const userId = req.user.id;
+        // Llama al servicio para obtener los datos del usuario
+        const usuario = await authService.getCurrentUser(userId);
 
-            // Llama al servicio para obtener los datos del usuario
-            const usuario = await authService.getCurrentUser(userId);
+        return res.status(200).json(
+            ApiResponse.success({ usuario })
+        );
+    });
 
-            return res.status(200).json({
-                success: true,
-                usuario: usuario
-            });
+    login = asyncHandler(async (req, res) => {
+        // Los datos ya están validados por el middleware
+        const { email, password } = req.validatedData;
 
-        } catch (error) {
-            console.error('Error en getCurrentUser controller:', error);
+        // Llama al servicio para la lógica de negocio
+        const result = await authService.login(email, password);
 
-            if (error.message === 'Usuario no encontrado') {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Usuario no encontrado'
-                });
-            }
-
-            return res.status(500).json({
-                success: false,
-                message: 'Error del servidor al obtener datos del usuario'
-            });
-        }
-    }
-
-    async login(req, res) {
-        try {
-            // Los datos ya están validados por el middleware
-            const { email, password } = req.validatedData;
-
-            // Llama al servicio para la lógica de negocio
-            const result = await authService.login(email, password);
-
-            // Si es el primer login, devolvemos el código especial
-            if (result.code === 'FORCE_CHANGE_PASSWORD') {
-                return res.status(200).json({
-                    success: true,
+        // Si es el primer login, devolvemos el código especial
+        if (result.code === 'FORCE_CHANGE_PASSWORD') {
+            return res.status(200).json(
+                ApiResponse.success({
                     code: result.code,
                     message: result.message,
                     tempToken: result.tempToken
-                });
-            }
+                })
+            );
+        }
 
-            // Login exitoso normal
-            res.status(200).json({
-                success: true,
+        // Login exitoso normal
+        return res.status(200).json(
+            ApiResponse.success({
                 code: 'LOGIN_SUCCESS',
                 token: result.token,
                 usuario: result.usuario
-            });
+            })
+        );
+    });
 
-        } catch (error) {
-            // Si el servicio lanza un error (ej: "Credenciales inválidas"), lo atrapamos
-            const statusCode = error.message.includes('bloqueada') ? 403 : 401;
-            res.status(statusCode).json({
-                success: false,
-                message: error.message || 'Error de autenticación'
-            });
-        }
-    }
+    forgotPassword = asyncHandler(async (req, res) => {
+        const { email } = req.validatedData;
 
-    async forgotPassword(req, res) {
-        try {
-            const { email } = req.validatedData;
+        // El servicio maneja la lógica de enviar el correo "en silencio"
+        await authService.forgotPassword(email);
 
-            // El servicio maneja la lógica de enviar el correo "en silencio"
-            await authService.forgotPassword(email);
+        // Siempre enviamos una respuesta positiva por seguridad silenciosa
+        return res.status(200).json(
+            ApiResponse.success(
+                null,
+                'Si tu email está registrado, recibirás un enlace de recuperación.'
+            )
+        );
+    });
 
-            // Siempre enviamos una respuesta positiva
-            res.status(200).json({
-                success: true,
-                message: 'Si tu email está registrado, recibirás un enlace de recuperación.'
-            });
+    resetPassword = asyncHandler(async (req, res) => {
+        const { token, newPassword } = req.validatedData;
 
-        } catch (error) {
-            console.error('Error en forgotPassword controller:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error del servidor'
-            });
-        }
-    }
+        const result = await authService.resetPassword(token, newPassword);
 
-    async resetPassword(req, res) {
-        try {
-            const { token, newPassword } = req.validatedData;
+        return res.status(200).json(
+            ApiResponse.success(null, result.message)
+        );
+    });
 
-            const result = await authService.resetPassword(token, newPassword);
+    completeFirstPasswordChange = asyncHandler(async (req, res) => {
+        // El ID del usuario lo inyecta el middleware 'verifyFirstLoginToken'
+        const userId = req.user.id;
+        const { newPassword } = req.validatedData;
 
-            res.status(200).json({
-                success: true,
-                message: result.message
-            });
+        // El servicio se encarga de todo y devuelve la sesión completa
+        const loginResult = await authService.completeFirstPasswordChange(userId, newPassword);
 
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: error.message || 'Error al resetear la contraseña'
-            });
-        }
-    }
-
-    async completeFirstPasswordChange(req, res) {
-        try {
-            // El ID del usuario lo inyecta el middleware 'verifyFirstLoginToken'
-            const userId = req.user.id;
-            const { newPassword } = req.validatedData;
-
-            // El servicio se encarga de todo y devuelve la sesión completa
-            const loginResult = await authService.completeFirstPasswordChange(userId, newPassword);
-
-            res.status(200).json({
-                success: true,
-                ...loginResult
-            });
-
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: error.message || 'Error al actualizar la contraseña.'
-            });
-        }
-    }
+        return res.status(200).json(
+            ApiResponse.success(loginResult)
+        );
+    });
 }

@@ -1,75 +1,53 @@
 // src/controllers/config.controller.js
 import { ConfigService } from '../services/config.service.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/apiResponse.js';
 
 const configService = new ConfigService();
 
 export class ConfigController {
-
     /**
      * Actualizar tiempo de expiración del token
      */
-    async actualizarTiempoExpiracion(req, res) {
-        try {
-            // ✅ Los datos YA están validados por Zod
-            const { tiempo_expiracion } = req.validatedData;
+    actualizarTiempoExpiracion = asyncHandler(async (req, res) => {
+        // ✅ Los datos YA están validados por Zod
+        const { tiempo_expiracion } = req.validatedData;
 
-            const configActualizada = await configService.actualizarTiempoExpiracion(tiempo_expiracion);
+        const configActualizada = await configService.actualizarTiempoExpiracion(tiempo_expiracion);
 
-            res.status(200).json({
-                success: true,
-                message: 'Tiempo de expiración actualizado correctamente',
-                configuracion: configActualizada
-            });
-
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: error.message || 'Error al actualizar la configuración'
-            });
-        }
-    }
+        return res.status(200).json(
+            ApiResponse.success(
+                { configuracion: configActualizada },
+                'Tiempo de expiración actualizado correctamente'
+            )
+        );
+    });
 
     /**
      * Actualizar configuración de bloqueo
      */
-    async actualizarConfigBloqueo(req, res) {
-        try {
-            // ✅ Los datos YA están validados por Zod
-            const configData = req.validatedData;
+    actualizarConfigBloqueo = asyncHandler(async (req, res) => {
+        // ✅ Los datos YA están validados por Zod
+        const configData = req.validatedData;
 
-            const configActualizada = await configService.actualizarConfigBloqueo(configData);
+        const configActualizada = await configService.actualizarConfigBloqueo(configData);
 
-            res.status(200).json({
-                success: true,
-                message: 'Configuración de bloqueo actualizada correctamente',
-                configuracion: configActualizada
-            });
-
-        } catch (error) {
-            res.status(400).json({
-                success: false,
-                message: error.message || 'Error al actualizar la configuración de bloqueo'
-            });
-        }
-    }
+        return res.status(200).json(
+            ApiResponse.success(
+                { configuracion: configActualizada },
+                'Configuración de bloqueo actualizada correctamente'
+            )
+        );
+    });
 
     /**
      * Obtener configuración actual
      */
-    async obtenerConfiguracion(req, res) {
-        try {
-            const configuracion = await configService.obtenerConfiguracionActual();
+    obtenerConfiguracion = asyncHandler(async (req, res) => {
+        const configuracion = await configService.obtenerConfiguracionActual();
 
-            res.status(200).json({
-                success: true,
-                configuracion
-            });
-
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener la configuración'
-            });
-        }
-    }
+        return res.status(200).json(
+            ApiResponse.success({ configuracion })
+        );
+    });
 }
