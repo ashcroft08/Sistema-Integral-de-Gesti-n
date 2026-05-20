@@ -19,7 +19,7 @@ const LoginPage = () => {
     // Usamos el código, no el nombre que puede tener tildes o cambiar
     switch (userData.rol_codigo) {
       case ROLES.VENDEDOR:
-        navigate("/seller");
+        navigate("/ventas");
         break;
       case ROLES.ADMINISTRADOR:
       case ROLES.SUPERUSUARIO:
