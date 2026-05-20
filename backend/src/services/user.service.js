@@ -5,6 +5,13 @@ import { Op } from 'sequelize';
 import { sendEmail } from './email.service.js';
 import { getHtmlTemplate } from '../utils/email.utils.js';
 import { ROLES, ESTADOS_USUARIO } from '../constants/codigos.js'; //Importamos las constantes
+import {
+    ValidationError,
+    NotFoundError,
+    ConflictError,
+    UnauthorizedError,
+    ForbiddenError
+} from '../utils/errors.js';
 
 // Regla de negocio (esto sí puede ser constante numérica, o venir de una tabla de config)
 const MAX_ADMINS = 3;
@@ -33,11 +40,11 @@ export class UserService {
 
             // 1. Verificar email
             const emailExists = await Usuario.findOne({ where: { email } });
-            if (emailExists) throw new Error('El email ya está registrado.');
+            if (emailExists) throw new ConflictError('El email ya está registrado.');
 
             // 2. Validar Rol existente
             const role = await Rol.findByPk(id_rol);
-            if (!role) throw new Error('El ID de rol proporcionado no es válido.');
+            if (!role) throw new ValidationError('El ID de rol proporcionado no es válido.');
 
             // ✨ 3. LÓGICA DE NEGOCIO: Límite de admins
             // Buscamos dinámicamente cuál es el ID de ADMIN y ACTIVO
@@ -52,7 +59,7 @@ export class UserService {
                     }
                 });
                 if (adminCount >= MAX_ADMINS) {
-                    throw new Error(`Límite de administradores alcanzado. Solo se permiten ${MAX_ADMINS} administradores activos.`);
+                    throw new ValidationError(`Límite de administradores alcanzado. Solo se permiten ${MAX_ADMINS} administradores activos.`);
                 }
             }
 
@@ -96,14 +103,14 @@ export class UserService {
             const { email, id_rol, password } = updateData;
 
             const usuario = await Usuario.findByPk(userId);
-            if (!usuario) throw new Error('Usuario no encontrado.');
+            if (!usuario) throw new NotFoundError('Usuario no encontrado.');
 
             // 1. Email único
             if (email && email !== usuario.email) {
                 const emailExists = await Usuario.findOne({
                     where: { email, id_usuario: { [Op.ne]: userId } }
                 });
-                if (emailExists) throw new Error('El email ya está en uso por otra cuenta.');
+                if (emailExists) throw new ConflictError('El email ya está en uso por otra cuenta.');
             }
 
             // ✨ 2. LÓGICA DE ADMINS (Refactorizada)
@@ -116,7 +123,7 @@ export class UserService {
                     where: { id_rol: idRolAdmin, id_estado_usuario: idEstadoActivo }
                 });
                 if (adminCount >= MAX_ADMINS) {
-                    throw new Error('Límite de administradores alcanzado. No se puede asignar este rol.');
+                    throw new ValidationError('Límite de administradores alcanzado. No se puede asignar este rol.');
                 }
             }
 
@@ -300,7 +307,7 @@ export class UserService {
             });
 
             if (!user) {
-                throw new Error('Usuario no encontrado.');
+                throw new NotFoundError('Usuario no encontrado.');
             }
             return user;
         } catch (error) {
@@ -320,17 +327,17 @@ export class UserService {
                 include: [{ model: Rol }]
             });
 
-            if (!usuario) throw new Error('Usuario no encontrado.');
+            if (!usuario) throw new NotFoundError('Usuario no encontrado.');
 
             // ✨ VALIDACIÓN ROBUSTA USANDO CÓDIGOS
             const codigoRol = usuario.Rol.codigo;
 
             if (codigoRol === ROLES.SUPERUSUARIO) {
-                throw new Error('El Superusuario no puede ser eliminado.');
+                throw new ForbiddenError('El Superusuario no puede ser eliminado.');
             }
 
             if (codigoRol === ROLES.ADMINISTRADOR) {
-                throw new Error('Los administradores no pueden ser eliminados. Debe desactivarlos.');
+                throw new ForbiddenError('Los administradores no pueden ser eliminados. Debe desactivarlos.');
             }
 
             await usuario.destroy();
@@ -349,12 +356,12 @@ export class UserService {
             const usuario = await Usuario.findByPk(userId, {
                 include: [{ model: Rol }]
             });
-            if (!usuario) throw new Error('Usuario no encontrado.');
+            if (!usuario) throw new NotFoundError('Usuario no encontrado.');
 
             // Validar existencia del nuevo estado
             // ✨ CORRECCIÓN 2: Ahora 'nuevoEstadoId' sí existe
             const estadoObj = await EstadoUsuario.findByPk(nuevoEstadoId);
-            if (!estadoObj) throw new Error('El ID del estado usuario no es válido.');
+            if (!estadoObj) throw new ValidationError('El ID del estado usuario no es válido.');
 
             // IDs importantes
             const idRolSuper = await this._getRolIdByCode(ROLES.SUPERUSUARIO);
@@ -366,7 +373,7 @@ export class UserService {
 
             // ✨ PROTECCIÓN 1: Superusuario
             if (usuario.id_rol === idRolSuper && nuevoEstadoId !== idEstadoActivo) {
-                throw new Error('El Superusuario no puede ser desactivado ni bloqueado.');
+                throw new ForbiddenError('El Superusuario no puede ser desactivado ni bloqueado.');
             }
 
             // ✨ PROTECCIÓN 2: Último Admin
@@ -376,7 +383,7 @@ export class UserService {
                 });
 
                 if (adminActivos <= 1) {
-                    throw new Error('No se puede desactivar el último administrador activo.');
+                    throw new ForbiddenError('No se puede desactivar el último administrador activo.');
                 }
             }
 
@@ -406,13 +413,13 @@ export class UserService {
         try {
             const usuario = await Usuario.findByPk(userId);
             if (!usuario) {
-                throw new Error('Usuario no encontrado.');
+                throw new NotFoundError('Usuario no encontrado.');
             }
 
             // Verificar contraseña actual
             const isCurrentPasswordValid = await bcrypt.compare(currentPassword, usuario.password);
             if (!isCurrentPasswordValid) {
-                throw new Error('Contraseña actual incorrecta.');
+                throw new ValidationError('Contraseña actual incorrecta.');
             }
 
             // Hashear nueva contraseña
