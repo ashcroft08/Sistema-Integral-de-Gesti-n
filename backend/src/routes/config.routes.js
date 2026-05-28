@@ -27,7 +27,7 @@ router.put(
     '/token-expiration',
     adminAccess,
     validateRequest(TokenExpirationSchema), // ✅ Validación Zod
-    (req, res) => configController.actualizarTiempoExpiracion(req, res)
+    configController.actualizarTiempoExpiracion
 );
 
 /**
@@ -39,7 +39,7 @@ router.put(
     '/block-config',
     adminAccess,
     validateRequest(BlockConfigSchema), // ✅ Validación Zod
-    (req, res) => configController.actualizarConfigBloqueo(req, res)
+    configController.actualizarConfigBloqueo
 );
 
 /**
@@ -50,7 +50,7 @@ router.put(
 router.get(
     '/',
     adminAccess,
-    (req, res) => configController.obtenerConfiguracion(req, res)
+    configController.obtenerConfiguracion
 );
 
 export default router;

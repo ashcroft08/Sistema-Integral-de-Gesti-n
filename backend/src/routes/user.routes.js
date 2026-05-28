@@ -30,7 +30,7 @@ router.post(
     '/',
     adminAccess,
     validateRequest(CreateUserSchema),
-    (req, res) => userController.createUser(req, res)
+    userController.createUser
 );
 
 /**
@@ -41,7 +41,7 @@ router.post(
 router.get(
     '/',
     adminAccess,
-    (req, res) => userController.getAllUsers(req, res)
+    userController.getAllUsers
 );
 
 /**
@@ -52,7 +52,7 @@ router.get(
 router.get(
     '/statuses',
     adminAccess,
-    (req, res) => userController.getUserStatuses(req, res)
+    userController.getUserStatuses
 );
 
 /**
@@ -64,7 +64,7 @@ router.get(
     '/:id',
     adminAccess,
     validateParams(UserIdSchema),
-    (req, res) => userController.getUserById(req, res)
+    userController.getUserById
 );
 
 /**
@@ -77,7 +77,7 @@ router.put(
     adminAccess,
     validateParams(UserIdSchema),
     validateRequest(UpdateUserSchema),
-    (req, res) => userController.updateUser(req, res)
+    userController.updateUser
 );
 
 /**
@@ -89,7 +89,7 @@ router.delete(
     '/:id',
     adminAccess,
     validateParams(UserIdSchema),
-    (req, res) => userController.deleteUser(req, res)
+    userController.deleteUser
 );
 
 /**
@@ -102,7 +102,7 @@ router.patch(
     adminAccess,
     validateParams(UserIdSchema),
     validateRequest(ChangeUserStatusSchema),
-    (req, res) => userController.changeUserStatus(req, res)
+    userController.changeUserStatus
 );
 
 // Rutas individuales de activación/desactivación (si las necesitas)
@@ -110,14 +110,14 @@ router.patch(
     '/:id/activate',
     adminAccess,
     validateParams(UserIdSchema),
-    (req, res) => userController.activateUser(req, res)
+    userController.activateUser
 );
 
 router.patch(
     '/:id/deactivate',
     adminAccess,
     validateParams(UserIdSchema),
-    (req, res) => userController.deactivateUser(req, res)
+    userController.deactivateUser
 );
 
 export default router;

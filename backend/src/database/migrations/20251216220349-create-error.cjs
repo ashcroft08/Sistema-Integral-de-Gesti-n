@@ -28,6 +28,19 @@ module.exports = {
       },
       usuario_nombre: {
         type: Sequelize.STRING
+      },
+      ruta: {
+        type: Sequelize.STRING
+      },
+      metodo: {
+        type: Sequelize.STRING(10)
+      },
+      parametros: {
+        type: Sequelize.JSONB
+      },
+      nivel: {
+        type: Sequelize.STRING(20),
+        defaultValue: 'ERROR'
       }
     }, {
       schema: 'auditoria'
@@ -37,3 +50,4 @@ module.exports = {
     await queryInterface.dropTable({ tableName: 'error', schema: 'auditoria' });
   }
 };
+

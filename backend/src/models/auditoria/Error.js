@@ -25,6 +25,23 @@ export default (sequelize, DataTypes) => {
       },
       usuario_nombre: {
         type: DataTypes.STRING
+      },
+      ruta: {
+        type: DataTypes.STRING,
+        comment: 'Ruta/Endpoint HTTP donde ocurrió el error'
+      },
+      metodo: {
+        type: DataTypes.STRING(10),
+        comment: 'Método HTTP utilizado (GET, POST, etc.)'
+      },
+      parametros: {
+        type: DataTypes.JSONB,
+        comment: 'Cuerpo o parámetros de la petición sanitizados'
+      },
+      nivel: {
+        type: DataTypes.STRING(20),
+        defaultValue: 'ERROR',
+        comment: 'Severidad del error (DEBUG, INFO, WARNING, ERROR, FATAL)'
       }
     }, {
     tableName: 'error',
@@ -32,5 +49,6 @@ export default (sequelize, DataTypes) => {
     timestamps: false
   }
   )
-  return Error
+  return ErrorSistema;
 };
+

@@ -27,6 +27,22 @@ export default (sequelize, DataTypes) => {
     },
     llave: {
       type: DataTypes.TEXT
+    },
+    valores_anteriores: {
+      type: DataTypes.JSONB,
+      comment: 'Estado anterior del registro antes de la acción (para UPDATE o DELETE)'
+    },
+    valores_nuevos: {
+      type: DataTypes.JSONB,
+      comment: 'Estado nuevo del registro después de la acción (para INSERT o UPDATE)'
+    },
+    ip_direccion: {
+      type: DataTypes.STRING(45),
+      comment: 'Dirección IP de origen del cliente'
+    },
+    user_agent: {
+      type: DataTypes.TEXT,
+      comment: 'Navegador y sistema operativo del cliente'
     }
   },{ 
     tableName: 'auditoria', 
@@ -35,3 +51,4 @@ export default (sequelize, DataTypes) => {
   )
   return Auditoria;
 };
+

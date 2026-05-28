@@ -18,6 +18,6 @@ const adminAccess = [
  * @desc    Obtener todos los roles
  * @access  Privado (Admin)
  */
-router.get('/', adminAccess, (req, res) => roleController.getAllRoles(req, res));
+router.get('/', adminAccess, roleController.getAllRoles);
 
 export default router;

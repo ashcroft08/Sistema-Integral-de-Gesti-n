@@ -17,28 +17,28 @@ const authController = new AuthController();
 router.get(
     '/me',
     verifyToken,
-    (req, res) => authController.getCurrentUser(req, res)
+    authController.getCurrentUser
 );
 
 // Ruta de login
 router.post(
     '/login',
     validateRequest(LoginSchema),
-    (req, res) => authController.login(req, res)
+    authController.login
 );
 
 // Ruta para forgot password
 router.post(
     '/forgot-password',
     validateRequest(ForgotPasswordSchema),
-    (req, res) => authController.forgotPassword(req, res)
+    authController.forgotPassword
 );
 
 // Ruta para reset password CON CONFIRMACIÓN
 router.post(
     '/reset-password',
     validateRequest(ResetPasswordWithConfirmationSchema),
-    (req, res) => authController.resetPassword(req, res)
+    authController.resetPassword
 );
 
 // Ruta para primer cambio de contraseña CON CONFIRMACIÓN
@@ -46,7 +46,7 @@ router.post(
     '/complete-password-change',
     verifyFirstLoginToken,
     validateRequest(ChangePasswordWithConfirmationSchema),
-    (req, res) => authController.completeFirstPasswordChange(req, res)
+    authController.completeFirstPasswordChange
 );
 
 export default router;

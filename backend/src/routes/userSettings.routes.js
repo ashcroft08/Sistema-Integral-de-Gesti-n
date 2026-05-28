@@ -20,7 +20,7 @@ const userSettingsController = new UserSettingsController();
 router.get(
     '/profile',
     verifyToken,
-    (req, res) => userSettingsController.getMyProfile(req, res)
+    userSettingsController.getMyProfile
 );
 
 /**
@@ -32,7 +32,7 @@ router.put(
     '/profile',
     verifyToken,
     validateRequest(UpdateProfileSchema),
-    (req, res) => userSettingsController.updateProfileOnly(req, res)
+    userSettingsController.updateProfileOnly
 );
 
 /**
@@ -44,7 +44,7 @@ router.put(
     '/password',
     verifyToken,
     validateRequest(ChangePasswordSchema),
-    (req, res) => userSettingsController.changePasswordOnly(req, res)
+    userSettingsController.changePasswordOnly
 );
 
 export default router;

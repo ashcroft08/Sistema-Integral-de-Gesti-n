@@ -20,7 +20,9 @@
     "db:init": "npm run create-schemas",
     "db:setup": "npm run create-schemas && npm run migrate && npm run seed",
     "db:refresh": "npm run migrate:undo:all && npm run migrate && npm run seed",
-    "db:reset": "npm run seed:undo && npm run migrate:undo:all"
+    "db:reset": "npm run seed:undo && npm run migrate:undo:all",
+    "db:cleanup": "node scripts/cleanupAuditoria.js",
+    "db:cleanup:dry": "node scripts/cleanupAuditoria.js --dry"
   },
   "keywords": [],
   "author": "",

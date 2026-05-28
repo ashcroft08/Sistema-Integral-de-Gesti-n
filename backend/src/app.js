@@ -12,6 +12,7 @@ import roleRoutes from './routes/role.routes.js';
 import userSettingsRoutes from './routes/userSettings.routes.js';
 
 import { errorHandler } from './middleware/error.middleware.js';
+import { auditMiddleware } from './middleware/audit.middleware.js';
 
 const app = express();
 
@@ -55,6 +56,9 @@ app.use('/api', globalLimiter);
 
 app.use(express.json());
 app.use(morgan('dev'));
+
+// 5. Middleware de Auditoría (intercepta mutaciones antes de las rutas)
+app.use(auditMiddleware);
 
 // --- Rutas ---
 // Monta el router de autenticación bajo el prefijo /api/auth con limitador específico

@@ -32,6 +32,18 @@ module.exports = {
       },
       llave: {
         type: Sequelize.TEXT
+      },
+      valores_anteriores: {
+        type: Sequelize.JSONB
+      },
+      valores_nuevos: {
+        type: Sequelize.JSONB
+      },
+      ip_direccion: {
+        type: Sequelize.STRING(45)
+      },
+      user_agent: {
+        type: Sequelize.TEXT
       }
     }, {
       schema: 'auditoria'
@@ -41,3 +53,4 @@ module.exports = {
     await queryInterface.dropTable({ tableName: 'auditoria', schema: 'auditoria' });
   }
 };
+
