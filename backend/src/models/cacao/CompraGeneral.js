@@ -48,12 +48,20 @@ export default (sequelize, DataTypes) => {
         negociador: {
             type: DataTypes.STRING(250),
             allowNull: true
+        },
+        id_periodo_compra: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         tableName: 'compra_general',
         schema: 'cacao',
         timestamps: false
     });
+
+    CompraGeneral.associate = (models) => {
+        CompraGeneral.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
+    };
 
     return CompraGeneral;
 };

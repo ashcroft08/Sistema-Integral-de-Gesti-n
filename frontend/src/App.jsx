@@ -24,6 +24,7 @@ import AdminSettingsPage from "./pages/Admin/SettingsPage";
 // Pages Ventas / Bodega
 import VentasDashboardPage from "./pages/Ventas/VentasDashboardPage";
 import BodegaDashboardPage from "./pages/Bodega/BodegaDashboardPage";
+import ComprasGeneralesPage from "./pages/Bodega/Cacao/ComprasGeneralesPage";
 
 function App() {
   return (
@@ -101,6 +102,7 @@ function App() {
           >
             <Route index element={<BodegaDashboardPage />} />
             <Route path="dashboard" element={<BodegaDashboardPage />} />
+            <Route path="cacao/compras-generales" element={<ComprasGeneralesPage />} />
           </Route>
 
           {/* === CATCH ALL === */}

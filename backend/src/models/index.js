@@ -12,6 +12,7 @@ import ConfiguracionBloqueoModel from './configuracion/ConfiguracionBloqueo.js';
 import ConfiguracionTokenModel from './configuracion/ConfiguracionToken.js';
 
 // Cacao Module Imports
+import PeriodoCompraModel from './cacao/PeriodoCompra.js';
 import CompraGeneralModel from './cacao/CompraGeneral.js';
 import ComunidadMpModel from './cacao/ComunidadMp.js';
 import ProveedorMpModel from './cacao/ProveedorMp.js';
@@ -38,6 +39,7 @@ const ConfiguracionBloqueo = ConfiguracionBloqueoModel(sequelize, DataTypes);
 const ConfiguracionToken = ConfiguracionTokenModel(sequelize, DataTypes);
 
 // Cacao Module Initialization
+const PeriodoCompra = PeriodoCompraModel(sequelize, DataTypes);
 const CompraGeneral = CompraGeneralModel(sequelize, DataTypes);
 const ComunidadMp = ComunidadMpModel(sequelize, DataTypes);
 const ProveedorMp = ProveedorMpModel(sequelize, DataTypes);
@@ -63,6 +65,7 @@ const models = {
     Usuario,
     ConfiguracionBloqueo,
     ConfiguracionToken,
+    PeriodoCompra,
     CompraGeneral,
     ComunidadMp,
     ProveedorMp,
@@ -96,6 +99,7 @@ export {
     Usuario,
     ConfiguracionBloqueo,
     ConfiguracionToken,
+    PeriodoCompra,
     CompraGeneral,
     ComunidadMp,
     ProveedorMp,
