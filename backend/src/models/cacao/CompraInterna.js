@@ -40,6 +40,10 @@ export default (sequelize, DataTypes) => {
         total: {
             type: DataTypes.DECIMAL(12, 4),
             allowNull: false
+        },
+        id_periodo_compra: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         tableName: 'compra_interna',
@@ -53,6 +57,7 @@ export default (sequelize, DataTypes) => {
         CompraInterna.belongsTo(models.CategoriaMp, { foreignKey: 'id_categoria_mp' });
         CompraInterna.belongsTo(models.ProductoMp, { foreignKey: 'id_producto_mp' });
         CompraInterna.belongsTo(models.NegociadorMp, { foreignKey: 'id_negociador_mp' });
+        CompraInterna.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
         CompraInterna.hasMany(models.StockLoteOrg, { foreignKey: 'id_compra_interna' });
     };
 

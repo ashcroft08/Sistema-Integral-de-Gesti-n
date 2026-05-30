@@ -33,10 +33,13 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: true
         },
-        activo: {
-            type: DataTypes.BOOLEAN,
+        estado: {
+            type: DataTypes.STRING(20),
             allowNull: false,
-            defaultValue: true
+            defaultValue: 'PENDIENTE',
+            validate: {
+                isIn: [['PENDIENTE', 'APROBADO']]
+            }
         }
     }, {
         tableName: 'periodo_compra',

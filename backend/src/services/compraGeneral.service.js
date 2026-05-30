@@ -255,6 +255,13 @@ export class CompraGeneralService {
      * Main ETL pipeline: reads Excel buffer, cleans data, and bulk-inserts into CompraGeneral.
      */
     async processExcel(fileBuffer, id_periodo_compra = null) {
+        if (id_periodo_compra) {
+            const periodo = await PeriodoCompra.findByPk(parseInt(id_periodo_compra, 10));
+            if (periodo && periodo.estado === 'APROBADO') {
+                throw new Error('Este período ya se encuentra APROBADO y está bloqueado para nuevas cargas o modificaciones.');
+            }
+        }
+
         // 1. Read Excel file from buffer
         const rawRows = await readXlsxFile(fileBuffer);
 
@@ -388,10 +395,13 @@ export class CompraGeneralService {
         };
     }
 
-    /**
-     * Delete records from CompraGeneral, optionally filtered by period.
-     */
     async deleteAll(id_periodo_compra = null) {
+        if (id_periodo_compra) {
+            const periodo = await PeriodoCompra.findByPk(parseInt(id_periodo_compra, 10));
+            if (periodo && periodo.estado === 'APROBADO') {
+                throw new Error('Este período ya se encuentra APROBADO y está bloqueado. No se pueden eliminar o modificar sus registros.');
+            }
+        }
         const where = id_periodo_compra ? { id_periodo_compra: parseInt(id_periodo_compra, 10) } : {};
         const count = await CompraGeneral.destroy({ where });
         return count;
