@@ -988,7 +988,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
                                         <div className="pr-1 flex flex-col items-center justify-center">
                                             <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Libra
+                                                Libras
                                             </span>
                                             <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
                                                 {(resumenPeriodo?.totalCantidad ?? 0).toLocaleString('es-EC')}
@@ -1018,7 +1018,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
                                         <div className="pr-1 flex flex-col items-center justify-center">
                                             <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Libra
+                                                Libras
                                             </span>
                                             <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
                                                 {formatCurrency(resumenPeriodo?.totalInversion ?? 0)}
