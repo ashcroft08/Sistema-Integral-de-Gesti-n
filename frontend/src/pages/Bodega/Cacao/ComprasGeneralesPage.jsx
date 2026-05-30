@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ModuleLayout from '../../../components/Layout/ModuleLayout';
 import { useComprasGenerales } from '../../../hooks/useComprasGenerales';
 
-const ComprasGeneralesPage = () => {
+const ComprasGeneralesPage = ({ onBack }) => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
     
@@ -18,6 +18,13 @@ const ComprasGeneralesPage = () => {
     const [newPeriodStart, setNewPeriodStart] = useState('');
     const [newPeriodEnd, setNewPeriodEnd] = useState('');
     const [newPeriodDesc, setNewPeriodDesc] = useState('');
+
+    // Form states for editing an existing Period
+    const [showEditPeriodModal, setShowEditPeriodModal] = useState(false);
+    const [editPeriodName, setEditPeriodName] = useState('');
+    const [editPeriodStart, setEditPeriodStart] = useState('');
+    const [editPeriodEnd, setEditPeriodEnd] = useState('');
+    const [editPeriodDesc, setEditPeriodDesc] = useState('');
 
     const {
         compras,
@@ -41,6 +48,7 @@ const ComprasGeneralesPage = () => {
         fetchPeriodos,
         createPeriodo,
         deletePeriodo,
+        updatePeriodo,
     } = useComprasGenerales();
 
     // Load periods on mount
@@ -129,6 +137,42 @@ const ComprasGeneralesPage = () => {
         }
     };
 
+    const openEditPeriodModal = () => {
+        if (!activePeriodObj) return;
+        setEditPeriodName(activePeriodObj.nombre || '');
+        
+        // Helper to format dates correctly without timezone offsets
+        const formatForInput = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+            const normalizedDate = new Date(d.getTime() + userTimezoneOffset);
+            return normalizedDate.toISOString().split('T')[0];
+        };
+
+        setEditPeriodStart(formatForInput(activePeriodObj.fecha_inicio));
+        setEditPeriodEnd(formatForInput(activePeriodObj.fecha_fin));
+        setEditPeriodDesc(activePeriodObj.descripcion || '');
+        setShowEditPeriodModal(true);
+    };
+
+    const handleEditPeriodSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedPeriod || !editPeriodName || !editPeriodStart || !editPeriodEnd) return;
+        try {
+            await updatePeriodo(selectedPeriod, {
+                nombre: editPeriodName,
+                fecha_inicio: editPeriodStart,
+                fecha_fin: editPeriodEnd,
+                descripcion: editPeriodDesc
+            });
+            setShowEditPeriodModal(false);
+        } catch {
+            // error already handled in hook
+        }
+    };
+
     // ─── Formatters ───
     const formatDate = (dateStr) => {
         if (!dateStr) return '—';
@@ -146,18 +190,28 @@ const ComprasGeneralesPage = () => {
         return `$${num.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
     };
 
-    return (
-        <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
-
+    // Render inner content of ComprasGenerales
+    const renderContent = () => (
+        <div className="space-y-6">
             {/* ═══════ BREADCRUMB ═══════ */}
             <nav className="flex items-center gap-2 text-sm mb-4">
-                <button
-                    onClick={() => navigate('/bodega')}
-                    className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors"
-                >
-                    <span className="material-symbols-outlined text-base">warehouse</span>
-                    <span>Bodega</span>
-                </button>
+                {onBack ? (
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-1 text-primary/80 hover:text-primary font-bold transition-all cursor-pointer group"
+                    >
+                        <span className="material-symbols-outlined text-base group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+                        <span>Volver a Materia Prima</span>
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => navigate('/bodega')}
+                        className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                    >
+                        <span className="material-symbols-outlined text-base">warehouse</span>
+                        <span>Bodega</span>
+                    </button>
+                )}
                 <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
                 <span className="text-text-secondary/70 dark:text-background-light/50">Materia Prima Cacao</span>
                 <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
@@ -165,7 +219,7 @@ const ComprasGeneralesPage = () => {
             </nav>
 
             {/* ═══════ HEADER ═══════ */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
                 <div>
                     <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-background-light tracking-tight flex items-center gap-2">
                         <span className="material-symbols-outlined text-3xl text-primary font-bold">analytics</span>
@@ -178,7 +232,7 @@ const ComprasGeneralesPage = () => {
             </div>
 
             {/* ═══════ PERIOD SELECTION BAR ═══════ */}
-            <div className="rounded-2xl border border-primary/15 bg-white/60 dark:bg-background-dark/45 dark:border-primary/25 backdrop-blur-md p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="rounded-2xl border border-primary/15 bg-white/60 dark:bg-background-dark/45 dark:border-primary/25 backdrop-blur-md p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="w-full sm:max-w-xs">
                         <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-2 px-1">
@@ -226,15 +280,11 @@ const ComprasGeneralesPage = () => {
                     
                     {selectedPeriod && activePeriodObj && (
                         <button
-                            onClick={() => {
-                                if (window.confirm(`¿Estás seguro que deseas eliminar el periodo "${activePeriodObj.nombre}"? Esto también borrará todas sus compras generales vinculadas.`)) {
-                                    deletePeriodo(activePeriodObj.id_periodo_compra);
-                                }
-                            }}
-                            className="inline-flex items-center justify-center w-10 h-10 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all cursor-pointer"
-                            title="Eliminar este trimestre de forma permanente"
+                            onClick={openEditPeriodModal}
+                            className="inline-flex items-center justify-center w-10 h-10 text-primary dark:text-background-light/95 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-xl hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white hover:scale-[1.02] transition-all cursor-pointer"
+                            title="Editar información de este trimestre"
                         >
-                            <span className="material-symbols-outlined text-lg">delete</span>
+                            <span className="material-symbols-outlined text-lg">edit</span>
                         </button>
                     )}
                 </div>
@@ -337,6 +387,103 @@ const ComprasGeneralesPage = () => {
                 </div>
             )}
 
+            {/* ═══════ EDIT PERIOD MODAL ═══════ */}
+            {showEditPeriodModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => setShowEditPeriodModal(false)} />
+                    <form
+                        onSubmit={handleEditPeriodSubmit}
+                        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200"
+                    >
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20">
+                                <span className="material-symbols-outlined text-2xl text-primary">edit_calendar</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
+                                    Editar Trimestre / Período
+                                </h3>
+                                <p className="text-xs text-text-secondary dark:text-background-light/50">
+                                    Modifica los parámetros temporales o el nombre del reporte
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4 my-6">
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                    Nombre del Trimestre *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej: 2026 - Trimestre 1"
+                                    value={editPeriodName}
+                                    onChange={(e) => setEditPeriodName(e.target.value)}
+                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Fecha Inicio *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={editPeriodStart}
+                                        onChange={(e) => setEditPeriodStart(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Fecha Fin *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={editPeriodEnd}
+                                        onChange={(e) => setEditPeriodEnd(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                    Descripción / Notas
+                                </label>
+                                <textarea
+                                    placeholder="Notas adicionales sobre este trimestre..."
+                                    value={editPeriodDesc}
+                                    onChange={(e) => setEditPeriodDesc(e.target.value)}
+                                    rows={2}
+                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all resize-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setShowEditPeriodModal(false)}
+                                className="px-4 py-2.5 text-sm font-medium rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all"
+                            >
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
             {/* ═══════ NO PERIOD SELECTED (EMPTY STATE) ═══════ */}
             {!selectedPeriod && (
                 <div className="rounded-2xl border border-primary/10 dark:border-primary/20 bg-white/40 dark:bg-background-dark/30 py-16 px-6 text-center shadow-sm">
@@ -415,8 +562,8 @@ const ComprasGeneralesPage = () => {
                         </div>
                     )}
 
-                    {/* ═══════ UPLOAD ZONE ═══════ */}
-                    {!uploading && compras.length === 0 && !uploadResult && (
+                    {/* ═══════ UPLOAD ZONE (ONLY SHOW IF NO DATA AND NOT LOADING) ═══════ */}
+                    {!loading && !uploading && total === 0 && compras.length === 0 && !uploadResult && (
                         <div
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -452,7 +599,7 @@ const ComprasGeneralesPage = () => {
                                     o
                                 </p>
                                 <div
-                                    className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-xl bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200"
+                                    className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200"
                                 >
                                     <span className="material-symbols-outlined text-lg">folder_open</span>
                                     Seleccionar Archivo
@@ -540,6 +687,21 @@ const ComprasGeneralesPage = () => {
                     {/* ═══════ METRIC & SUMMARY CARDS ═══════ */}
                     {total > 0 && !uploading && (
                         <div className="mb-6 space-y-4">
+                            {/* Information alert about correct ETL process flow */}
+                            <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-4 flex items-start gap-3.5 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <span className="material-symbols-outlined text-2xl font-bold">info</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
+                                        Período con compras activas
+                                    </h4>
+                                    <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
+                                        Este trimestre ya contiene registros procesados y normalizados. Si necesitas reemplazar la información con un nuevo archivo Excel, primero debes eliminar los datos actuales haciendo clic en el botón <strong className="font-bold text-amber-800 dark:text-amber-300">"Limpiar Trimestre"</strong> (ubicado arriba a la derecha) para poder habilitar la zona de carga de nuevo.
+                                    </p>
+                                </div>
+                            </div>
+
                             <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-background-light/60 px-1 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-base">monitoring</span>
                                 Métricas Acumuladas ({activePeriodObj?.nombre})
@@ -794,6 +956,16 @@ const ComprasGeneralesPage = () => {
                     )}
                 </>
             )}
+        </div>
+    );
+
+    if (onBack) {
+        return renderContent();
+    }
+
+    return (
+        <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
+            {renderContent()}
         </ModuleLayout>
     );
 };

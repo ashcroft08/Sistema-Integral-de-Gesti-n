@@ -89,4 +89,16 @@ export class CompraGeneralController {
             ApiResponse.success({ eliminados: resultado }, 'Período eliminado correctamente')
         );
     });
+
+    /**
+     * Actualizar un período de compra
+     */
+    updatePeriodo = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { nombre, fecha_inicio, fecha_fin, descripcion, estado } = req.body;
+        const resultado = await compraGeneralService.updatePeriodo(id, { nombre, fecha_inicio, fecha_fin, descripcion, estado });
+        return res.status(200).json(
+            ApiResponse.success(resultado, 'Período actualizado correctamente')
+        );
+    });
 }

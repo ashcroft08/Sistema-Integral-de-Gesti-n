@@ -52,12 +52,14 @@ router.get('/periodos', bodegaAccess, controller.getPeriodos);
  */
 router.post('/periodos', bodegaAccess, controller.createPeriodo);
 
+router.delete('/periodos/:id', bodegaAccess, controller.deletePeriodo);
+
 /**
- * @route   DELETE /api/cacao/compra-general/periodos/:id
- * @desc    Eliminar un período de compra
+ * @route   PUT /api/cacao/compra-general/periodos/:id
+ * @desc    Actualizar un período de compra
  * @access  Privado (Bodega/Admin/Superusuario)
  */
-router.delete('/periodos/:id', bodegaAccess, controller.deletePeriodo);
+router.put('/periodos/:id', bodegaAccess, controller.updatePeriodo);
 
 /**
  * @route   GET /api/cacao/compra-general

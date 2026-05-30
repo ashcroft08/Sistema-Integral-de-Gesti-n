@@ -17,12 +17,13 @@
     "seed:create": "sequelize-cli seed:generate --name",
     "seed:undo": "sequelize-cli db:seed:undo:all",
     "seed:undo:last": "sequelize-cli db:seed:undo",
-    "db:init": "npm run create-schemas",
-    "db:setup": "npm run create-schemas && npm run migrate && npm run seed",
-    "db:refresh": "npm run migrate:undo:all && npm run migrate && npm run seed",
-    "db:reset": "npm run seed:undo && npm run migrate:undo:all",
+    "db:init": "pnpm run create-schemas",
+    "db:setup": "pnpm run create-schemas && pnpm run migrate && pnpm run seed",
+    "db:refresh": "pnpm run migrate:undo:all && pnpm run migrate && pnpm run seed",
+    "db:reset": "pnpm run seed:undo && pnpm run migrate:undo:all",
     "db:cleanup": "node scripts/cleanupAuditoria.js",
-    "db:cleanup:dry": "node scripts/cleanupAuditoria.js --dry"
+    "db:cleanup:dry": "node scripts/cleanupAuditoria.js --dry",
+    "preinstall": "npx only-allow pnpm"
   },
   "keywords": [],
   "author": "",

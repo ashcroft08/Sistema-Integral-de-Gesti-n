@@ -79,6 +79,22 @@ export const useComprasGenerales = () => {
         }
     }, [fetchPeriodos, selectedPeriod]);
 
+    const updatePeriodo = useCallback(async (id, data) => {
+        try {
+            setLoading(true);
+            const response = await compraGeneralService.updatePeriodo(id, data);
+            toast.success('Trimestre actualizado correctamente');
+            await fetchPeriodos();
+            return response.data;
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || 'Error al actualizar período';
+            toast.error(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchPeriodos]);
+
     const fetchCompras = useCallback(async (page = 1, limit = 20, periodId = selectedPeriod) => {
         if (!periodId) {
             setCompras([]);
@@ -182,6 +198,7 @@ export const useComprasGenerales = () => {
         fetchPeriodos,
         createPeriodo,
         deletePeriodo,
+        updatePeriodo,
         
         fetchCompras,
         uploadFile,

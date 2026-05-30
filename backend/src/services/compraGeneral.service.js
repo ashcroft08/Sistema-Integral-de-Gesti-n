@@ -1,6 +1,7 @@
 // src/services/compraGeneral.service.js
 import readXlsxFile from 'read-excel-file/node';
 import { CompraGeneral, PeriodoCompra } from '../models/index.js';
+import { Op } from 'sequelize';
 
 // Column mapping: Excel header → DB field
 const COLUMN_MAP = {
@@ -360,7 +361,43 @@ export class CompraGeneralService {
      * Create a new purchase period/quarter.
      */
     async createPeriodo(data) {
-        const periodo = await PeriodoCompra.create(data);
+        const nombreTrimmed = data.nombre ? data.nombre.trim() : '';
+        if (!nombreTrimmed) {
+            throw new Error('El nombre del período es requerido');
+        }
+
+        // Validate date order
+        if (new Date(data.fecha_inicio) > new Date(data.fecha_fin)) {
+            throw new Error('La fecha de inicio no puede ser posterior a la fecha de fin');
+        }
+
+        // 1. Check duplicate by name case-insensitive
+        const exist = await PeriodoCompra.findOne({
+            where: {
+                nombre: { [Op.iLike]: nombreTrimmed }
+            }
+        });
+
+        if (exist) {
+            throw new Error(`Ya existe un trimestre o período registrado con el nombre "${nombreTrimmed}"`);
+        }
+
+        // 2. Check duplicate by date range overlap
+        const overlap = await PeriodoCompra.findOne({
+            where: {
+                fecha_inicio: { [Op.lte]: data.fecha_fin },
+                fecha_fin: { [Op.gte]: data.fecha_inicio }
+            }
+        });
+
+        if (overlap) {
+            throw new Error(`Las fechas seleccionadas colisionan con el período existente "${overlap.nombre}" (${overlap.fecha_inicio} a ${overlap.fecha_fin})`);
+        }
+
+        const periodo = await PeriodoCompra.create({
+            ...data,
+            nombre: nombreTrimmed
+        });
         return periodo;
     }
 
@@ -382,5 +419,61 @@ export class CompraGeneralService {
             where: { id_periodo_compra: parseInt(id, 10) }
         });
         return count;
+    }
+
+    /**
+     * Update an existing period's information.
+     */
+    async updatePeriodo(id, data) {
+        const idInt = parseInt(id, 10);
+        
+        // Find existing period to merge dates if only one is updated
+        const existing = await PeriodoCompra.findByPk(idInt);
+        if (!existing) {
+            throw new Error('El período no existe');
+        }
+
+        const nombreTrimmed = data.nombre ? data.nombre.trim() : existing.nombre;
+        const fechaInicio = data.fecha_inicio || existing.fecha_inicio;
+        const fechaFin = data.fecha_fin || existing.fecha_fin;
+
+        // Validate date order
+        if (new Date(fechaInicio) > new Date(fechaFin)) {
+            throw new Error('La fecha de inicio no puede ser posterior a la fecha de fin');
+        }
+
+        // 1. Check duplicate by name case-insensitive excluding this period itself
+        if (data.nombre) {
+            const existName = await PeriodoCompra.findOne({
+                where: {
+                    id_periodo_compra: { [Op.ne]: idInt },
+                    nombre: { [Op.iLike]: nombreTrimmed }
+                }
+            });
+
+            if (existName) {
+                throw new Error(`Ya existe otro trimestre o período registrado con el nombre "${nombreTrimmed}"`);
+            }
+            data.nombre = nombreTrimmed;
+        }
+
+        // 2. Check duplicate by date range overlap excluding this period itself
+        const overlap = await PeriodoCompra.findOne({
+            where: {
+                id_periodo_compra: { [Op.ne]: idInt },
+                fecha_inicio: { [Op.lte]: fechaFin },
+                fecha_fin: { [Op.gte]: fechaInicio }
+            }
+        });
+
+        if (overlap) {
+            throw new Error(`Las fechas seleccionadas colisionan con el período existente "${overlap.nombre}" (${overlap.fecha_inicio} a ${overlap.fecha_fin})`);
+        }
+
+        const [updatedRowsCount, updatedRows] = await PeriodoCompra.update(data, {
+            where: { id_periodo_compra: idInt },
+            returning: true
+        });
+        return updatedRowsCount > 0 ? updatedRows[0] : null;
     }
 }
