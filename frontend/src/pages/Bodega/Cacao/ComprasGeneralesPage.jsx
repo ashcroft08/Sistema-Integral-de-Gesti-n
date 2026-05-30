@@ -940,20 +940,6 @@ const ComprasGeneralesPage = ({ onBack }) => {
                         </div>
                     )}
 
-                    {/* ═══════ EMPTY PERIOD STATE ═══════ */}
-                    {!loading && compras.length === 0 && !uploading && !uploadResult && (
-                        <div className="rounded-2xl border border-primary/10 dark:border-primary/20 bg-white/40 dark:bg-background-dark/30 py-16 px-6 text-center shadow-sm">
-                            <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 dark:bg-primary/10 mx-auto mb-4 text-primary">
-                                <span className="material-symbols-outlined text-4xl">folder_zip</span>
-                            </div>
-                            <h3 className="text-lg font-semibold text-text-primary/60 dark:text-background-light/40 mb-1">
-                                Período sin compras cargadas
-                            </h3>
-                            <p className="text-sm text-text-secondary/60 dark:text-background-light/30 max-w-md mx-auto">
-                                Arrastra tu archivo Excel en la zona de arriba para procesar y normalizar las compras generales de {activePeriodObj?.nombre}
-                            </p>
-                        </div>
-                    )}
                 </>
             )}
         </div>
