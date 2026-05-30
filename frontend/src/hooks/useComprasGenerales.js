@@ -25,18 +25,13 @@ export const useComprasGenerales = () => {
             const response = await compraGeneralService.getPeriodos();
             const list = response.data || [];
             setPeriodos(list);
-            
-            // Auto-select the first/active period if none selected yet
-            if (list.length > 0 && !selectedPeriod) {
-                setSelectedPeriod(list[0].id_periodo_compra);
-            }
         } catch (err) {
             const message = err.response?.data?.message || err.message || 'Error al cargar períodos';
             toast.error(message);
         } finally {
             setLoadingPeriodos(false);
         }
-    }, [selectedPeriod]);
+    }, []);
 
     const createPeriodo = useCallback(async (data) => {
         try {
@@ -108,11 +103,11 @@ export const useComprasGenerales = () => {
             setLoading(true);
             setError(null);
             const response = await compraGeneralService.getAll(page, limit, periodId);
-            setCompras(response.data?.compras || response.data || []);
-            setTotal(response.data?.total || response.total || 0);
-            setPagina(response.data?.pagina || response.pagina || page);
-            setTotalPaginas(response.data?.totalPaginas || response.totalPaginas || 0);
-            setResumenPeriodo(response.data?.resumen || null);
+            setCompras(response.compras || response.data?.compras || (Array.isArray(response.data) ? response.data : []));
+            setTotal(response.total !== undefined ? response.total : (response.data?.total || 0));
+            setPagina(response.pagina !== undefined ? response.pagina : (response.data?.pagina || page));
+            setTotalPaginas(response.totalPaginas !== undefined ? response.totalPaginas : (response.data?.totalPaginas || 0));
+            setResumenPeriodo(response.resumen || response.data?.resumen || null);
         } catch (err) {
             const message = err.response?.data?.message || err.message || 'Error al cargar compras';
             setError(message);

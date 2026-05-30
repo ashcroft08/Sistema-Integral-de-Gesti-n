@@ -12,6 +12,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showCreatePeriodModal, setShowCreatePeriodModal] = useState(false);
     const [showImportBanner, setShowImportBanner] = useState(true);
+    const [showDetailView, setShowDetailView] = useState(false);
 
     // Form states for creating a new Period
     const [newPeriodName, setNewPeriodName] = useState('');
@@ -190,28 +191,252 @@ const ComprasGeneralesPage = ({ onBack }) => {
         return `$${num.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
     };
 
+    const renderTable = () => (
+        <div className="rounded-2xl border border-primary/15 dark:border-primary/25 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm overflow-hidden shadow-sm animate-in fade-in-50 duration-200">
+            {/* Table Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10 dark:border-primary/20">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/5 dark:bg-primary/10 text-primary">
+                        <span className="material-symbols-outlined text-xl">table_chart</span>
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-text-primary dark:text-background-light">
+                            Tabla de Registros ({activePeriodObj?.nombre})
+                        </h3>
+                        <p className="text-xs text-text-secondary dark:text-background-light/40">
+                            {total.toLocaleString('es-EC')} compras normalizadas
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="bg-primary/[0.03] dark:bg-primary/[0.08]">
+                            {['#', 'Número', 'Fecha', 'Comunidad', 'Código', 'Proveedor', 'Categoría', 'Producto', 'Cantidad', 'V. Unitario', 'Total', 'Negociador'].map((col) => (
+                                <th
+                                    key={col}
+                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 whitespace-nowrap"
+                                >
+                                    {col}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-primary/[0.06] dark:divide-primary/[0.12]">
+                        {loading && compras.length === 0 ? (
+                            <tr>
+                                <td colSpan={12} className="px-6 py-16 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary/10 animate-pulse">
+                                            <span className="material-symbols-outlined text-2xl text-primary/40">hourglass_top</span>
+                                        </div>
+                                        <p className="text-sm text-text-secondary dark:text-background-light/40">Cargando compras...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            compras.map((compra, idx) => {
+                                const rowId = compra.id_compra_general || idx;
+                                return (
+                                    <tr
+                                        key={rowId}
+                                        className={`transition-colors hover:bg-primary/[0.04] dark:hover:bg-primary/[0.08] ${
+                                            idx % 2 === 0
+                                                ? 'bg-transparent'
+                                                : 'bg-primary/[0.015] dark:bg-primary/[0.04]'
+                                        }`}
+                                    >
+                                        <td className="px-4 py-3 text-xs font-mono text-text-secondary dark:text-background-light/40">
+                                            {(pagina - 1) * 20 + idx + 1}
+                                        </td>
+                                        <td className="px-4 py-3 font-medium text-text-primary dark:text-background-light whitespace-nowrap">
+                                            {compra.numero || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap">
+                                            {formatDate(compra.fecha)}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap">
+                                            {compra.comunidad || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 font-mono text-xs text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
+                                            {compra.codigo || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap font-medium text-primary dark:text-accent">
+                                            {compra.proveedor || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
+                                            {compra.categoria || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap font-medium text-primary dark:text-accent">
+                                            {compra.producto || '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-medium text-text-primary dark:text-background-light tabular-nums whitespace-nowrap">
+                                            {compra.cantidad ?? '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-mono text-xs text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+                                            {formatCurrency(compra.valor_unitario)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">
+                                            {formatCurrency(compra.total)}
+                                        </td>
+                                        <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
+                                            {compra.negociador || '—'}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* ═══════ PAGINATION ═══════ */}
+            {totalPaginas > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-primary/10 dark:border-primary/20">
+                    <p className="text-xs text-text-secondary dark:text-background-light/40">
+                        Página <span className="font-bold text-text-primary dark:text-background-light">{pagina}</span> de{' '}
+                        <span className="font-bold text-text-primary dark:text-background-light">{totalPaginas}</span>
+                        {' · '}{total.toLocaleString('es-EC')} registros
+                    </p>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => fetchCompras(1, 20, selectedPeriod)}
+                            disabled={pagina <= 1 || loading}
+                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="material-symbols-outlined text-lg">first_page</span>
+                        </button>
+                        <button
+                            onClick={() => fetchCompras(pagina - 1, 20, selectedPeriod)}
+                            disabled={pagina <= 1 || loading}
+                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="material-symbols-outlined text-lg">chevron_left</span>
+                        </button>
+
+                        {/* Page numbers */}
+                        {(() => {
+                            const pages = [];
+                            let start = Math.max(1, pagina - 2);
+                            let end = Math.min(totalPaginas, pagina + 2);
+                            if (pagina <= 3) end = Math.min(5, totalPaginas);
+                            if (pagina >= totalPaginas - 2) start = Math.max(1, totalPaginas - 4);
+
+                            for (let i = start; i <= end; i++) {
+                                pages.push(
+                                    <button
+                                        key={i}
+                                        onClick={() => fetchCompras(i, 20, selectedPeriod)}
+                                        disabled={loading}
+                                        className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-all ${
+                                            i === pagina
+                                                ? 'bg-primary text-white shadow-md shadow-primary/20'
+                                                : 'border border-primary/15 dark:border-primary/25 text-text-primary/60 dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary'
+                                        }`}
+                                    >
+                                        {i}
+                                    </button>
+                                );
+                            }
+                            return pages;
+                        })()}
+
+                        <button
+                            onClick={() => fetchCompras(pagina + 1, 20, selectedPeriod)}
+                            disabled={pagina >= totalPaginas || loading}
+                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="material-symbols-outlined text-lg">chevron_right</span>
+                        </button>
+                        <button
+                            onClick={() => fetchCompras(totalPaginas, 20, selectedPeriod)}
+                            disabled={pagina >= totalPaginas || loading}
+                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="material-symbols-outlined text-lg">last_page</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
+    const renderDetailView = () => (
+        <div className="space-y-6 animate-in fade-in-50 duration-300">
+            {/* ═══════ BREADCRUMB ═══════ */}
+            <nav className="flex items-center gap-2 text-sm mb-4">
+                <button
+                    onClick={onBack ? onBack : () => navigate('/bodega')}
+                    className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                >
+                    <span className="material-symbols-outlined text-base">warehouse</span>
+                    <span>Bodega</span>
+                </button>
+                <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
+                <span className="text-text-secondary/70 dark:text-background-light/50">Materia Prima Cacao</span>
+                <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
+                <button
+                    onClick={() => setShowDetailView(false)}
+                    className="text-text-secondary/70 hover:text-primary transition-colors cursor-pointer"
+                >
+                    Compras Generales
+                </button>
+                <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
+                <span className="font-semibold text-text-primary dark:text-background-light">Listado Completo</span>
+            </nav>
+
+            {/* ═══════ HEADER ═══════ */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-background-light tracking-tight flex items-center gap-3">
+                        <button
+                            onClick={() => setShowDetailView(false)}
+                            className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/10 dark:border-primary/25 text-primary hover:scale-105 active:scale-95 transition-all cursor-pointer group shadow-sm"
+                            title="Regresar al Resumen"
+                        >
+                            <span className="material-symbols-outlined text-xl group-hover:-translate-x-0.5 transition-transform font-bold">arrow_back</span>
+                        </button>
+                        <span className="material-symbols-outlined text-3xl text-primary font-bold">list_alt</span>
+                        Listado Detallado de Compras
+                    </h1>
+                    <p className="text-sm text-text-secondary dark:text-background-light/50 mt-1">
+                        Explora todos los registros del periodo <strong className="text-primary">{activePeriodObj?.nombre}</strong>.
+                    </p>
+                </div>
+            </div>
+
+            {/* Render table here */}
+            {(compras.length > 0 || loading) ? renderTable() : (
+                <div className="rounded-2xl border border-primary/10 dark:border-primary/20 bg-white/40 dark:bg-background-dark/30 py-16 px-6 text-center shadow-sm">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 dark:bg-primary/10 mx-auto mb-4 text-primary">
+                        <span className="material-symbols-outlined text-4xl">folder_zip</span>
+                    </div>
+                    <h3 className="text-lg font-semibold text-text-primary/60 dark:text-background-light/40 mb-1">
+                        No hay datos en este trimestre
+                    </h3>
+                    <p className="text-sm text-text-secondary/60 dark:text-background-light/30 max-w-md mx-auto">
+                        Regresa a la pantalla principal de resumen para poder subir tu archivo Excel.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+
     // Render inner content of ComprasGenerales
     const renderContent = () => (
         <div className="space-y-6">
             {/* ═══════ BREADCRUMB ═══════ */}
             <nav className="flex items-center gap-2 text-sm mb-4">
-                {onBack ? (
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-1 text-primary/80 hover:text-primary font-bold transition-all cursor-pointer group"
-                    >
-                        <span className="material-symbols-outlined text-base group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
-                        <span>Volver a Materia Prima</span>
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => navigate('/bodega')}
-                        className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-base">warehouse</span>
-                        <span>Bodega</span>
-                    </button>
-                )}
+                <button
+                    onClick={onBack ? onBack : () => navigate('/bodega')}
+                    className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                >
+                    <span className="material-symbols-outlined text-base">warehouse</span>
+                    <span>Bodega</span>
+                </button>
                 <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
                 <span className="text-text-secondary/70 dark:text-background-light/50">Materia Prima Cacao</span>
                 <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
@@ -221,7 +446,16 @@ const ComprasGeneralesPage = ({ onBack }) => {
             {/* ═══════ HEADER ═══════ */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
                 <div>
-                    <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-background-light tracking-tight flex items-center gap-2">
+                    <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-background-light tracking-tight flex items-center gap-3">
+                        {onBack && (
+                            <button
+                                onClick={onBack}
+                                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/10 dark:border-primary/25 text-primary hover:scale-105 active:scale-95 transition-all cursor-pointer group shadow-sm"
+                                title="Volver a Materia Prima"
+                            >
+                                <span className="material-symbols-outlined text-xl group-hover:-translate-x-0.5 transition-transform font-bold">arrow_back</span>
+                            </button>
+                        )}
                         <span className="material-symbols-outlined text-3xl text-primary font-bold">analytics</span>
                         Compras Generales por Periodos
                     </h1>
@@ -508,17 +742,32 @@ const ComprasGeneralesPage = ({ onBack }) => {
 
             {selectedPeriod && (
                 <>
-                    {/* ═══════ ACTIONS BAR (WHEN DATA LOADED) ═══════ */}
+                    {/* ═══════ ACTIONS & NOTICE BAR (WHEN DATA LOADED) ═══════ */}
                     {total > 0 && !uploading && (
-                        <div className="flex justify-end gap-2 mb-4">
-                            <button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                disabled={loading}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                                Limpiar Trimestre
-                            </button>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                    <span className="material-symbols-outlined text-2xl font-bold">info</span>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
+                                        Período con compras activas
+                                    </h4>
+                                    <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
+                                        Este trimestre ya contiene información de compras registradas. Si necesitas subir un nuevo archivo Excel, primero debes borrar los datos actuales con el botón <strong className="font-bold">"Limpiar Trimestre"</strong> que se muestra al lado.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex-shrink-0 self-end md:self-center flex flex-wrap items-center gap-3">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    disabled={loading}
+                                    className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-[1.02] shadow-sm hover:shadow transition-all duration-200 cursor-pointer whitespace-nowrap"
+                                >
+                                    <span className="material-symbols-outlined text-lg">delete_sweep</span>
+                                    Limpiar Trimestre
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -662,15 +911,15 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                     <div>
                                         <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-400">
-                                            ¡Excel Importado y Normalizado con Éxito!
+                                            ¡Archivo de Compras Cargado con Éxito!
                                         </h4>
                                         <p className="text-xs text-emerald-700 dark:text-emerald-500/80 mt-0.5">
-                                            Se procesaron **{(uploadResult.totalFilasExcel ?? uploadResult.total_filas_excel ?? 0)}** filas en el trimestre.
+                                            Se ha procesado y registrado la información del archivo de Excel en el sistema.
                                         </p>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-emerald-800/70 dark:text-emerald-500/60 font-bold">
-                                            <span>✓ Insertadas: {(uploadResult.filasInsertadas ?? uploadResult.filas_insertadas ?? 0)}</span>
-                                            <span>· ✖ Duplicados omitidos: {(uploadResult.duplicadosEliminados ?? uploadResult.duplicados_eliminados ?? 0)}</span>
-                                            <span>· ✍ Rellenadas con ETL: {(uploadResult.camposRellenados ?? uploadResult.campos_rellenados ?? 0)}</span>
+                                            <span>✓ Nuevas compras añadidas: {(uploadResult.filasInsertadas ?? uploadResult.filas_insertadas ?? 0)}</span>
+                                            <span>· ✖ Compras repetidas (omitidas): {(uploadResult.duplicadosEliminados ?? uploadResult.duplicados_eliminados ?? 0)}</span>
+                                            <span>· ✍ Datos vacíos corregidos: {(uploadResult.camposRellenados ?? uploadResult.campos_rellenados ?? 0)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -687,263 +936,145 @@ const ComprasGeneralesPage = ({ onBack }) => {
                     {/* ═══════ METRIC & SUMMARY CARDS ═══════ */}
                     {total > 0 && !uploading && (
                         <div className="mb-6 space-y-4">
-                            {/* Information alert about correct ETL process flow */}
-                            <div className="rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-4 flex items-start gap-3.5 shadow-sm animate-in slide-in-from-top-2 duration-300">
-                                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                    <span className="material-symbols-outlined text-2xl font-bold">info</span>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
-                                        Período con compras activas
-                                    </h4>
-                                    <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
-                                        Este trimestre ya contiene registros procesados y normalizados. Si necesitas reemplazar la información con un nuevo archivo Excel, primero debes eliminar los datos actuales haciendo clic en el botón <strong className="font-bold text-amber-800 dark:text-amber-300">"Limpiar Trimestre"</strong> (ubicado arriba a la derecha) para poder habilitar la zona de carga de nuevo.
-                                    </p>
-                                </div>
-                            </div>
-
                             <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-background-light/60 px-1 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-base">monitoring</span>
                                 Métricas Acumuladas ({activePeriodObj?.nombre})
                             </h3>
                             
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                {[
-                                    {
-                                        icon: 'shopping_basket',
-                                        value: total,
-                                        label: 'Total de Compras',
-                                        color: 'text-blue-600 dark:text-blue-400',
-                                        bg: 'bg-blue-500/10 dark:bg-blue-500/20',
-                                        border: 'border-blue-200/50 dark:border-blue-800/30',
-                                        suffix: ' compras'
-                                    },
-                                    {
-                                        icon: 'scale',
-                                        value: resumenPeriodo?.totalCantidad ?? 0,
-                                        label: 'Volumen Cacao',
-                                        color: 'text-emerald-600 dark:text-emerald-400',
-                                        bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-                                        border: 'border-emerald-200/50 dark:border-emerald-800/30',
-                                        suffix: ' Lb / Qq'
-                                    },
-                                    {
-                                        icon: 'payments',
-                                        value: formatCurrency(resumenPeriodo?.totalInversion ?? 0),
-                                        label: 'Monto Inversión',
-                                        color: 'text-amber-600 dark:text-amber-400',
-                                        bg: 'bg-amber-500/10 dark:bg-amber-500/20',
-                                        border: 'border-amber-200/50 dark:border-amber-800/30',
-                                        isCurrency: true
-                                    },
-                                    {
-                                        icon: 'price_change',
-                                        value: formatCurrency(resumenPeriodo?.promedioValorUnitario ?? 0),
-                                        label: 'Precio Promedio / Lb',
-                                        color: 'text-purple-600 dark:text-purple-400',
-                                        bg: 'bg-purple-500/10 dark:bg-purple-500/20',
-                                        border: 'border-purple-200/50 dark:border-purple-800/30',
-                                        isCurrency: true
-                                    },
-                                ].map((stat, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`rounded-xl border ${stat.border} bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl ${stat.bg}`}>
-                                                <span className={`material-symbols-outlined text-2xl ${stat.color}`}>{stat.icon}</span>
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="text-xl font-bold text-text-primary dark:text-background-light leading-none mb-1.5 tabular-nums">
-                                                    {stat.isCurrency ? stat.value : stat.value.toLocaleString('es-EC')}
-                                                </p>
-                                                <p className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 truncate uppercase tracking-wider">
-                                                    {stat.label}
-                                                </p>
-                                            </div>
+                                {/* CARD 1: Total de Compras */}
+                                <div className="rounded-xl border border-blue-200/50 dark:border-blue-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200">
+                                    <div className="flex items-center gap-4 h-full">
+                                        <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                            <span className="material-symbols-outlined text-2xl">shopping_basket</span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xl font-bold text-text-primary dark:text-background-light leading-none mb-1.5 tabular-nums">
+                                                {total.toLocaleString('es-EC')}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 truncate uppercase tracking-wider">
+                                                Total de Compras
+                                            </p>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                </div>
 
-                    {/* ═══════ DATA TABLE ═══════ */}
-                    {(compras.length > 0 || loading) && (
-                        <div className="rounded-2xl border border-primary/15 dark:border-primary/25 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm overflow-hidden shadow-sm">
-                            {/* Table Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10 dark:border-primary/20">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/5 dark:bg-primary/10 text-primary">
-                                        <span className="material-symbols-outlined text-xl">table_chart</span>
+                                {/* CARD 2: Volumen Cacao (Pencil Sketch custom design!) */}
+                                <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                                            <span className="material-symbols-outlined text-xl">scale</span>
+                                        </div>
+                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
+                                            Volumen Cacao
+                                        </h4>
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-bold text-text-primary dark:text-background-light">
-                                            Tabla de Registros ({activePeriodObj?.nombre})
-                                        </h3>
-                                        <p className="text-xs text-text-secondary dark:text-background-light/40">
-                                            {total.toLocaleString('es-EC')} compras normalizadas
-                                        </p>
+                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
+                                        <div className="pr-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Libra
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {(resumenPeriodo?.totalCantidad ?? 0).toLocaleString('es-EC')}
+                                            </span>
+                                        </div>
+                                        <div className="pl-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Quintales
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {((resumenPeriodo?.totalCantidad ?? 0) / 100).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CARD 3: Monto Inversión (Split Lb / Qq layout) */}
+                                <div className="rounded-xl border border-purple-200/50 dark:border-purple-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+                                            <span className="material-symbols-outlined text-xl">payments</span>
+                                        </div>
+                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
+                                            Monto Inversión
+                                        </h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
+                                        <div className="pr-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Libra
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {formatCurrency(resumenPeriodo?.totalInversion ?? 0)}
+                                            </span>
+                                        </div>
+                                        <div className="pl-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Quintal
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {formatCurrency(resumenPeriodo?.totalCantidad > 0 ? (resumenPeriodo.totalInversion / (resumenPeriodo.totalCantidad / 100)) : 0)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CARD 4: Quintal Seco Aprox (Split Lb / Qq layout) */}
+                                <div className="rounded-xl border border-amber-200/50 dark:border-amber-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                            <span className="material-symbols-outlined text-xl">wb_sunny</span>
+                                        </div>
+                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
+                                            Cacao Seco Aproximado
+                                        </h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
+                                        <div className="pr-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Quintales
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {(((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                        <div className="pl-1 flex flex-col items-center justify-center">
+                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
+                                                Monto
+                                            </span>
+                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
+                                                {formatCurrency((((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) > 0 ? (resumenPeriodo?.totalInversion ?? 0) / (((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) : 0)}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Table */}
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-primary/[0.03] dark:bg-primary/[0.08]">
-                                            {['#', 'Número', 'Fecha', 'Comunidad', 'Código', 'Proveedor', 'Categoría', 'Producto', 'Cantidad', 'V. Unitario', 'Total', 'Negociador'].map((col) => (
-                                                <th
-                                                    key={col}
-                                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 whitespace-nowrap"
-                                                >
-                                                    {col}
-                                                </th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-primary/[0.06] dark:divide-primary/[0.12]">
-                                        {loading && compras.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={12} className="px-6 py-16 text-center">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary/10 animate-pulse">
-                                                            <span className="material-symbols-outlined text-2xl text-primary/40">hourglass_top</span>
-                                                        </div>
-                                                        <p className="text-sm text-text-secondary dark:text-background-light/40">Cargando compras...</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            compras.map((compra, idx) => (
-                                                <tr
-                                                    key={compra.id_compra_general || idx}
-                                                    className={`transition-colors hover:bg-primary/[0.04] dark:hover:bg-primary/[0.08] ${
-                                                        idx % 2 === 0
-                                                            ? 'bg-transparent'
-                                                            : 'bg-primary/[0.015] dark:bg-primary/[0.04]'
-                                                    }`}
-                                                >
-                                                    <td className="px-4 py-3 text-xs font-mono text-text-secondary dark:text-background-light/40">
-                                                        {(pagina - 1) * 20 + idx + 1}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-medium text-text-primary dark:text-background-light whitespace-nowrap">
-                                                        {compra.numero || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap">
-                                                        {formatDate(compra.fecha)}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 max-w-[160px] truncate">
-                                                        {compra.comunidad || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 font-mono text-xs text-text-primary/70 dark:text-background-light/60">
-                                                        {compra.codigo || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 max-w-[180px] truncate">
-                                                        {compra.proveedor || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60">
-                                                        {compra.categoria || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 max-w-[160px] truncate">
-                                                        {compra.producto || '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-medium text-text-primary dark:text-background-light tabular-nums">
-                                                        {compra.cantidad ?? '—'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-mono text-xs text-emerald-700 dark:text-emerald-400 tabular-nums">
-                                                        {formatCurrency(compra.valor_unitario)}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                                                        {formatCurrency(compra.total)}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60 max-w-[140px] truncate">
-                                                        {compra.negociador || '—'}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                            {/* Centered CTA Button to view detail below metrics cards */}
+                            <div className="flex items-center justify-center pt-4">
+                                <button
+                                    onClick={() => setShowDetailView(true)}
+                                    className="inline-flex items-center gap-2.5 px-8 py-3.5 text-sm font-bold text-white bg-primary hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20 hover:shadow-primary/30 rounded-xl transition-all duration-200 cursor-pointer"
+                                >
+                                    <span className="material-symbols-outlined text-lg">visibility</span>
+                                    Ver Detalle Completo de Compras
+                                </button>
                             </div>
-
-                            {/* ═══════ PAGINATION ═══════ */}
-                            {totalPaginas > 1 && (
-                                <div className="flex items-center justify-between px-6 py-4 border-t border-primary/10 dark:border-primary/20">
-                                    <p className="text-xs text-text-secondary dark:text-background-light/40">
-                                        Página <span className="font-bold text-text-primary dark:text-background-light">{pagina}</span> de{' '}
-                                        <span className="font-bold text-text-primary dark:text-background-light">{totalPaginas}</span>
-                                        {' · '}{total.toLocaleString('es-EC')} registros
-                                    </p>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => fetchCompras(1, 20, selectedPeriod)}
-                                            disabled={pagina <= 1 || loading}
-                                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">first_page</span>
-                                        </button>
-                                        <button
-                                            onClick={() => fetchCompras(pagina - 1, 20, selectedPeriod)}
-                                            disabled={pagina <= 1 || loading}
-                                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">chevron_left</span>
-                                        </button>
-
-                                        {/* Page numbers */}
-                                        {(() => {
-                                            const pages = [];
-                                            let start = Math.max(1, pagina - 2);
-                                            let end = Math.min(totalPaginas, pagina + 2);
-                                            if (pagina <= 3) end = Math.min(5, totalPaginas);
-                                            if (pagina >= totalPaginas - 2) start = Math.max(1, totalPaginas - 4);
-
-                                            for (let i = start; i <= end; i++) {
-                                                pages.push(
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => fetchCompras(i, 20, selectedPeriod)}
-                                                        disabled={loading}
-                                                        className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-all ${
-                                                            i === pagina
-                                                                ? 'bg-primary text-white shadow-md shadow-primary/20'
-                                                                : 'border border-primary/15 dark:border-primary/25 text-text-primary/60 dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary'
-                                                        }`}
-                                                    >
-                                                        {i}
-                                                    </button>
-                                                );
-                                            }
-                                            return pages;
-                                        })()}
-
-                                        <button
-                                            onClick={() => fetchCompras(pagina + 1, 20, selectedPeriod)}
-                                            disabled={pagina >= totalPaginas || loading}
-                                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">chevron_right</span>
-                                        </button>
-                                        <button
-                                            onClick={() => fetchCompras(totalPaginas, 20, selectedPeriod)}
-                                            disabled={pagina >= totalPaginas || loading}
-                                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">last_page</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
-
                 </>
             )}
         </div>
     );
+
+    if (showDetailView) {
+        if (onBack) return renderDetailView();
+        return (
+            <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
+                {renderDetailView()}
+            </ModuleLayout>
+        );
+    }
 
     if (onBack) {
         return renderContent();
