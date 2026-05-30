@@ -57,13 +57,13 @@ export class CompraGeneralController {
      * Crear un nuevo período de compra
      */
     createPeriodo = asyncHandler(async (req, res) => {
-        const { nombre, fecha_inicio, fecha_fin, descripcion } = req.body;
+        const { nombre, fecha_inicio, fecha_fin, descripcion, trimestre, anio } = req.body;
         if (!nombre || !fecha_inicio || !fecha_fin) {
             return res.status(400).json(
                 ApiResponse.error('Faltan campos obligatorios (nombre, fecha_inicio, fecha_fin).')
             );
         }
-        const resultado = await compraGeneralService.createPeriodo({ nombre, fecha_inicio, fecha_fin, descripcion });
+        const resultado = await compraGeneralService.createPeriodo({ nombre, fecha_inicio, fecha_fin, descripcion, trimestre, anio });
         return res.status(201).json(
             ApiResponse.success(resultado, 'Período creado correctamente')
         );
@@ -95,8 +95,8 @@ export class CompraGeneralController {
      */
     updatePeriodo = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { nombre, fecha_inicio, fecha_fin, descripcion, estado } = req.body;
-        const resultado = await compraGeneralService.updatePeriodo(id, { nombre, fecha_inicio, fecha_fin, descripcion, estado });
+        const { nombre, fecha_inicio, fecha_fin, descripcion, estado, trimestre, anio } = req.body;
+        const resultado = await compraGeneralService.updatePeriodo(id, { nombre, fecha_inicio, fecha_fin, descripcion, estado, trimestre, anio });
         return res.status(200).json(
             ApiResponse.success(resultado, 'Período actualizado correctamente')
         );

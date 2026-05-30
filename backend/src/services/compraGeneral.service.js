@@ -434,9 +434,28 @@ export class CompraGeneralService {
             throw new Error(`Las fechas seleccionadas colisionan con el período existente "${overlap.nombre}" (${overlap.fecha_inicio} a ${overlap.fecha_fin})`);
         }
 
+        // Auto-calculate quarter (trimestre) and year (anio) from start date if not provided
+        let trimestreVal = data.trimestre;
+        let anioVal = data.anio;
+        if (!trimestreVal && data.fecha_inicio) {
+            const date = new Date(data.fecha_inicio);
+            if (!isNaN(date.getTime())) {
+                const month = date.getUTCMonth() + 1; // 1-12
+                trimestreVal = Math.ceil(month / 3);
+            }
+        }
+        if (!anioVal && data.fecha_inicio) {
+            const date = new Date(data.fecha_inicio);
+            if (!isNaN(date.getTime())) {
+                anioVal = date.getUTCFullYear();
+            }
+        }
+
         const periodo = await PeriodoCompra.create({
             ...data,
-            nombre: nombreTrimmed
+            nombre: nombreTrimmed,
+            trimestre: trimestreVal ? parseInt(trimestreVal, 10) : null,
+            anio: anioVal ? parseInt(anioVal, 10) : null
         });
         return periodo;
     }
@@ -510,7 +529,32 @@ export class CompraGeneralService {
             throw new Error(`Las fechas seleccionadas colisionan con el período existente "${overlap.nombre}" (${overlap.fecha_inicio} a ${overlap.fecha_fin})`);
         }
 
-        const [updatedRowsCount, updatedRows] = await PeriodoCompra.update(data, {
+        // Auto-calculate / update quarter (trimestre) and year (anio) from start date if needed
+        let trimestreVal = data.trimestre;
+        let anioVal = data.anio;
+        if (data.fecha_inicio) {
+            if (trimestreVal === undefined) {
+                const date = new Date(data.fecha_inicio);
+                if (!isNaN(date.getTime())) {
+                    const month = date.getUTCMonth() + 1;
+                    trimestreVal = Math.ceil(month / 3);
+                }
+            }
+            if (anioVal === undefined) {
+                const date = new Date(data.fecha_inicio);
+                if (!isNaN(date.getTime())) {
+                    anioVal = date.getUTCFullYear();
+                }
+            }
+        }
+
+        const updateData = {
+            ...data,
+            ...(trimestreVal !== undefined ? { trimestre: trimestreVal ? parseInt(trimestreVal, 10) : null } : {}),
+            ...(anioVal !== undefined ? { anio: anioVal ? parseInt(anioVal, 10) : null } : {})
+        };
+
+        const [updatedRowsCount, updatedRows] = await PeriodoCompra.update(updateData, {
             where: { id_periodo_compra: idInt },
             returning: true
         });

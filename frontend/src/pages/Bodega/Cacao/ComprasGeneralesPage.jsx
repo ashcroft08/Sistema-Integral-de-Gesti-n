@@ -19,6 +19,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const [newPeriodStart, setNewPeriodStart] = useState('');
     const [newPeriodEnd, setNewPeriodEnd] = useState('');
     const [newPeriodDesc, setNewPeriodDesc] = useState('');
+    const [newPeriodTrimestre, setNewPeriodTrimestre] = useState('');
+    const [newPeriodAnio, setNewPeriodAnio] = useState('');
 
     // Form states for editing an existing Period
     const [showEditPeriodModal, setShowEditPeriodModal] = useState(false);
@@ -26,6 +28,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const [editPeriodStart, setEditPeriodStart] = useState('');
     const [editPeriodEnd, setEditPeriodEnd] = useState('');
     const [editPeriodDesc, setEditPeriodDesc] = useState('');
+    const [editPeriodTrimestre, setEditPeriodTrimestre] = useState('');
+    const [editPeriodAnio, setEditPeriodAnio] = useState('');
 
     const {
         compras,
@@ -125,13 +129,17 @@ const ComprasGeneralesPage = ({ onBack }) => {
                 nombre: newPeriodName,
                 fecha_inicio: newPeriodStart,
                 fecha_fin: newPeriodEnd,
-                descripcion: newPeriodDesc
+                descripcion: newPeriodDesc,
+                trimestre: newPeriodTrimestre ? parseInt(newPeriodTrimestre, 10) : undefined,
+                anio: newPeriodAnio ? parseInt(newPeriodAnio, 10) : undefined
             });
             // Reset form
             setNewPeriodName('');
             setNewPeriodStart('');
             setNewPeriodEnd('');
             setNewPeriodDesc('');
+            setNewPeriodTrimestre('');
+            setNewPeriodAnio('');
             setShowCreatePeriodModal(false);
         } catch {
             // error already handled in hook
@@ -155,6 +163,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
         setEditPeriodStart(formatForInput(activePeriodObj.fecha_inicio));
         setEditPeriodEnd(formatForInput(activePeriodObj.fecha_fin));
         setEditPeriodDesc(activePeriodObj.descripcion || '');
+        setEditPeriodTrimestre(activePeriodObj.trimestre || '');
+        setEditPeriodAnio(activePeriodObj.anio || '');
         setShowEditPeriodModal(true);
     };
 
@@ -166,7 +176,9 @@ const ComprasGeneralesPage = ({ onBack }) => {
                 nombre: editPeriodName,
                 fecha_inicio: editPeriodStart,
                 fecha_fin: editPeriodEnd,
-                descripcion: editPeriodDesc
+                descripcion: editPeriodDesc,
+                trimestre: editPeriodTrimestre ? parseInt(editPeriodTrimestre, 10) : null,
+                anio: editPeriodAnio ? parseInt(editPeriodAnio, 10) : null
             });
             setShowEditPeriodModal(false);
         } catch {
@@ -564,6 +576,37 @@ const ComprasGeneralesPage = ({ onBack }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Trimestre (Opcional)
+                                    </label>
+                                    <select
+                                        value={newPeriodTrimestre}
+                                        onChange={(e) => setNewPeriodTrimestre(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-white dark:bg-gray-800 text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
+                                    >
+                                        <option value="">Auto-detectar</option>
+                                        <option value="1">Trimestre 1 (Q1)</option>
+                                        <option value="2">Trimestre 2 (Q2)</option>
+                                        <option value="3">Trimestre 3 (Q3)</option>
+                                        <option value="4">Trimestre 4 (Q4)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Año (Opcional)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        placeholder="Ej: 2026"
+                                        value={newPeriodAnio}
+                                        onChange={(e) => setNewPeriodAnio(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
                                         Fecha Inicio *
                                     </label>
                                     <input
@@ -656,6 +699,37 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     onChange={(e) => setEditPeriodName(e.target.value)}
                                     className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Trimestre (Opcional)
+                                    </label>
+                                    <select
+                                        value={editPeriodTrimestre}
+                                        onChange={(e) => setEditPeriodTrimestre(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-white dark:bg-gray-800 text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
+                                    >
+                                        <option value="">Auto-detectar</option>
+                                        <option value="1">Trimestre 1 (Q1)</option>
+                                        <option value="2">Trimestre 2 (Q2)</option>
+                                        <option value="3">Trimestre 3 (Q3)</option>
+                                        <option value="4">Trimestre 4 (Q4)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
+                                        Año (Opcional)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        placeholder="Ej: 2026"
+                                        value={editPeriodAnio}
+                                        onChange={(e) => setEditPeriodAnio(e.target.value)}
+                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

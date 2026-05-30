@@ -21,6 +21,18 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.STRING(250),
             allowNull: true
         },
+        trimestre: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            validate: {
+                min: 1,
+                max: 4
+            }
+        },
+        anio: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
         activo: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
