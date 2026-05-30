@@ -2,6 +2,9 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModuleLayout from '../../../components/Layout/ModuleLayout';
 import { useComprasGenerales } from '../../../hooks/useComprasGenerales';
+import MetricCardSplit from './components/MetricCardSplit';
+import PeriodModal from './components/PeriodModal';
+import PurchaseTable from './components/PurchaseTable';
 
 const ComprasGeneralesPage = ({ onBack }) => {
     const navigate = useNavigate();
@@ -204,176 +207,17 @@ const ComprasGeneralesPage = ({ onBack }) => {
     };
 
     const renderTable = () => (
-        <div className="rounded-2xl border border-primary/15 dark:border-primary/25 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm overflow-hidden shadow-sm animate-in fade-in-50 duration-200">
-            {/* Table Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10 dark:border-primary/20">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/5 dark:bg-primary/10 text-primary">
-                        <span className="material-symbols-outlined text-xl">table_chart</span>
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-text-primary dark:text-background-light">
-                            Tabla de Registros ({activePeriodObj?.nombre})
-                        </h3>
-                        <p className="text-xs text-text-secondary dark:text-background-light/40">
-                            {total.toLocaleString('es-EC')} compras normalizadas
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="bg-primary/[0.03] dark:bg-primary/[0.08]">
-                            {['#', 'Número', 'Fecha', 'Comunidad', 'Código', 'Proveedor', 'Categoría', 'Producto', 'Cantidad', 'V. Unitario', 'Total', 'Negociador'].map((col) => (
-                                <th
-                                    key={col}
-                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 whitespace-nowrap"
-                                >
-                                    {col}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-primary/[0.06] dark:divide-primary/[0.12]">
-                        {loading && compras.length === 0 ? (
-                            <tr>
-                                <td colSpan={12} className="px-6 py-16 text-center">
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/5 dark:bg-primary/10 animate-pulse">
-                                            <span className="material-symbols-outlined text-2xl text-primary/40">hourglass_top</span>
-                                        </div>
-                                        <p className="text-sm text-text-secondary dark:text-background-light/40">Cargando compras...</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : (
-                            compras.map((compra, idx) => {
-                                const rowId = compra.id_compra_general || idx;
-                                return (
-                                    <tr
-                                        key={rowId}
-                                        className={`transition-colors hover:bg-primary/[0.04] dark:hover:bg-primary/[0.08] ${
-                                            idx % 2 === 0
-                                                ? 'bg-transparent'
-                                                : 'bg-primary/[0.015] dark:bg-primary/[0.04]'
-                                        }`}
-                                    >
-                                        <td className="px-4 py-3 text-xs font-mono text-text-secondary dark:text-background-light/40">
-                                            {(pagina - 1) * 20 + idx + 1}
-                                        </td>
-                                        <td className="px-4 py-3 font-medium text-text-primary dark:text-background-light whitespace-nowrap">
-                                            {compra.numero || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap">
-                                            {formatDate(compra.fecha)}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap">
-                                            {compra.comunidad || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 font-mono text-xs text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
-                                            {compra.codigo || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap font-medium text-primary dark:text-accent">
-                                            {compra.proveedor || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
-                                            {compra.categoria || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/80 dark:text-background-light/70 whitespace-nowrap font-medium text-primary dark:text-accent">
-                                            {compra.producto || '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-medium text-text-primary dark:text-background-light tabular-nums whitespace-nowrap">
-                                            {compra.cantidad ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-mono text-xs text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">
-                                            {formatCurrency(compra.valor_unitario)}
-                                        </td>
-                                        <td className="px-4 py-3 text-right font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400 tabular-nums whitespace-nowrap">
-                                            {formatCurrency(compra.total)}
-                                        </td>
-                                        <td className="px-4 py-3 text-text-primary/70 dark:text-background-light/60 whitespace-nowrap">
-                                            {compra.negociador || '—'}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* ═══════ PAGINATION ═══════ */}
-            {totalPaginas > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-primary/10 dark:border-primary/20">
-                    <p className="text-xs text-text-secondary dark:text-background-light/40">
-                        Página <span className="font-bold text-text-primary dark:text-background-light">{pagina}</span> de{' '}
-                        <span className="font-bold text-text-primary dark:text-background-light">{totalPaginas}</span>
-                        {' · '}{total.toLocaleString('es-EC')} registros
-                    </p>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => fetchCompras(1, 20, selectedPeriod)}
-                            disabled={pagina <= 1 || loading}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            <span className="material-symbols-outlined text-lg">first_page</span>
-                        </button>
-                        <button
-                            onClick={() => fetchCompras(pagina - 1, 20, selectedPeriod)}
-                            disabled={pagina <= 1 || loading}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            <span className="material-symbols-outlined text-lg">chevron_left</span>
-                        </button>
-
-                        {/* Page numbers */}
-                        {(() => {
-                            const pages = [];
-                            let start = Math.max(1, pagina - 2);
-                            let end = Math.min(totalPaginas, pagina + 2);
-                            if (pagina <= 3) end = Math.min(5, totalPaginas);
-                            if (pagina >= totalPaginas - 2) start = Math.max(1, totalPaginas - 4);
-
-                            for (let i = start; i <= end; i++) {
-                                pages.push(
-                                    <button
-                                        key={i}
-                                        onClick={() => fetchCompras(i, 20, selectedPeriod)}
-                                        disabled={loading}
-                                        className={`flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-all ${
-                                            i === pagina
-                                                ? 'bg-primary text-white shadow-md shadow-primary/20'
-                                                : 'border border-primary/15 dark:border-primary/25 text-text-primary/60 dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary'
-                                        }`}
-                                    >
-                                        {i}
-                                    </button>
-                                );
-                            }
-                            return pages;
-                        })()}
-
-                        <button
-                            onClick={() => fetchCompras(pagina + 1, 20, selectedPeriod)}
-                            disabled={pagina >= totalPaginas || loading}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            <span className="material-symbols-outlined text-lg">chevron_right</span>
-                        </button>
-                        <button
-                            onClick={() => fetchCompras(totalPaginas, 20, selectedPeriod)}
-                            disabled={pagina >= totalPaginas || loading}
-                            className="flex items-center justify-center w-9 h-9 rounded-lg border border-primary/15 dark:border-primary/25 text-text-secondary dark:text-background-light/50 hover:bg-primary/5 dark:hover:bg-primary/10 hover:text-primary transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            <span className="material-symbols-outlined text-lg">last_page</span>
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+        <PurchaseTable
+            compras={compras}
+            total={total}
+            pagina={pagina}
+            totalPaginas={totalPaginas}
+            loading={loading}
+            selectedPeriod={selectedPeriod}
+            activePeriodObj={activePeriodObj}
+            fetchCompras={fetchCompras}
+            formatDate={formatDate}
+        />
     );
 
     const renderDetailView = () => (
@@ -537,202 +381,42 @@ const ComprasGeneralesPage = ({ onBack }) => {
             </div>
 
             {/* ═══════ CREATE PERIOD MODAL ═══════ */}
-            {showCreatePeriodModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => setShowCreatePeriodModal(false)} />
-                    <form
-                        onSubmit={handleCreatePeriodSubmit}
-                        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20">
-                                <span className="material-symbols-outlined text-2xl text-primary">calendar_add_on</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
-                                    Nuevo Trimestre / Período
-                                </h3>
-                                <p className="text-xs text-text-secondary dark:text-background-light/50">
-                                    Define los parámetros temporales para el reporte
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 my-6">
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                    Nombre del Trimestre *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Ej: 2026 - Trimestre 1"
-                                    value={newPeriodName}
-                                    onChange={(e) => setNewPeriodName(e.target.value)}
-                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
-                                />
-                            </div>
-
-
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                        Fecha Inicio *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={newPeriodStart}
-                                        onChange={(e) => setNewPeriodStart(e.target.value)}
-                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                        Fecha Fin *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={newPeriodEnd}
-                                        onChange={(e) => setNewPeriodEnd(e.target.value)}
-                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                    Descripción / Notas
-                                </label>
-                                <textarea
-                                    placeholder="Notas adicionales sobre este trimestre..."
-                                    value={newPeriodDesc}
-                                    onChange={(e) => setNewPeriodDesc(e.target.value)}
-                                    rows={2}
-                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all resize-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 justify-end">
-                            <button
-                                type="button"
-                                onClick={() => setShowCreatePeriodModal(false)}
-                                className="px-4 py-2.5 text-sm font-medium rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all"
-                            >
-                                Guardar Periodo
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+            <PeriodModal
+                isOpen={showCreatePeriodModal}
+                onClose={() => setShowCreatePeriodModal(false)}
+                onSubmit={handleCreatePeriodSubmit}
+                title="Nuevo Trimestre / Período"
+                subtitle="Define los parámetros temporales para el reporte"
+                icon="calendar_add_on"
+                name={newPeriodName}
+                setName={setNewPeriodName}
+                startDate={newPeriodStart}
+                setStartDate={setNewPeriodStart}
+                endDate={newPeriodEnd}
+                setEndDate={setNewPeriodEnd}
+                description={newPeriodDesc}
+                setDescription={setNewPeriodDesc}
+                submitLabel="Guardar Periodo"
+            />
 
             {/* ═══════ EDIT PERIOD MODAL ═══════ */}
-            {showEditPeriodModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" onClick={() => setShowEditPeriodModal(false)} />
-                    <form
-                        onSubmit={handleEditPeriodSubmit}
-                        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200"
-                    >
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20">
-                                <span className="material-symbols-outlined text-2xl text-primary">edit_calendar</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
-                                    Editar Trimestre / Período
-                                </h3>
-                                <p className="text-xs text-text-secondary dark:text-background-light/50">
-                                    Modifica los parámetros temporales o el nombre del reporte
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 my-6">
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                    Nombre del Trimestre *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Ej: 2026 - Trimestre 1"
-                                    value={editPeriodName}
-                                    onChange={(e) => setEditPeriodName(e.target.value)}
-                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
-                                />
-                            </div>
-
-
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                        Fecha Inicio *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={editPeriodStart}
-                                        onChange={(e) => setEditPeriodStart(e.target.value)}
-                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                        Fecha Fin *
-                                    </label>
-                                    <input
-                                        type="date"
-                                        required
-                                        value={editPeriodEnd}
-                                        onChange={(e) => setEditPeriodEnd(e.target.value)}
-                                        className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-1">
-                                    Descripción / Notas
-                                </label>
-                                <textarea
-                                    placeholder="Notas adicionales sobre este trimestre..."
-                                    value={editPeriodDesc}
-                                    onChange={(e) => setEditPeriodDesc(e.target.value)}
-                                    rows={2}
-                                    className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all resize-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 justify-end">
-                            <button
-                                type="button"
-                                onClick={() => setShowEditPeriodModal(false)}
-                                className="px-4 py-2.5 text-sm font-medium rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all"
-                            >
-                                Guardar Cambios
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+            <PeriodModal
+                isOpen={showEditPeriodModal}
+                onClose={() => setShowEditPeriodModal(false)}
+                onSubmit={handleEditPeriodSubmit}
+                title="Editar Trimestre / Período"
+                subtitle="Modifica los parámetros temporales o el nombre del reporte"
+                icon="edit_calendar"
+                name={editPeriodName}
+                setName={setEditPeriodName}
+                startDate={editPeriodStart}
+                setStartDate={setEditPeriodStart}
+                endDate={editPeriodEnd}
+                setEndDate={setEditPeriodEnd}
+                description={editPeriodDesc}
+                setDescription={setEditPeriodDesc}
+                submitLabel="Guardar Cambios"
+            />
 
             {/* ═══════ NO PERIOD SELECTED (EMPTY STATE) ═══════ */}
             {!selectedPeriod && (
@@ -975,95 +659,38 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                 </div>
 
-                                {/* CARD 2: Volumen Cacao (Pencil Sketch custom design!) */}
-                                <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-                                            <span className="material-symbols-outlined text-xl">scale</span>
-                                        </div>
-                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
-                                            Volumen Cacao
-                                        </h4>
-                                    </div>
-                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
-                                        <div className="pr-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Libras
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {(resumenPeriodo?.totalCantidad ?? 0).toLocaleString('es-EC')}
-                                            </span>
-                                        </div>
-                                        <div className="pl-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Quintales
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {((resumenPeriodo?.totalCantidad ?? 0) / 100).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {/* CARD 2: Volumen Cacao */}
+                                <MetricCardSplit
+                                    title="Volumen Cacao"
+                                    icon="scale"
+                                    theme="emerald"
+                                    leftLabel="Libras"
+                                    leftValue={(resumenPeriodo?.totalCantidad ?? 0).toLocaleString('es-EC')}
+                                    rightLabel="Quintales"
+                                    rightValue={((resumenPeriodo?.totalCantidad ?? 0) / 100).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                />
 
-                                {/* CARD 3: Monto Inversión (Split Lb / Qq layout) */}
-                                <div className="rounded-xl border border-purple-200/50 dark:border-purple-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
-                                            <span className="material-symbols-outlined text-xl">payments</span>
-                                        </div>
-                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
-                                            Monto Inversión
-                                        </h4>
-                                    </div>
-                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
-                                        <div className="pr-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Libras
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {formatCurrency(resumenPeriodo?.totalInversion ?? 0)}
-                                            </span>
-                                        </div>
-                                        <div className="pl-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Quintal
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {formatCurrency(resumenPeriodo?.totalCantidad > 0 ? (resumenPeriodo.totalInversion / (resumenPeriodo.totalCantidad / 100)) : 0)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {/* CARD 3: Monto Inversión */}
+                                <MetricCardSplit
+                                    title="Monto Inversión"
+                                    icon="payments"
+                                    theme="purple"
+                                    leftLabel="Libras"
+                                    leftValue={formatCurrency(resumenPeriodo?.totalInversion ?? 0)}
+                                    rightLabel="Quintal"
+                                    rightValue={formatCurrency(resumenPeriodo?.totalCantidad > 0 ? (resumenPeriodo.totalInversion / (resumenPeriodo.totalCantidad / 100)) : 0)}
+                                />
 
-                                {/* CARD 4: Quintal Seco Aprox (Split Lb / Qq layout) */}
-                                <div className="rounded-xl border border-amber-200/50 dark:border-amber-800/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 flex flex-col justify-between">
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                                            <span className="material-symbols-outlined text-xl">wb_sunny</span>
-                                        </div>
-                                        <h4 className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">
-                                            Cacao Seco Aproximado
-                                        </h4>
-                                    </div>
-                                    <div className="grid grid-cols-2 divide-x divide-primary/10 dark:divide-primary/20 text-center">
-                                        <div className="pr-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Quintales
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {(((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </span>
-                                        </div>
-                                        <div className="pl-1 flex flex-col items-center justify-center">
-                                            <span className="text-[9px] font-bold text-text-secondary/70 dark:text-background-light/40 uppercase tracking-wider mb-0.5">
-                                                Monto
-                                            </span>
-                                            <span className="text-sm font-bold text-text-primary dark:text-background-light tabular-nums">
-                                                {formatCurrency((((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) > 0 ? (resumenPeriodo?.totalInversion ?? 0) / (((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) : 0)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                {/* CARD 4: Cacao Seco Aproximado */}
+                                <MetricCardSplit
+                                    title="Cacao Seco Aproximado"
+                                    icon="wb_sunny"
+                                    theme="amber"
+                                    leftLabel="Quintales"
+                                    leftValue={(((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8).toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    rightLabel="Monto"
+                                    rightValue={formatCurrency((((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) > 0 ? (resumenPeriodo?.totalInversion ?? 0) / (((resumenPeriodo?.totalCantidad ?? 0) / 100) / 2.8) : 0)}
+                                />
                             </div>
 
                             {/* Centered CTA Button to view detail below metrics cards */}
