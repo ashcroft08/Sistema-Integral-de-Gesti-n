@@ -63,6 +63,11 @@ class CompraGeneralService {
         const response = await axiosInstance.post(`/cacao/compra-general/periodos/${id}/approve`);
         return response.data;
     }
+
+    async getReporteResumen(id) {
+        const response = await axiosInstance.get(`/cacao/compra-general/periodos/${id}/reporte-resumen`);
+        return response.data;
+    }
 }
 
 export const compraGeneralService = new CompraGeneralService();

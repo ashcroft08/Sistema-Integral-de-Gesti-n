@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import ModuleLayout from "../../components/Layout/ModuleLayout";
 import { compraGeneralService } from "../../services/compraGeneral.service";
 import ComprasGeneralesPage from "./Cacao/ComprasGeneralesPage";
+import ResumenReportesPage from "./Cacao/ResumenReportesPage";
 
 const tabs = [
   { id: "inventario", label: "Inventario", icon: "inventory_2" },
@@ -40,6 +41,7 @@ const quickActions = {
   ],
   "materia-prima-cacao": [
     { label: "Importar Compras Excel", icon: "upload_file", path: "/bodega/cacao/compras-generales" },
+    { label: "Resumen Reportes DW", icon: "analytics", path: "/bodega/cacao/resumen-reportes" },
     { label: "Registrar Compra Interna", icon: "add_box" },
     { label: "Crear Lote de Cacao", icon: "layers" },
     { label: "Exportar Reporte MP", icon: "download" },
@@ -83,6 +85,8 @@ const BodegaDashboardPage = () => {
   const handleActionClick = (path) => {
     if (path === "/bodega/cacao/compras-generales") {
       setSearchParams({ tab: activeTab, subApp: "compras-generales" });
+    } else if (path === "/bodega/cacao/resumen-reportes") {
+      setSearchParams({ tab: activeTab, subApp: "resumen-reportes" });
     } else if (path && path !== "#") {
       navigate(path);
     }
@@ -119,6 +123,7 @@ const BodegaDashboardPage = () => {
     ],
     "materia-prima-cacao": [
       { label: "Compras Generales", icon: "upload_file", color: "text-amber-700 bg-amber-500/10", path: "/bodega/cacao/compras-generales" },
+      { label: "Resumen Reportes", icon: "analytics", color: "text-emerald-700 bg-emerald-500/10", path: "/bodega/cacao/resumen-reportes" },
       { label: "Compras Internas", icon: "inventory_2", color: "text-green-600 bg-green-500/10", path: "#" },
       { label: "Control Lotes Orgánicos", icon: "eco", color: "text-emerald-600 bg-emerald-500/10", path: "#" },
       { label: "Control Lotes Convencional", icon: "park", color: "text-teal-600 bg-teal-500/10", path: "#" },
@@ -169,6 +174,10 @@ const BodegaDashboardPage = () => {
       {activeTab === "materia-prima-cacao" && activeSubApp === "compras-generales" ? (
         <div className="animate-in fade-in-50 duration-300">
           <ComprasGeneralesPage onBack={() => setSearchParams({ tab: activeTab })} />
+        </div>
+      ) : activeTab === "materia-prima-cacao" && activeSubApp === "resumen-reportes" ? (
+        <div className="animate-in fade-in-50 duration-300">
+          <ResumenReportesPage onBack={() => setSearchParams({ tab: activeTab })} />
         </div>
       ) : (
         <div className="flex gap-8 flex-col lg:flex-row animate-in fade-in-50 duration-300">

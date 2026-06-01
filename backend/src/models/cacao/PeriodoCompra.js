@@ -47,5 +47,10 @@ export default (sequelize, DataTypes) => {
         timestamps: false
     });
 
+    PeriodoCompra.associate = (models) => {
+        PeriodoCompra.hasMany(models.CompraGeneral, { foreignKey: 'id_periodo_compra' });
+        PeriodoCompra.hasMany(models.CompraInterna, { foreignKey: 'id_periodo_compra' });
+    };
+
     return PeriodoCompra;
 };

@@ -1,5 +1,5 @@
 import readXlsxFile from 'read-excel-file/node';
-import { CompraGeneral, PeriodoCompra, CompraInterna, ComunidadMp, ProveedorMp, CategoriaMp, ProductoMp, NegociadorMp } from '../models/index.js';
+import { CompraGeneral, PeriodoCompra, CompraInterna, ComunidadMp, ProveedorMp, CategoriaMp, ProductoMp, NegociadorMp, FechaMp } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // Column mapping: Excel header → DB field
@@ -122,9 +122,9 @@ export class CompraGeneralService {
         // If it is already a JS Date object
         if (value instanceof Date) {
             if (isNaN(value.getTime())) return null;
-            const y = value.getFullYear();
-            const m = String(value.getMonth() + 1).padStart(2, '0');
-            const d = String(value.getDate()).padStart(2, '0');
+            const y = value.getUTCFullYear();
+            const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+            const d = String(value.getUTCDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
         }
 
@@ -616,6 +616,18 @@ export class CompraGeneralService {
             const categoriasCache = {};
             const productosCache = {};
             const negociadoresCache = {};
+            const fechasCache = {};
+
+            // Helper maps for Spanish month and day names
+            const MONTH_NAMES_MAP = {
+                1: 'ENERO', 2: 'FEBRERO', 3: 'MARZO', 4: 'ABRIL',
+                5: 'MAYO', 6: 'JUNIO', 7: 'JULIO', 8: 'AGOSTO',
+                9: 'SEPTIEMBRE', 10: 'OCTUBRE', 11: 'NOVIEMBRE', 12: 'DICIEMBRE'
+            };
+            const DAY_NAMES_MAP = {
+                0: 'DOMINGO', 1: 'LUNES', 2: 'MARTES', 3: 'MIÉRCOLES',
+                4: 'JUEVES', 5: 'VIERNES', 6: 'SÁBADO'
+            };
 
             for (const purchase of stagingPurchases) {
                 const comName = purchase.comunidad || 'SIN DATO';
@@ -674,6 +686,33 @@ export class CompraGeneralService {
                     negociadoresCache[negName] = record.id_negociador_mp;
                 }
 
+                // 6. Resolve Fecha (Dimensión Temporal)
+                const fechaStr = purchase.fecha; // 'YYYY-MM-DD'
+                if (fechaStr && !fechasCache[fechaStr]) {
+                    const dateObj = new Date(fechaStr + 'T12:00:00Z'); // noon UTC to avoid timezone shifts
+                    const dia = dateObj.getUTCDate();
+                    const mes = dateObj.getUTCMonth() + 1;
+                    const anio = dateObj.getUTCFullYear();
+                    const trimestre = Math.ceil(mes / 3);
+                    const nombreMes = MONTH_NAMES_MAP[mes] || 'DESCONOCIDO';
+                    const nombreDiaSemana = DAY_NAMES_MAP[dateObj.getUTCDay()] || 'DESCONOCIDO';
+
+                    const [record] = await FechaMp.findOrCreate({
+                        where: { fecha: fechaStr },
+                        defaults: {
+                            fecha: fechaStr,
+                            dia,
+                            mes,
+                            anio,
+                            trimestre,
+                            nombre_mes: nombreMes,
+                            nombre_dia_semana: nombreDiaSemana
+                        },
+                        transaction
+                    });
+                    fechasCache[fechaStr] = record.id_fecha_mp;
+                }
+
                 // Build target DW record
                 dwRecords.push({
                     id_comunidad_mp: comunidadesCache[comName],
@@ -681,7 +720,7 @@ export class CompraGeneralService {
                     id_categoria_mp: categoriasCache[catName],
                     id_producto_mp: productosCache[prodName],
                     id_negociador_mp: negociadoresCache[negName],
-                    fecha_compra: purchase.fecha,
+                    id_fecha_compra: fechasCache[fechaStr] || null,
                     cantidad_libra: purchase.cantidad,
                     costo_unitario: purchase.valor_unitario,
                     total: purchase.total,
@@ -720,4 +759,136 @@ export class CompraGeneralService {
             throw error;
         }
     }
+
+    async getPeriodReport(id) {
+        const idInt = parseInt(id, 10);
+        if (isNaN(idInt)) {
+            throw new Error('ID de período inválido');
+        }
+
+        const period = await PeriodoCompra.findByPk(idInt);
+        if (!period) {
+            throw new Error('El período seleccionado no existe');
+        }
+
+        // Fetch all CompraInterna records for this period, including CategoriaMp, FechaMp and ProductoMp
+        const records = await CompraInterna.findAll({
+            where: { id_periodo_compra: idInt },
+            include: [
+                {
+                    model: CategoriaMp,
+                    attributes: ['categoria']
+                },
+                {
+                    model: FechaMp,
+                    attributes: ['fecha', 'dia', 'mes', 'anio', 'trimestre', 'nombre_mes', 'nombre_dia_semana']
+                },
+                {
+                    model: ProductoMp,
+                    attributes: ['producto']
+                }
+            ],
+            order: [[FechaMp, 'mes', 'ASC'], [FechaMp, 'dia', 'ASC']]
+        });
+
+        // Aggregation structure grouped by month (from FechaMp dimension)
+        const monthlyGroups = {};
+
+        records.forEach(record => {
+            const fechaDim = record.FechaMp;
+            if (!fechaDim) return;
+
+            // Filter to only include 'escurrido' products
+            const prodName = record.ProductoMp?.producto?.toLowerCase() || '';
+            if (!prodName.includes('escurrido')) return;
+
+            const monthCode = fechaDim.mes; // integer 1-12
+            const monthName = fechaDim.nombre_mes; // 'ENERO', 'FEBRERO', etc.
+
+            if (!monthlyGroups[monthCode]) {
+                monthlyGroups[monthCode] = {
+                    mes: monthName,
+                    codigoMes: monthCode,
+                    organico: { qq: 0, monto: 0 },
+                    convencional: { qq: 0, monto: 0 },
+                    total: { qq: 0, monto: 0 }
+                };
+            }
+
+            const catName = record.CategoriaMp?.categoria?.toLowerCase() || '';
+            const isOrganico = catName.includes('orgánico') || catName.includes('organico');
+
+            const qq = parseFloat(record.cantidad_libra) / 100;
+            const monto = parseFloat(record.total);
+
+            if (isOrganico) {
+                monthlyGroups[monthCode].organico.qq += qq;
+                monthlyGroups[monthCode].organico.monto += monto;
+            } else {
+                monthlyGroups[monthCode].convencional.qq += qq;
+                monthlyGroups[monthCode].convencional.monto += monto;
+            }
+
+            // Always add to total
+            monthlyGroups[monthCode].total.qq += qq;
+            monthlyGroups[monthCode].total.monto += monto;
+        });
+
+        // Convert monthlyGroups to sorted array (sorted by month integer)
+        const sortedMonths = Object.keys(monthlyGroups)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .map(code => {
+                const group = monthlyGroups[code];
+                return {
+                    mes: group.mes,
+                    organico: {
+                        qq: Math.round(group.organico.qq * 100) / 100,
+                        monto: Math.round(group.organico.monto * 100) / 100
+                    },
+                    convencional: {
+                        qq: Math.round(group.convencional.qq * 100) / 100,
+                        monto: Math.round(group.convencional.monto * 100) / 100
+                    },
+                    total: {
+                        qq: Math.round(group.total.qq * 100) / 100,
+                        monto: Math.round(group.total.monto * 100) / 100
+                    }
+                };
+            });
+
+        // Calculate grand totals
+        const grandTotals = {
+            organico: { qq: 0, monto: 0 },
+            convencional: { qq: 0, monto: 0 },
+            total: { qq: 0, monto: 0 }
+        };
+
+        sortedMonths.forEach(m => {
+            grandTotals.organico.qq += m.organico.qq;
+            grandTotals.organico.monto += m.organico.monto;
+            grandTotals.convencional.qq += m.convencional.qq;
+            grandTotals.convencional.monto += m.convencional.monto;
+            grandTotals.total.qq += m.total.qq;
+            grandTotals.total.monto += m.total.monto;
+        });
+
+        // Round grand totals
+        grandTotals.organico.qq = Math.round(grandTotals.organico.qq * 100) / 100;
+        grandTotals.organico.monto = Math.round(grandTotals.organico.monto * 100) / 100;
+        grandTotals.convencional.qq = Math.round(grandTotals.convencional.qq * 100) / 100;
+        grandTotals.convencional.monto = Math.round(grandTotals.convencional.monto * 100) / 100;
+        grandTotals.total.qq = Math.round(grandTotals.total.qq * 100) / 100;
+        grandTotals.total.monto = Math.round(grandTotals.total.monto * 100) / 100;
+
+        return {
+            periodo: {
+                id_periodo_compra: period.id_periodo_compra,
+                nombre: period.nombre,
+                estado: period.estado
+            },
+            reporte: sortedMonths,
+            totalesGenerales: grandTotals
+        };
+    }
 }
+

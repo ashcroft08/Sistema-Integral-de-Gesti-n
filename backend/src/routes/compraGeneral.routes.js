@@ -69,6 +69,13 @@ router.put('/periodos/:id', bodegaAccess, controller.updatePeriodo);
 router.post('/periodos/:id/approve', bodegaAccess, controller.approvePeriod);
 
 /**
+ * @route   GET /api/cacao/compra-general/periodos/:id/reporte-resumen
+ * @desc    Obtener reporte resumen del Data Warehouse de compras
+ * @access  Privado (Bodega/Admin/Superusuario)
+ */
+router.get('/periodos/:id/reporte-resumen', bodegaAccess, controller.getPeriodReport);
+
+/**
  * @route   GET /api/cacao/compra-general
  * @desc    Obtener todas las compras generales (paginado)
  * @access  Privado (Bodega/Admin/Superusuario)

@@ -112,4 +112,15 @@ export class CompraGeneralController {
             ApiResponse.success(resultado, 'Período aprobado y datos cargados al Data Warehouse correctamente')
         );
     });
+
+    /**
+     * Obtener reporte resumen agrupado de compras del Data Warehouse para un período
+     */
+    getPeriodReport = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const resultado = await compraGeneralService.getPeriodReport(id);
+        return res.status(200).json(
+            ApiResponse.success(resultado)
+        );
+    });
 }

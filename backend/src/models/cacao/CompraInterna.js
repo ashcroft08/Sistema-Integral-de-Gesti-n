@@ -25,8 +25,8 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        fecha_compra: {
-            type: DataTypes.DATEONLY,
+        id_fecha_compra: {
+            type: DataTypes.INTEGER,
             allowNull: false
         },
         cantidad_libra: {
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
         },
         id_periodo_compra: {
             type: DataTypes.INTEGER,
-            allowNull: true
+            allowNull: false
         }
     }, {
         tableName: 'compra_interna',
@@ -57,6 +57,7 @@ export default (sequelize, DataTypes) => {
         CompraInterna.belongsTo(models.CategoriaMp, { foreignKey: 'id_categoria_mp' });
         CompraInterna.belongsTo(models.ProductoMp, { foreignKey: 'id_producto_mp' });
         CompraInterna.belongsTo(models.NegociadorMp, { foreignKey: 'id_negociador_mp' });
+        CompraInterna.belongsTo(models.FechaMp, { foreignKey: 'id_fecha_compra' });
         CompraInterna.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
         CompraInterna.hasMany(models.StockLoteOrg, { foreignKey: 'id_compra_interna' });
     };

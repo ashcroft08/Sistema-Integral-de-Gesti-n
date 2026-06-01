@@ -190,6 +190,26 @@ export const useComprasGenerales = () => {
         }
     }, [fetchPeriodos, fetchCompras]);
 
+    const [reporteResumen, setReporteResumen] = useState(null);
+    const [loadingReporte, setLoadingReporte] = useState(false);
+
+    const fetchReporteResumen = useCallback(async (id) => {
+        if (!id) {
+            setReporteResumen(null);
+            return;
+        }
+        try {
+            setLoadingReporte(true);
+            const response = await compraGeneralService.getReporteResumen(id);
+            setReporteResumen(response.data || response.resultado || response);
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || 'Error al cargar reporte resumen';
+            toast.error(message);
+        } finally {
+            setLoadingReporte(false);
+        }
+    }, []);
+
     return {
         compras,
         total,
@@ -212,6 +232,11 @@ export const useComprasGenerales = () => {
         deletePeriodo,
         updatePeriodo,
         approvePeriodo,
+        
+        // Report exports
+        reporteResumen,
+        loadingReporte,
+        fetchReporteResumen,
         
         fetchCompras,
         uploadFile,

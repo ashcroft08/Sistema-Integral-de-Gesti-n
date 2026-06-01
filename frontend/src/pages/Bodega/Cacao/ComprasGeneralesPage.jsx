@@ -5,6 +5,7 @@ import { useComprasGenerales } from '../../../hooks/useComprasGenerales';
 import MetricCardSplit from './components/MetricCardSplit';
 import PeriodModal from './components/PeriodModal';
 import PurchaseTable from './components/PurchaseTable';
+import Breadcrumbs from './components/Breadcrumbs';
 
 const ComprasGeneralesPage = ({ onBack }) => {
     const navigate = useNavigate();
@@ -308,19 +309,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const renderContent = () => (
         <div className="space-y-6">
             {/* ═══════ BREADCRUMB ═══════ */}
-            <nav className="flex items-center gap-2 text-sm mb-4">
-                <button
-                    onClick={onBack ? onBack : () => navigate('/bodega')}
-                    className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
-                >
-                    <span className="material-symbols-outlined text-base">warehouse</span>
-                    <span>Bodega</span>
-                </button>
-                <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
-                <span className="text-text-secondary/70 dark:text-background-light/50">Materia Prima Cacao</span>
-                <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
-                <span className="font-semibold text-text-primary dark:text-background-light">Compras Generales</span>
-            </nav>
+            <Breadcrumbs onBack={onBack ? onBack : () => navigate('/bodega')} currentPath="Compras Generales" />
 
             {/* ═══════ HEADER ═══════ */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">

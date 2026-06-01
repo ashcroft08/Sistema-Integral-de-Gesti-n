@@ -19,6 +19,7 @@ import ProveedorMpModel from './cacao/ProveedorMp.js';
 import NegociadorMpModel from './cacao/NegociadorMp.js';
 import CategoriaMpModel from './cacao/CategoriaMp.js';
 import ProductoMpModel from './cacao/ProductoMp.js';
+import FechaMpModel from './cacao/FechaMp.js';
 import CompraInternaModel from './cacao/CompraInterna.js';
 import StockLoteOrgModel from './cacao/StockLoteOrg.js';
 import RutaCompraModel from './cacao/RutaCompra.js';
@@ -46,6 +47,7 @@ const ProveedorMp = ProveedorMpModel(sequelize, DataTypes);
 const NegociadorMp = NegociadorMpModel(sequelize, DataTypes);
 const CategoriaMp = CategoriaMpModel(sequelize, DataTypes);
 const ProductoMp = ProductoMpModel(sequelize, DataTypes);
+const FechaMp = FechaMpModel(sequelize, DataTypes);
 const CompraInterna = CompraInternaModel(sequelize, DataTypes);
 const StockLoteOrg = StockLoteOrgModel(sequelize, DataTypes);
 const RutaCompra = RutaCompraModel(sequelize, DataTypes);
@@ -72,6 +74,7 @@ const models = {
     NegociadorMp,
     CategoriaMp,
     ProductoMp,
+    FechaMp,
     CompraInterna,
     StockLoteOrg,
     RutaCompra,
@@ -106,6 +109,7 @@ export {
     NegociadorMp,
     CategoriaMp,
     ProductoMp,
+    FechaMp,
     CompraInterna,
     StockLoteOrg,
     RutaCompra,
