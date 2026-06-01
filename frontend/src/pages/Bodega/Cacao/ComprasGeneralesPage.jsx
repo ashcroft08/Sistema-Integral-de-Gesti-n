@@ -74,6 +74,17 @@ const ComprasGeneralesPage = ({ onBack }) => {
         }
     }, [selectedPeriod, fetchCompras]);
 
+    // Auto-hide upload success banner after 15 seconds
+    useEffect(() => {
+        if (uploadResult) {
+            setShowImportBanner(true);
+            const timer = setTimeout(() => {
+                setShowImportBanner(false);
+            }, 15000); // 15 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [uploadResult]);
+
     // Get current period object details
     const activePeriodObj = periodos.find(p => p.id_periodo_compra === parseInt(selectedPeriod, 10));
 
@@ -474,16 +485,16 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <h4 className="text-sm font-bold text-primary dark:text-accent leading-tight">
-                                            Trimestre Aprobado & Cargado al Data Warehouse
+                                            Trimestre Aprobado y Guardado en el Historial
                                         </h4>
                                         <p className="text-xs text-text-secondary dark:text-background-light/60 mt-1 leading-relaxed">
-                                            Este período se encuentra formalmente cerrado, normalizado y respaldado en el Data Warehouse histórico. Para garantizar la consistencia, está <strong className="font-bold">bloqueado</strong> contra nuevas cargas, eliminaciones o modificaciones de datos.
+                                            Este período de compras ha sido revisado, aprobado y archivado en el registro histórico oficial. Para asegurar que la información no se altere, se encuentra <strong className="font-bold">bloqueado</strong> para nuevas cargas, modificaciones o eliminaciones.
                                         </p>
                                     </div>
                                 </div>
                                 <div className="flex-shrink-0 self-end md:self-center flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/25 rounded-xl text-primary text-xs font-bold uppercase tracking-wider">
                                     <span className="material-symbols-outlined text-sm font-bold">lock</span>
-                                    DW Cerrado
+                                    Trimestre Cerrado
                                 </div>
                             </div>
                         ) : (
@@ -494,10 +505,10 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
-                                            Período en Staging (Vista Previa Pendiente)
+                                            Borrador de Compras (Revisión Pendiente)
                                         </h4>
                                         <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
-                                            Los datos están cargados en fase de pruebas (staging). Por favor, revisa la tabla detallada inferior. Si todo está correcto, haz clic en <strong className="font-bold">"Aprobar e Integrar DW"</strong> para consolidar los datos de forma permanente.
+                                            Las compras de este trimestre han sido pre-cargadas de forma temporal. Por favor, revisa el listado inferior. Si la información es correcta, haz clic en <strong className="font-bold">"Aprobar y Guardar de forma Permanente"</strong> para registrar los datos formalmente.
                                         </p>
                                     </div>
                                 </div>
@@ -517,7 +528,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                         className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-primary/20 hover:shadow-primary/30 rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap"
                                     >
                                         <span className="material-symbols-outlined text-lg">verified_user</span>
-                                        Aprobar e Integrar DW
+                                        Aprobar y Guardar de forma Permanente
                                     </button>
                                 </div>
                             </div>
@@ -535,7 +546,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
-                                            ¿Limpiar compras de este periodo?
+                                            ¿Borrar compras temporales de este periodo?
                                         </h3>
                                         <p className="text-xs text-text-secondary dark:text-background-light/50">
                                             Esta acción solo afecta a {activePeriodObj?.nombre}
@@ -543,7 +554,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </div>
                                 </div>
                                 <p className="text-sm text-text-primary/70 dark:text-background-light/60 mb-6">
-                                    Se eliminarán los <span className="font-bold text-red-600 dark:text-red-400">{total}</span> registros de compras generales en el periodo <span className="font-semibold">{activePeriodObj?.nombre}</span>. Los demás periodos no se verán afectados.
+                                    Se eliminarán los <span className="font-bold text-red-600 dark:text-red-400">{total}</span> registros de compras temporales en el periodo <span className="font-semibold">{activePeriodObj?.nombre}</span>. Los demás periodos no se verán afectados.
                                 </p>
                                 <div className="flex items-center gap-3 justify-end">
                                     <button
@@ -557,7 +568,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                         disabled={loading}
                                         className="px-5 py-2.5 text-sm font-medium rounded-xl bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 transition-all disabled:opacity-50"
                                     >
-                                        {loading ? 'Eliminando...' : 'Sí, limpiar periodo'}
+                                        {loading ? 'Eliminando...' : 'Sí, borrar datos temporales'}
                                     </button>
                                 </div>
                             </div>
@@ -571,23 +582,23 @@ const ComprasGeneralesPage = ({ onBack }) => {
                             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20">
-                                        <span className="material-symbols-outlined text-2xl text-primary">gavel</span>
+                                        <span className="material-symbols-outlined text-2xl text-primary">verified_user</span>
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
-                                            ¿Aprobar y cargar a Data Warehouse?
+                                            ¿Aprobar y cerrar el período de compras?
                                         </h3>
                                         <p className="text-xs text-text-secondary dark:text-background-light/50">
-                                            Consolidación permanente para {activePeriodObj?.nombre}
+                                            Guardar permanentemente en el historial para {activePeriodObj?.nombre}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="text-sm text-text-primary/70 dark:text-background-light/60 space-y-3 mb-6">
                                     <p>
-                                        Esta acción ejecutará el pipeline ETL para normalizar, estructurar y poblar el Data Warehouse histórico (`compra_interna`) con los <span className="font-bold text-primary">{total}</span> registros actuales.
+                                        Esta acción guardará permanentemente en el registro histórico los <span className="font-bold text-primary">{total}</span> registros de compra cargados en este trimestre.
                                     </p>
                                     <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-400 font-medium">
-                                        ⚠️ <strong>Importante:</strong> Al finalizar, este trimestre se considerará oficial y quedará <strong>bloqueado permanentemente</strong>. No se podrán subir nuevos archivos ni borrar registros de este trimestre.
+                                        ⚠️ <strong>Importante:</strong> Una vez aprobado, este trimestre quedará cerrado y bloqueado de forma permanente. Ya no se podrán subir más archivos de Excel ni borrar la información actual.
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3 justify-end">
@@ -602,7 +613,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                         disabled={loading}
                                         className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all disabled:opacity-50"
                                     >
-                                        {loading ? 'Procesando ETL...' : 'Aprobar y Consolidar'}
+                                        {loading ? 'Guardando datos...' : 'Sí, Aprobar y Cerrar Trimestre'}
                                     </button>
                                 </div>
                             </div>
@@ -715,9 +726,9 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                             Se ha procesado y registrado la información del archivo de Excel en el sistema.
                                         </p>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-emerald-800/70 dark:text-emerald-500/60 font-bold">
-                                            <span>✓ Nuevas compras añadidas: {(uploadResult.filasInsertadas ?? uploadResult.filas_insertadas ?? 0)}</span>
-                                            <span>· ✖ Compras repetidas (omitidas): {(uploadResult.duplicadosEliminados ?? uploadResult.duplicados_eliminados ?? 0)}</span>
-                                            <span>· ✍ Datos vacíos corregidos: {(uploadResult.camposRellenados ?? uploadResult.campos_rellenados ?? 0)}</span>
+                                            <span>✓ Nuevas compras registradas: {(uploadResult.filasInsertadas ?? uploadResult.filas_insertadas ?? 0)}</span>
+                                            <span>· ✖ Compras duplicadas (evitadas): {(uploadResult.duplicadosEliminados ?? uploadResult.duplicados_eliminados ?? 0)}</span>
+                                            <span>· ✍ Datos incompletos corregidos: {(uploadResult.camposRellenados ?? uploadResult.campos_rellenados ?? 0)}</span>
                                         </div>
                                     </div>
                                 </div>
