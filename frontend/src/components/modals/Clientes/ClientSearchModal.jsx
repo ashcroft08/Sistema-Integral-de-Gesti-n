@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../../ui/Modal";
 import Button from "../../ui/Button";
 import ClientFormModal from "./ClientFormModal";
-import { useClients } from "../../../hooks/useClients";
+import { useClients } from "../../../hooks/useClientes";
 import { toast } from "react-toastify";
 
 const ClientSearchModal = ({ isOpen, onClose, onSelect }) => {

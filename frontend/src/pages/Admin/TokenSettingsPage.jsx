@@ -4,8 +4,8 @@ import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
 import SuccessModal from "../../components/UI/SuccessModal";
 import ErrorMessage from "../../components/UI/ErrorMessage";
-import { useConfig } from "../../hooks/useConfig";
-import { configService } from '../../services/config.service';
+import { useConfig } from "../../hooks/useConfiguracion";
+import { configService } from '../../services/configuracion.service';
 
 const TokenSettingsPage = () => {
   const {

@@ -1,6 +1,6 @@
 // src/hooks/useSales.js
 import { useState, useCallback } from 'react';
-import { salesService } from '../services/sales.service';
+import { salesService } from '../services/ventas.service';
 import { toast } from 'react-toastify';
 
 export const useSales = () => {

@@ -1,6 +1,6 @@
 // src/hooks/useConfig.js
 import { useState, useEffect } from 'react';
-import { configService } from '../services/config.service';
+import { configService } from '../services/configuracion.service';
 import { TokenExpirationFrontendSchema, BlockConfigFrontendSchema } from '../schemas/config.schemas';
 
 export const useConfig = () => {

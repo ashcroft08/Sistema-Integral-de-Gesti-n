@@ -1,6 +1,6 @@
 // src/hooks/useUsers.js
 import { useState, useEffect } from 'react';
-import { userService } from '../services/user.service';
+import { userService } from '../services/usuario.service';
 import { validateFormData, CreateUserSchema, UpdateUserSchema } from '../schemas/user.schemas';
 
 export const useUsers = () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { certificateService } from '../services/certificate.service';
+import { certificateService } from '../services/certificado.service';
 import { toast } from 'react-toastify';
 
 export const useCertificates = () => {

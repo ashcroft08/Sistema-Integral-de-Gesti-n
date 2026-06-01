@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNotifications } from "../../hooks/useNotifications";
+import { useNotifications } from "../../hooks/useNotificaciones";
 import { useNavigate } from "react-router-dom";
 
 const NotificationBell = ({ isCollapsed }) => {

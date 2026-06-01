@@ -1,13 +1,13 @@
 // src/pages/Admin/UsersPage.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useUsers } from "../../hooks/useUsers";
+import { useUsers } from "../../hooks/useUsuarios";
 import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
 import Table from "../../components/UI/Table";
 import TablePagination from "../../components/UI/TablePagination";
-import UserFormModal from "../../components/modals/Users/UserFormModal";
-import StatusConfirmationModal from "../../components/modals/Users/StatusConfirmationModal";
+import UserFormModal from "../../components/modals/Usuarios/UserFormModal";
+import StatusConfirmationModal from "../../components/modals/Usuarios/StatusConfirmationModal";
 import { toast } from "react-toastify";
 import { ESTADOS_USUARIO } from "../../constants/statuses";
 

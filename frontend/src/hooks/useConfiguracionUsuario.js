@@ -1,6 +1,6 @@
 // src/hooks/useUserSettings.js - ACTUALIZADO
 import { useState, useCallback } from 'react';
-import { userService } from '../services/user.service';
+import { userService } from '../services/usuario.service';
 import { toast } from 'react-toastify';
 
 export const useUserSettings = () => {

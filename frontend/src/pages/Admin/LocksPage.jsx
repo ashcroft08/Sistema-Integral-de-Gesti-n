@@ -6,7 +6,7 @@ import Button from "../../components/UI/Button";
 import SuccessModal from "../../components/UI/SuccessModal";
 import Modal from "../../components/UI/Modal";
 import ErrorMessage from "../../components/UI/ErrorMessage";
-import { useConfig } from "../../hooks/useConfig";
+import { useConfig } from "../../hooks/useConfiguracion";
 
 const LocksPage = () => {
   const {

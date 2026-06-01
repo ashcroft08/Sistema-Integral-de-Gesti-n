@@ -1,6 +1,6 @@
 // hooks/useClients.js
 import { useState, useEffect, useCallback } from 'react';
-import { clientService } from '../services/client.service';
+import { clientService } from '../services/cliente.service';
 import { toast } from 'react-toastify';
 
 export const useClients = () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { locationService } from '../services/location.service';
+import { locationService } from '../services/ubicacion.service';
 
 export const useLocations = () => {
     const [provincias, setProvincias] = useState([]);

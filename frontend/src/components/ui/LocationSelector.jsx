@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocations } from "../../hooks/useLocations";
+import { useLocations } from "../../hooks/useUbicaciones";
 
 const LocationSelector = ({
   value,

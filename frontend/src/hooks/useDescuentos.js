@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { discountService } from '../services/discount.service';
+import { discountService } from '../services/descuento.service';
 import { toast } from 'react-toastify';
 
 export const useDiscounts = () => {

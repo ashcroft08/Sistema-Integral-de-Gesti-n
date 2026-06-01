@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { productService } from '../services/product.service';
-import { categoryService } from '../services/category.service';
+import { productService } from '../services/producto.service';
+import { categoryService } from '../services/categoria.service';
 import { toast } from 'react-toastify';
 
 export const useProducts = () => {
