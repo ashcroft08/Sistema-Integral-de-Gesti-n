@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
-import Modal from "./Modal";
-import Button from "./Button";
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
 
 const CertificateUploadModal = ({ isOpen, onClose, onUpload, isLoading }) => {
   const [file, setFile] = useState(null);

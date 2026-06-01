@@ -3,13 +3,13 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import Modal from "./Modal";
-import InputFieldForm from "./InputFieldForm";
-import Button from "./Button";
+import Modal from "../../ui/Modal";
+import InputFieldForm from "../../ui/InputFieldForm";
+import Button from "../../ui/Button";
 import {
   CreateProductSchema,
   UpdateProductSchema,
-} from "../../schemas/product.schemas";
+} from "../../../schemas/product.schemas";
 
 const ProductFormModal = ({
   isOpen,

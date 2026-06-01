@@ -173,6 +173,23 @@ export const useComprasGenerales = () => {
         }
     }, [selectedPeriod]);
 
+    const approvePeriodo = useCallback(async (id) => {
+        try {
+            setLoading(true);
+            const response = await compraGeneralService.approvePeriod(id);
+            toast.success(response.message || 'Trimestre aprobado y cargado al Data Warehouse correctamente');
+            await fetchPeriodos();
+            await fetchCompras(1, 20, id);
+            return response.data;
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || 'Error al aprobar trimestre';
+            toast.error(message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [fetchPeriodos, fetchCompras]);
+
     return {
         compras,
         total,
@@ -194,6 +211,7 @@ export const useComprasGenerales = () => {
         createPeriodo,
         deletePeriodo,
         updatePeriodo,
+        approvePeriodo,
         
         fetchCompras,
         uploadFile,

@@ -13,6 +13,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     // UI modals / states
     const [isDragOver, setIsDragOver] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showApproveConfirm, setShowApproveConfirm] = useState(false);
     const [showCreatePeriodModal, setShowCreatePeriodModal] = useState(false);
     const [showImportBanner, setShowImportBanner] = useState(true);
     const [showDetailView, setShowDetailView] = useState(false);
@@ -57,6 +58,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
         createPeriodo,
         deletePeriodo,
         updatePeriodo,
+        approvePeriodo,
     } = useComprasGenerales();
 
     // Load periods on mount
@@ -119,6 +121,16 @@ const ComprasGeneralesPage = ({ onBack }) => {
         try {
             await clearData(selectedPeriod);
             setShowDeleteConfirm(false);
+        } catch {
+            // error already handled in hook
+        }
+    };
+
+    const handleApprove = async () => {
+        if (!selectedPeriod) return;
+        try {
+            await approvePeriodo(selectedPeriod);
+            setShowApproveConfirm(false);
         } catch {
             // error already handled in hook
         }
@@ -345,10 +357,20 @@ const ComprasGeneralesPage = ({ onBack }) => {
 
                     {activePeriodObj && (
                         <div className="flex-1 self-end sm:self-center mt-2 sm:mt-5 p-2.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/10 dark:border-primary/20">
-                            <p className="text-xs text-text-primary/95 dark:text-background-light/90 flex items-center gap-1.5">
+                            <p className="text-xs text-text-primary/95 dark:text-background-light/90 flex flex-wrap items-center gap-2">
                                 <span className="material-symbols-outlined text-sm text-primary">calendar_month</span>
                                 <span className="font-bold">Duración:</span>
                                 {formatDate(activePeriodObj.fecha_inicio)} al {formatDate(activePeriodObj.fecha_fin)}
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                    activePeriodObj.estado === 'APROBADO'
+                                        ? 'bg-primary/15 text-primary border border-primary/25'
+                                        : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
+                                }`}>
+                                    <span className="material-symbols-outlined text-[10px] font-bold">
+                                        {activePeriodObj.estado === 'APROBADO' ? 'lock' : 'lock_open'}
+                                    </span>
+                                    {activePeriodObj.estado}
+                                </span>
                             </p>
                             {activePeriodObj.descripcion && (
                                 <p className="text-[10px] text-text-secondary dark:text-background-light/40 mt-0.5 line-clamp-1 italic">
@@ -444,31 +466,62 @@ const ComprasGeneralesPage = ({ onBack }) => {
                 <>
                     {/* ═══════ ACTIONS & NOTICE BAR (WHEN DATA LOADED) ═══════ */}
                     {total > 0 && !uploading && (
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
-                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                    <span className="material-symbols-outlined text-2xl font-bold">info</span>
+                        activePeriodObj?.estado === 'APROBADO' ? (
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-primary/20 dark:border-primary/45 bg-primary/5 dark:bg-primary/10 p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-accent">
+                                        <span className="material-symbols-outlined text-2xl font-bold">verified</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="text-sm font-bold text-primary dark:text-accent leading-tight">
+                                            Trimestre Aprobado & Cargado al Data Warehouse
+                                        </h4>
+                                        <p className="text-xs text-text-secondary dark:text-background-light/60 mt-1 leading-relaxed">
+                                            Este período se encuentra formalmente cerrado, normalizado y respaldado en el Data Warehouse histórico. Para garantizar la consistencia, está <strong className="font-bold">bloqueado</strong> contra nuevas cargas, eliminaciones o modificaciones de datos.
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0 flex-1">
-                                    <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
-                                        Período con compras activas
-                                    </h4>
-                                    <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
-                                        Este trimestre ya contiene información de compras registradas. Si necesitas subir un nuevo archivo Excel, primero debes borrar los datos actuales con el botón <strong className="font-bold">"Limpiar Trimestre"</strong> que se muestra al lado.
-                                    </p>
+                                <div className="flex-shrink-0 self-end md:self-center flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/25 rounded-xl text-primary text-xs font-bold uppercase tracking-wider">
+                                    <span className="material-symbols-outlined text-sm font-bold">lock</span>
+                                    DW Cerrado
                                 </div>
                             </div>
-                            <div className="flex-shrink-0 self-end md:self-center flex flex-wrap items-center gap-3">
-                                <button
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    disabled={loading}
-                                    className="inline-flex items-center gap-2 px-5 py-3 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-[1.02] shadow-sm hover:shadow transition-all duration-200 cursor-pointer whitespace-nowrap"
-                                >
-                                    <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                                    Limpiar Trimestre
-                                </button>
+                        ) : (
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                        <span className="material-symbols-outlined text-2xl font-bold">info</span>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
+                                            Período en Staging (Vista Previa Pendiente)
+                                        </h4>
+                                        <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
+                                            Los datos están cargados en fase de pruebas (staging). Por favor, revisa la tabla detallada inferior. Si todo está correcto, haz clic en <strong className="font-bold">"Aprobar e Integrar DW"</strong> para consolidar los datos de forma permanente.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex-shrink-0 self-end md:self-center flex flex-wrap items-center gap-3">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        disabled={loading}
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-[1.02] shadow-sm hover:shadow transition-all duration-200 cursor-pointer whitespace-nowrap"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
+                                        Limpiar Trimestre
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setShowApproveConfirm(true)}
+                                        disabled={loading}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-primary/20 hover:shadow-primary/30 rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">verified_user</span>
+                                        Aprobar e Integrar DW
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )
                     )}
 
                     {/* ═══════ DELETE CONFIRMATION MODAL ═══════ */}
@@ -505,6 +558,51 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                         className="px-5 py-2.5 text-sm font-medium rounded-xl bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 hover:shadow-red-600/30 transition-all disabled:opacity-50"
                                     >
                                         {loading ? 'Eliminando...' : 'Sí, limpiar periodo'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ═══════ APPROVE CONFIRMATION MODAL ═══════ */}
+                    {showApproveConfirm && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowApproveConfirm(false)} />
+                            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 dark:bg-primary/20">
+                                        <span className="material-symbols-outlined text-2xl text-primary">gavel</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
+                                            ¿Aprobar y cargar a Data Warehouse?
+                                        </h3>
+                                        <p className="text-xs text-text-secondary dark:text-background-light/50">
+                                            Consolidación permanente para {activePeriodObj?.nombre}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-text-primary/70 dark:text-background-light/60 space-y-3 mb-6">
+                                    <p>
+                                        Esta acción ejecutará el pipeline ETL para normalizar, estructurar y poblar el Data Warehouse histórico (`compra_interna`) con los <span className="font-bold text-primary">{total}</span> registros actuales.
+                                    </p>
+                                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-400 font-medium">
+                                        ⚠️ <strong>Importante:</strong> Al finalizar, este trimestre se considerará oficial y quedará <strong>bloqueado permanentemente</strong>. No se podrán subir nuevos archivos ni borrar registros de este trimestre.
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 justify-end">
+                                    <button
+                                        onClick={() => setShowApproveConfirm(false)}
+                                        className="px-4 py-2.5 text-sm font-medium rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleApprove}
+                                        disabled={loading}
+                                        className="px-5 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all disabled:opacity-50"
+                                    >
+                                        {loading ? 'Procesando ETL...' : 'Aprobar y Consolidar'}
                                     </button>
                                 </div>
                             </div>

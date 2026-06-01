@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import Modal from "./Modal";
-import Button from "./Button";
-import InputFieldForm from "./InputFieldForm";
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
+import InputFieldForm from "../../ui/InputFieldForm";
 import { toast } from "react-toastify";
 
 const DiscountFormModal = ({ isOpen, onClose, onSave, discount }) => {

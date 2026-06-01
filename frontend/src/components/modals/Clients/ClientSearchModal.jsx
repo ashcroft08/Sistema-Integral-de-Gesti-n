@@ -1,9 +1,9 @@
 // components/UI/ClientSearchModal.jsx
 import React, { useState, useEffect } from "react";
-import Modal from "./Modal";
-import Button from "./Button";
+import Modal from "../../ui/Modal";
+import Button from "../../ui/Button";
 import ClientFormModal from "./ClientFormModal";
-import { useClients } from "../../hooks/useClients";
+import { useClients } from "../../../hooks/useClients";
 import { toast } from "react-toastify";
 
 const ClientSearchModal = ({ isOpen, onClose, onSelect }) => {

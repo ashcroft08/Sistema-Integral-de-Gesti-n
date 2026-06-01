@@ -1,13 +1,19 @@
 import React from "react";
-import Modal from "./Modal.jsx";
+import Modal from "../../ui/Modal";
 
-const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
-  if (!isOpen || !iva) return null;
+const DiscountStatusModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  discount,
+  isLoading,
+}) => {
+  if (!isOpen || !discount) return null;
 
   // Lógica de negocio:
-  // Si iva.activo es true, la acción es DESACTIVAR.
-  // Si iva.activo es false, la acción es ACTIVAR.
-  const isDeactivating = iva.activo;
+  // Si discount.activo es true, la acción es DESACTIVAR.
+  // Si discount.activo es false, la acción es ACTIVAR.
+  const isDeactivating = discount.activo;
 
   // --- LÓGICA DE TEXTOS ---
   let title = "";
@@ -16,30 +22,28 @@ const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
   let icon = "";
 
   if (isDeactivating) {
-    title = "Desactivar IVA";
+    title = "Desactivar Descuento";
     confirmText = "Desactivar";
     icon = "toggle_off";
     message = (
       <>
-        ¿Está seguro de que desea desactivar el impuesto{" "}
-        <span className="font-bold">{iva.descripcion}</span> (
-        {iva.porcentaje_iva}%)?
+        ¿Está seguro de que desea desactivar el descuento{" "}
+        <span className="font-bold">{discount.descuento}</span>?
       </>
     );
   } else {
-    title = "Activar IVA";
+    title = "Activar Descuento";
     confirmText = "Activar";
     icon = "check_circle";
     message = (
       <>
-        ¿Está seguro de que desea activar el impuesto{" "}
-        <span className="font-bold">{iva.descripcion}</span> (
-        {iva.porcentaje_iva}%)?
+        ¿Está seguro de que desea activar el descuento{" "}
+        <span className="font-bold">{discount.descuento}</span>?
       </>
     );
   }
 
-  // --- ESTILOS DINÁMICOS ---
+  // --- ESTILOS DINÁMICOS (Mismo diseño que CategoryStatusModal) ---
   const themeStyles = {
     activate: {
       iconBg: "bg-green-100 dark:bg-green-900/30",
@@ -55,6 +59,7 @@ const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
     },
   };
 
+  // Seleccionar estilo actual
   const currentStyle = isDeactivating
     ? themeStyles.deactivate
     : themeStyles.activate;
@@ -113,7 +118,7 @@ const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
         {/* Mensaje Principal */}
         <p className="text-gray-600 dark:text-gray-300 text-base">{message}</p>
 
-        {/* Alerta de Impacto */}
+        {/* Alerta Específica para Desactivar */}
         {isDeactivating && (
           <div className="mt-5 w-full rounded-md bg-amber-50 p-4 border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800/50 text-left">
             <div className="flex">
@@ -121,10 +126,10 @@ const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
                 info
               </span>
               <div className="text-sm text-amber-800 dark:text-amber-200">
-                <h4 className="font-bold mb-1">Impacto en el sistema</h4>
+                <h4 className="font-bold mb-1">Impacto en ventas</h4>
                 <p>
-                  Este porcentaje no podrá ser seleccionado al crear o editar
-                  productos hasta que sea reactivado.
+                  Este descuento dejará de aplicarse automáticamente en las
+                  nuevas ventas hasta que sea reactivado.
                 </p>
               </div>
             </div>
@@ -135,4 +140,4 @@ const IvaStatusModal = ({ isOpen, onClose, onConfirm, iva, isLoading }) => {
   );
 };
 
-export default IvaStatusModal;
+export default DiscountStatusModal;

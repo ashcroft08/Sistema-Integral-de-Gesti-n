@@ -1,6 +1,5 @@
-// src/services/compraGeneral.service.js
 import readXlsxFile from 'read-excel-file/node';
-import { CompraGeneral, PeriodoCompra } from '../models/index.js';
+import { CompraGeneral, PeriodoCompra, CompraInterna, ComunidadMp, ProveedorMp, CategoriaMp, ProductoMp, NegociadorMp } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // Column mapping: Excel header → DB field
@@ -144,6 +143,17 @@ export class CompraGeneralService {
                 if (month < 1 || month > 12 || day < 1 || day > 31) return null;
 
                 return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+        }
+
+        // If it is a string in YYYY-MM-DD or ISO format
+        if (typeof value === 'string') {
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                const y = date.getUTCFullYear();
+                const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(date.getUTCDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
             }
         }
 
@@ -569,5 +579,145 @@ export class CompraGeneralService {
             returning: true
         });
         return updatedRowsCount > 0 ? updatedRows[0] : null;
+    }
+
+    /**
+     * Run transactional ETL pipeline to load general purchases into the production Data Warehouse (compra_interna)
+     * and lock the period by updating its status to 'APROBADO'.
+     */
+    async approvePeriod(id_periodo_compra) {
+        const idInt = parseInt(id_periodo_compra, 10);
+        const periodo = await PeriodoCompra.findByPk(idInt);
+        if (!periodo) {
+            throw new Error('El período no existe');
+        }
+        if (periodo.estado === 'APROBADO') {
+            throw new Error('Este período ya ha sido aprobado y cargado al Data Warehouse.');
+        }
+
+        // Fetch staging purchases for the period
+        const stagingPurchases = await CompraGeneral.findAll({
+            where: { id_periodo_compra: idInt }
+        });
+
+        if (stagingPurchases.length === 0) {
+            throw new Error('No hay registros de compras cargados en este período para poder aprobar.');
+        }
+
+        const sequelize = CompraGeneral.sequelize;
+        const transaction = await sequelize.transaction();
+
+        try {
+            const dwRecords = [];
+
+            // caches to prevent redundant dimension database lookups
+            const comunidadesCache = {};
+            const proveedoresCache = {};
+            const categoriasCache = {};
+            const productosCache = {};
+            const negociadoresCache = {};
+
+            for (const purchase of stagingPurchases) {
+                const comName = purchase.comunidad || 'SIN DATO';
+                const provName = purchase.proveedor || 'SIN DATO';
+                const catName = purchase.categoria || 'SIN DATO';
+                const prodName = purchase.producto || 'SIN DATO';
+                const negName = purchase.negociador || 'SIN DATO';
+
+                // 1. Resolve Comunidad
+                if (!comunidadesCache[comName]) {
+                    const [record] = await ComunidadMp.findOrCreate({
+                        where: { comunidad: comName },
+                        defaults: { comunidad: comName },
+                        transaction
+                    });
+                    comunidadesCache[comName] = record.id_comunidad_mp;
+                }
+
+                // 2. Resolve Proveedor
+                if (!proveedoresCache[provName]) {
+                    const [record] = await ProveedorMp.findOrCreate({
+                        where: { proveedor: provName },
+                        defaults: { proveedor: provName },
+                        transaction
+                    });
+                    proveedoresCache[provName] = record.id_proveedor_mp;
+                }
+
+                // 3. Resolve Categoria
+                if (!categoriasCache[catName]) {
+                    const [record] = await CategoriaMp.findOrCreate({
+                        where: { categoria: catName },
+                        defaults: { categoria: catName },
+                        transaction
+                    });
+                    categoriasCache[catName] = record.id_categoria_mp;
+                }
+
+                // 4. Resolve Producto
+                if (!productosCache[prodName]) {
+                    const [record] = await ProductoMp.findOrCreate({
+                        where: { producto: prodName },
+                        defaults: { producto: prodName },
+                        transaction
+                    });
+                    productosCache[prodName] = record.id_producto_mp;
+                }
+
+                // 5. Resolve Negociador
+                if (!negociadoresCache[negName]) {
+                    const [record] = await NegociadorMp.findOrCreate({
+                        where: { negociador: negName },
+                        defaults: { negociador: negName },
+                        transaction
+                    });
+                    negociadoresCache[negName] = record.id_negociador_mp;
+                }
+
+                // Build target DW record
+                dwRecords.push({
+                    id_comunidad_mp: comunidadesCache[comName],
+                    id_proveedor_mp: proveedoresCache[provName],
+                    id_categoria_mp: categoriasCache[catName],
+                    id_producto_mp: productosCache[prodName],
+                    id_negociador_mp: negociadoresCache[negName],
+                    fecha_compra: purchase.fecha,
+                    cantidad_libra: purchase.cantidad,
+                    costo_unitario: purchase.valor_unitario,
+                    total: purchase.total,
+                    id_periodo_compra: idInt
+                });
+            }
+
+            // Clean any existing records in DW for this period to allow re-runs (safe migration strategy)
+            await CompraInterna.destroy({
+                where: { id_periodo_compra: idInt },
+                transaction
+            });
+
+            // Bulk insert into DW
+            await CompraInterna.bulkCreate(dwRecords, { transaction });
+
+            // Update Periodo status to APROBADO
+            await PeriodoCompra.update(
+                { estado: 'APROBADO' },
+                {
+                    where: { id_periodo_compra: idInt },
+                    transaction
+                }
+            );
+
+            await transaction.commit();
+
+            return {
+                comprasProcesadas: dwRecords.length,
+                comunidadesUnicas: Object.keys(comunidadesCache).length,
+                proveedoresUnicos: Object.keys(proveedoresCache).length
+            };
+
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     }
 }

@@ -62,6 +62,13 @@ router.delete('/periodos/:id', bodegaAccess, controller.deletePeriodo);
 router.put('/periodos/:id', bodegaAccess, controller.updatePeriodo);
 
 /**
+ * @route   POST /api/cacao/compra-general/periodos/:id/approve
+ * @desc    Aprobar período y procesar carga al Data Warehouse
+ * @access  Privado (Bodega/Admin/Superusuario)
+ */
+router.post('/periodos/:id/approve', bodegaAccess, controller.approvePeriod);
+
+/**
  * @route   GET /api/cacao/compra-general
  * @desc    Obtener todas las compras generales (paginado)
  * @access  Privado (Bodega/Admin/Superusuario)

@@ -6,8 +6,8 @@ import AdminLayout from "../../components/Layout/AdminLayout";
 import Button from "../../components/UI/Button";
 import Table from "../../components/UI/Table";
 import TablePagination from "../../components/UI/TablePagination";
-import UserFormModal from "../../components/UI/UserFormModal";
-import StatusConfirmationModal from "../../components/UI/StatusConfirmationModal";
+import UserFormModal from "../../components/modals/Users/UserFormModal";
+import StatusConfirmationModal from "../../components/modals/Users/StatusConfirmationModal";
 import { toast } from "react-toastify";
 import { ESTADOS_USUARIO } from "../../constants/statuses";
 

@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Modal from "./Modal";
-import InputFieldForm from "./InputFieldForm";
-import PasswordInputForm from "./PasswordInputForm";
-import Button from "./Button";
-import { CreateUserSchema, UpdateUserSchema } from "../../schemas/user.schemas";
+import Modal from "../../ui/Modal";
+import InputFieldForm from "../../ui/InputFieldForm";
+import PasswordInputForm from "../../ui/PasswordInputForm";
+import Button from "../../ui/Button";
+import { CreateUserSchema, UpdateUserSchema } from "../../../schemas/user.schemas";
 
 const UserFormModal = ({ isOpen, onClose, onSave, user, roles }) => {
   const [showPasswordFields, setShowPasswordFields] = React.useState(false);

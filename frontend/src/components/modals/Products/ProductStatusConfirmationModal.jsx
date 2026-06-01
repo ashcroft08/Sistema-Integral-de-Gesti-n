@@ -1,6 +1,6 @@
 // src/components/UI/ProductStatusConfirmationModal.jsx
 import React from "react";
-import Modal from "./Modal";
+import Modal from "../../ui/Modal";
 
 const ProductStatusConfirmationModal = ({
   isOpen,

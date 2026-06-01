@@ -3,14 +3,14 @@ import React, { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import Modal from "./Modal";
-import InputFieldForm from "./InputFieldForm";
-import Button from "./Button";
-import LocationSelector from "./LocationSelector";
+import Modal from "../../ui/Modal";
+import InputFieldForm from "../../ui/InputFieldForm";
+import Button from "../../ui/Button";
+import LocationSelector from "../../ui/LocationSelector";
 import {
   CreateClientSchema,
   UpdateClientSchema,
-} from "../../schemas/client.schema";
+} from "../../../schemas/client.schema";
 
 const ClientFormModal = ({
   isOpen,

@@ -1,5 +1,5 @@
 import React from "react";
-import Modal from "./Modal";
+import Modal from "../../ui/Modal";
 
 const PasswordResetModal = ({ isOpen, onClose, onConfirm, user }) => {
   if (!isOpen || !user) return null;

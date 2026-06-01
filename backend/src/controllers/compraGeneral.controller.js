@@ -101,4 +101,15 @@ export class CompraGeneralController {
             ApiResponse.success(resultado, 'Período actualizado correctamente')
         );
     });
+
+    /**
+     * Aprobar y procesar el período cargando los datos al Data Warehouse
+     */
+    approvePeriod = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const resultado = await compraGeneralService.approvePeriod(id);
+        return res.status(200).json(
+            ApiResponse.success(resultado, 'Período aprobado y datos cargados al Data Warehouse correctamente')
+        );
+    });
 }
