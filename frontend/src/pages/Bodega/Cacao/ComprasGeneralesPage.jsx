@@ -526,7 +526,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
 
                     {/* ═══════ DELETE CONFIRMATION MODAL ═══════ */}
                     {showDeleteConfirm && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
                             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex items-center gap-3 mb-4">
@@ -566,7 +566,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
 
                     {/* ═══════ APPROVE CONFIRMATION MODAL ═══════ */}
                     {showApproveConfirm && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowApproveConfirm(false)} />
                             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex items-center gap-3 mb-4">
