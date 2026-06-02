@@ -5,7 +5,7 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const schema = 'cacao';
 
-        // 1. COMPRA_INTERNA
+        // 1. COMPRA_INTERNA (Consolidated with correct keys)
         await queryInterface.createTable('compra_interna', {
             id_compra_interna: {
                 type: Sequelize.INTEGER,
@@ -78,9 +78,31 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
-            fecha_compra: {
-                type: Sequelize.DATEONLY,
-                allowNull: false
+            id_fecha_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'fecha_mp',
+                        schema
+                    },
+                    key: 'id_fecha_mp'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
+            id_periodo_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'periodo_compra',
+                        schema
+                    },
+                    key: 'id_periodo_compra'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'CASCADE'
             },
             cantidad_libra: {
                 type: Sequelize.DECIMAL(10, 2),
