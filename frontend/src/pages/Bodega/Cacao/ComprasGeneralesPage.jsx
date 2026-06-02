@@ -338,7 +338,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                 <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="w-full sm:max-w-xs">
                         <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 mb-2 px-1">
-                            Selecciona el Trimestre o Periodo
+                            Seleccionar Trimestre de Consulta
                         </label>
                         <select
                             value={selectedPeriod || ''}
@@ -346,7 +346,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                             disabled={loadingPeriodos}
                             className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-white/80 dark:bg-background-dark/50 text-sm font-semibold text-text-primary dark:text-background-light px-3 py-2.5 outline-none focus:border-primary transition-all cursor-pointer"
                         >
-                            <option value="">-- Selecciona un periodo --</option>
+                            <option value="">-- Elige un trimestre --</option>
                             {periodos.map((p) => (
                                 <option key={p.id_periodo_compra} value={p.id_periodo_compra}>
                                     {p.nombre}
