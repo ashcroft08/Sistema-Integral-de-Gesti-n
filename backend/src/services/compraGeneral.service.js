@@ -822,10 +822,6 @@ export class CompraGeneralService {
             const fechaDim = record.FechaMp;
             if (!fechaDim) return;
 
-            // Filter to only include 'escurrido' products
-            const prodName = record.ProductoMp?.producto?.toLowerCase() || '';
-            if (!prodName.includes('escurrido')) return;
-
             let monthCode = fechaDim.mes; // integer 1-12
             let monthName = fechaDim.nombre_mes; // 'ENERO', 'FEBRERO', etc.
 
