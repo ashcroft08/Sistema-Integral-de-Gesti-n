@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error al obtener datos del usuario:", error);
 
-      // Si hay error 401, limpiamos todo
-      if (error.response?.status === 401) {
+      // Si hay error 401 o 403 (Token inválido o expirado), limpiamos todo
+      if (error.response?.status === 401 || error.response?.status === 403) {
         logout();
       }
       throw error;
@@ -70,8 +70,8 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Error en inicialización de auth:", error);
-        // Si falla la validación, limpiamos todo
-        if (error.response?.status === 401) {
+        // Si falla la validación (401 o 403), limpiamos todo
+        if (error.response?.status === 401 || error.response?.status === 403) {
           logout();
         }
       } finally {
