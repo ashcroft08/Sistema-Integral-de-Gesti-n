@@ -791,6 +791,30 @@ export class CompraGeneralService {
             order: [[FechaMp, 'mes', 'ASC'], [FechaMp, 'dia', 'ASC']]
         });
 
+        // Determine the maximum month code in this period's records
+        let maxMonth = 1;
+        records.forEach(r => {
+            if (r.FechaMp && r.FechaMp.mes > maxMonth) {
+                maxMonth = r.FechaMp.mes;
+            }
+        });
+
+        // Helper to get the last Friday of a month
+        const getLastFridayOfMonth = (year, month) => {
+            const lastDay = new Date(Date.UTC(year, month, 0));
+            const dayOfWeek = lastDay.getUTCDay();
+            let diff = dayOfWeek - 5;
+            if (diff < 0) diff += 7;
+            const lastFriday = new Date(lastDay);
+            lastFriday.setUTCDate(lastDay.getUTCDate() - diff);
+            return lastFriday.getUTCDate();
+        };
+
+        const SPANISH_MONTHS = [
+            'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+            'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+        ];
+
         // Aggregation structure grouped by month (from FechaMp dimension)
         const monthlyGroups = {};
 
@@ -802,8 +826,18 @@ export class CompraGeneralService {
             const prodName = record.ProductoMp?.producto?.toLowerCase() || '';
             if (!prodName.includes('escurrido')) return;
 
-            const monthCode = fechaDim.mes; // integer 1-12
-            const monthName = fechaDim.nombre_mes; // 'ENERO', 'FEBRERO', etc.
+            let monthCode = fechaDim.mes; // integer 1-12
+            let monthName = fechaDim.nombre_mes; // 'ENERO', 'FEBRERO', etc.
+
+            // Option B: Shift purchases of the last week of the month (starting from the last Friday)
+            // to the next month, unless it is the final month of the period.
+            if (monthCode < maxMonth) {
+                const lastFriday = getLastFridayOfMonth(fechaDim.anio, monthCode);
+                if (fechaDim.dia >= lastFriday) {
+                    monthCode += 1;
+                    monthName = SPANISH_MONTHS[monthCode - 1] || fechaDim.nombre_mes;
+                }
+            }
 
             if (!monthlyGroups[monthCode]) {
                 monthlyGroups[monthCode] = {
