@@ -16,8 +16,7 @@ export default (sequelize, DataTypes) => {
     });
 
     RutaCompra.associate = (models) => {
-        RutaCompra.hasMany(models.ControlLoteOrg, { foreignKey: 'id_ruta_compra' });
-        RutaCompra.hasMany(models.ControlLoteCv, { foreignKey: 'id_ruta_compra' });
+        // Associations removed as control_lote tables now store route as string
     };
 
     return RutaCompra;
