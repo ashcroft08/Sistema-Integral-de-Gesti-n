@@ -78,6 +78,10 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
+            odp: {
+                type: Sequelize.CHAR(10),
+                allowNull: true
+            },
             lote: {
                 type: Sequelize.STRING(250),
                 allowNull: false
@@ -102,10 +106,6 @@ module.exports = {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
                 defaultValue: false
-            },
-            odp: {
-                type: Sequelize.CHAR(10),
-                allowNull: true
             }
         }, { schema });
     },
