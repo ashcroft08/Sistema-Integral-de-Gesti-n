@@ -74,6 +74,10 @@ module.exports = {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
                 defaultValue: false
+            },
+            odp: {
+                type: Sequelize.CHAR(10),
+                allowNull: true
             }
         }, { schema });
 
@@ -122,6 +126,10 @@ module.exports = {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
                 defaultValue: false
+            },
+            odp: {
+                type: Sequelize.CHAR(10),
+                allowNull: true
             }
         }, { schema });
 

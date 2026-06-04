@@ -39,6 +39,10 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
+        },
+        odp: {
+            type: DataTypes.CHAR(10),
+            allowNull: true
         }
     }, {
         tableName: 'control_lote_cv',
