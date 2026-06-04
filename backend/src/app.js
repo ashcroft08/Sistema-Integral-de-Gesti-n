@@ -11,6 +11,7 @@ import userRoutes from './routes/user.routes.js';
 import roleRoutes from './routes/role.routes.js';
 import userSettingsRoutes from './routes/userSettings.routes.js';
 import compraGeneralRoutes from './routes/compraGeneral.routes.js';
+import compraExternaRoutes from './routes/compraExterna.routes.js';
 
 import { errorHandler } from './middleware/error.middleware.js';
 import { auditMiddleware } from './middleware/audit.middleware.js';
@@ -69,6 +70,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes); 
 app.use('/api/user-settings', userSettingsRoutes);
 app.use('/api/cacao/compra-general', compraGeneralRoutes);
+app.use('/api/cacao/compra-externa', compraExternaRoutes);
 
 // --- Middleware Global de Errores ---
 app.use(errorHandler);

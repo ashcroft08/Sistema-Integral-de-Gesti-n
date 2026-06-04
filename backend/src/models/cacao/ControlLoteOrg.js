@@ -5,21 +5,27 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
-        id_lote_org: {
+        id_periodo_compra: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        id_ruta_compra: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        },
-        id_stock_lote_org: {
-            type: DataTypes.INTEGER,
+        lote: {
+            type: DataTypes.STRING(250),
             allowNull: false
         },
         fecha: {
             type: DataTypes.DATEONLY,
             allowNull: false
+        },
+        ruta_compra: {
+            type: DataTypes.STRING(250),
+            allowNull: false,
+            validate: {
+                isIn: {
+                    args: [['RUTA 1-CAPO', 'RUTA 2-CAPO', 'RUTA 3-CAPO', 'RUTA 5-CAPO']],
+                    msg: 'La ruta de compra seleccionada no es válida.'
+                }
+            }
         },
         cantidad_libra: {
             type: DataTypes.DECIMAL(10, 2),
@@ -41,9 +47,7 @@ export default (sequelize, DataTypes) => {
     });
 
     ControlLoteOrg.associate = (models) => {
-        ControlLoteOrg.belongsTo(models.LoteOrg, { foreignKey: 'id_lote_org' });
-        ControlLoteOrg.belongsTo(models.RutaCompra, { foreignKey: 'id_ruta_compra' });
-        ControlLoteOrg.belongsTo(models.StockLoteOrg, { foreignKey: 'id_stock_lote_org' });
+        ControlLoteOrg.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
         ControlLoteOrg.hasMany(models.LoteComercializacionOrg, { foreignKey: 'id_control_lote_org' });
     };
 

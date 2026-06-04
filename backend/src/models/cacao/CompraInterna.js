@@ -59,7 +59,6 @@ export default (sequelize, DataTypes) => {
         CompraInterna.belongsTo(models.NegociadorMp, { foreignKey: 'id_negociador_mp' });
         CompraInterna.belongsTo(models.FechaMp, { foreignKey: 'id_fecha_compra' });
         CompraInterna.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
-        CompraInterna.hasMany(models.StockLoteOrg, { foreignKey: 'id_compra_interna' });
     };
 
     return CompraInterna;

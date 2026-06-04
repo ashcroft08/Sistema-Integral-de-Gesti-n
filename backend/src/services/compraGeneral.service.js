@@ -1,5 +1,5 @@
 import readXlsxFile from 'read-excel-file/node';
-import { CompraGeneral, PeriodoCompra, CompraInterna, ComunidadMp, ProveedorMp, CategoriaMp, ProductoMp, NegociadorMp, FechaMp } from '../models/index.js';
+import { CompraGeneral, PeriodoCompra, CompraInterna, ComunidadMp, ProveedorMp, CategoriaMp, ProductoMp, NegociadorMp, FechaMp, ControlLoteOrg, ControlLoteCv } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // Column mapping: Excel header → DB field
@@ -728,14 +728,111 @@ export class CompraGeneralService {
                 });
             }
 
-            // Clean any existing records in DW for this period to allow re-runs (safe migration strategy)
+            // Clean any existing records in DW and lot control tables for this period to allow re-runs (safe migration strategy)
             await CompraInterna.destroy({
+                where: { id_periodo_compra: idInt },
+                transaction
+            });
+            await ControlLoteOrg.destroy({
+                where: { id_periodo_compra: idInt },
+                transaction
+            });
+            await ControlLoteCv.destroy({
                 where: { id_periodo_compra: idInt },
                 transaction
             });
 
             // Bulk insert into DW
             await CompraInterna.bulkCreate(dwRecords, { transaction });
+
+            // Group and aggregate data for lot control tables
+            const dailyGroups = {};
+            dwRecords.forEach((dwRecord, idx) => {
+                const originalPurchase = stagingPurchases[idx];
+                const fechaStr = originalPurchase.fecha;
+                if (!fechaStr) return;
+
+                if (!dailyGroups[fechaStr]) {
+                    dailyGroups[fechaStr] = {
+                        organico: { qty: 0, total: 0 },
+                        convencional: { qty: 0, total: 0 }
+                    };
+                }
+
+                const catName = originalPurchase.categoria || '';
+                const isOrganico = catName.toUpperCase().includes('ORGANICO') || catName.toUpperCase().includes('ORGÁNICO');
+
+                const qty = parseFloat(dwRecord.cantidad_libra) || 0;
+                const total = parseFloat(dwRecord.total) || 0;
+
+                if (isOrganico) {
+                    dailyGroups[fechaStr].organico.qty += qty;
+                    dailyGroups[fechaStr].organico.total += total;
+                } else {
+                    dailyGroups[fechaStr].convencional.qty += qty;
+                    dailyGroups[fechaStr].convencional.total += total;
+                }
+            });
+
+            const sortedDates = Object.keys(dailyGroups).sort();
+            const uniqueFridays = sortedDates.filter(d => {
+                const dateObj = new Date(d + 'T12:00:00Z');
+                return dateObj.getUTCDay() === 5;
+            });
+
+            const controlLotesOrg = [];
+            const controlLotesCv = [];
+
+            sortedDates.forEach((dateStr, idx) => {
+                const dateObj = new Date(dateStr + 'T12:00:00Z');
+                const year2Digit = String(dateObj.getUTCFullYear()).slice(-2);
+                const seqStr = String(idx + 1).padStart(2, '0');
+
+                // Determine Route
+                const dayOfWeek = dateObj.getUTCDay();
+                let ruta = 'RUTA 5-CAPO'; // default
+                if (dayOfWeek === 3) {
+                    ruta = 'RUTA 1-CAPO';
+                } else if (dayOfWeek === 4) {
+                    ruta = 'RUTA 2-CAPO';
+                } else if (dayOfWeek === 5) {
+                    const friIndex = uniqueFridays.indexOf(dateStr);
+                    ruta = (friIndex % 2 === 0) ? 'RUTA 5-CAPO' : 'RUTA 3-CAPO';
+                }
+
+                const group = dailyGroups[dateStr];
+
+                if (group.organico.qty > 0) {
+                    controlLotesOrg.push({
+                        id_periodo_compra: idInt,
+                        lote: `KPO-O${year2Digit}-A${seqStr}`,
+                        fecha: dateStr,
+                        ruta_compra: ruta,
+                        cantidad_libra: group.organico.qty,
+                        costo: group.organico.total,
+                        es_seco: false
+                    });
+                }
+
+                if (group.convencional.qty > 0) {
+                    controlLotesCv.push({
+                        id_periodo_compra: idInt,
+                        lote: `KPO-CV${year2Digit}-A${seqStr}`,
+                        fecha: dateStr,
+                        ruta_compra: ruta,
+                        cantidad_libra: group.convencional.qty,
+                        costo: group.convencional.total,
+                        es_seco: false
+                    });
+                }
+            });
+
+            if (controlLotesOrg.length > 0) {
+                await ControlLoteOrg.bulkCreate(controlLotesOrg, { transaction });
+            }
+            if (controlLotesCv.length > 0) {
+                await ControlLoteCv.bulkCreate(controlLotesCv, { transaction });
+            }
 
             // Update Periodo status to APROBADO
             await PeriodoCompra.update(

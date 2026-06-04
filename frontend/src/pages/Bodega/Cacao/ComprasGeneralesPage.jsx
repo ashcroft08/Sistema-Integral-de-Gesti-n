@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import ModuleLayout from '../../../components/Layout/ModuleLayout';
 import { useComprasGenerales } from '../../../hooks/useComprasGenerales';
@@ -525,7 +526,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                     )}
 
                     {/* ═══════ DELETE CONFIRMATION MODAL ═══════ */}
-                    {showDeleteConfirm && (
+                    {showDeleteConfirm && createPortal(
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
                             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
@@ -561,11 +562,12 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* ═══════ APPROVE CONFIRMATION MODAL ═══════ */}
-                    {showApproveConfirm && (
+                    {showApproveConfirm && createPortal(
                         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowApproveConfirm(false)} />
                             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
@@ -606,7 +608,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </div>,
+                        document.body
                     )}
 
                     {/* ═══════ UPLOAD ZONE (ONLY SHOW IF NO DATA AND NOT LOADING) ═══════ */}

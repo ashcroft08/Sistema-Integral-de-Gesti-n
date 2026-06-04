@@ -4,6 +4,7 @@ import ModuleLayout from "../../components/Layout/ModuleLayout";
 import { compraGeneralService } from "../../services/compraGeneral.service";
 import ComprasGeneralesPage from "./Cacao/ComprasGeneralesPage";
 import ResumenReportesPage from "./Cacao/ResumenReportesPage";
+import ComprasExternasPage from "./Cacao/ComprasExternasPage";
 
 const tabs = [
   { id: "inventario", label: "Inventario", icon: "inventory_2" },
@@ -41,6 +42,7 @@ const quickActions = {
   ],
   "materia-prima-cacao": [
     { label: "Importar Compras Excel", icon: "upload_file", path: "/bodega/cacao/compras-generales" },
+    { label: "Compras Externas", icon: "shopping_bag", path: "/bodega/cacao/compras-externas" },
     { label: "Resumen Reportes DW", icon: "analytics", path: "/bodega/cacao/resumen-reportes" },
     { label: "Registrar Compra Interna", icon: "add_box" },
     { label: "Crear Lote de Cacao", icon: "layers" },
@@ -85,6 +87,8 @@ const BodegaDashboardPage = () => {
   const handleActionClick = (path) => {
     if (path === "/bodega/cacao/compras-generales") {
       setSearchParams({ tab: activeTab, subApp: "compras-generales" });
+    } else if (path === "/bodega/cacao/compras-externas") {
+      setSearchParams({ tab: activeTab, subApp: "compras-externas" });
     } else if (path === "/bodega/cacao/resumen-reportes") {
       setSearchParams({ tab: activeTab, subApp: "resumen-reportes" });
     } else if (path && path !== "#") {
@@ -123,6 +127,7 @@ const BodegaDashboardPage = () => {
     ],
     "materia-prima-cacao": [
       { label: "Compras Generales", icon: "upload_file", color: "text-amber-700 bg-amber-500/10", path: "/bodega/cacao/compras-generales" },
+      { label: "Compras Externas", icon: "shopping_bag", color: "text-blue-700 bg-blue-500/10", path: "/bodega/cacao/compras-externas" },
       { label: "Resumen Reportes", icon: "analytics", color: "text-emerald-700 bg-emerald-500/10", path: "/bodega/cacao/resumen-reportes" },
       { label: "Compras Internas", icon: "inventory_2", color: "text-green-600 bg-green-500/10", path: "#" },
       { label: "Control Lotes Orgánicos", icon: "eco", color: "text-emerald-600 bg-emerald-500/10", path: "#" },
@@ -139,7 +144,6 @@ const BodegaDashboardPage = () => {
     ],
   };
 
-  const currentQuickActions = quickActions[activeTab] || [];
   const currentApps = apps[activeTab] || [];
 
   return (
@@ -175,95 +179,64 @@ const BodegaDashboardPage = () => {
         <div className="animate-in fade-in-50 duration-300">
           <ComprasGeneralesPage onBack={() => setSearchParams({ tab: activeTab })} />
         </div>
+      ) : activeTab === "materia-prima-cacao" && activeSubApp === "compras-externas" ? (
+        <div className="animate-in fade-in-50 duration-300">
+          <ComprasExternasPage onBack={() => setSearchParams({ tab: activeTab })} />
+        </div>
       ) : activeTab === "materia-prima-cacao" && activeSubApp === "resumen-reportes" ? (
         <div className="animate-in fade-in-50 duration-300">
           <ResumenReportesPage onBack={() => setSearchParams({ tab: activeTab })} />
         </div>
       ) : (
-        <div className="flex gap-8 flex-col lg:flex-row animate-in fade-in-50 duration-300">
-          {/* Quick Actions Sidebar */}
-          <div className="lg:w-72 flex-shrink-0">
-            <div className="rounded-2xl border border-primary/15 bg-white/60 dark:bg-background-dark/45 dark:border-primary/25 backdrop-blur-md p-5 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-background-light/60 mb-4 px-1 flex items-center gap-2">
-                <span className="material-symbols-outlined text-base">bolt</span>
-                Acciones Rápidas
-              </h3>
-              <div className="flex flex-col gap-2">
-                {currentQuickActions.map((action, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleActionClick(action.path)}
-                    disabled={!action.path}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm text-text-primary/80 dark:text-background-light/75 transition-all duration-200 text-left border border-transparent rounded-xl group ${
-                      action.path
-                        ? 'hover:bg-primary/5 dark:hover:bg-primary/15 hover:border-primary/10 dark:hover:border-primary/20 cursor-pointer'
-                        : 'opacity-60 cursor-default'
-                    }`}
-                  >
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg bg-primary/5 dark:bg-primary/10 text-primary transition-colors ${action.path ? 'group-hover:bg-primary/15 dark:group-hover:bg-primary/20' : ''}`}>
-                      <span className="material-symbols-outlined text-lg group-hover:scale-105 transition-transform">
-                        {action.icon}
-                      </span>
-                    </div>
-                    <span className={`font-medium transition-all duration-200 ${action.path ? 'group-hover:text-primary dark:group-hover:text-background-light group-hover:translate-x-0.5' : ''}`}>
-                      {action.label}
+        <div className="animate-in fade-in-50 duration-300">
+          {/* Grid de Procesos */}
+          <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-background-light/60 mb-4 px-1 flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">account_tree</span>
+            Procesos
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {currentApps.map((app, idx) => {
+              const isInteractable = app.path && app.path !== "#";
+              return (
+                <button
+                  key={idx}
+                  onClick={() => isInteractable && handleActionClick(app.path)}
+                  disabled={!isInteractable}
+                  className={`group relative flex flex-col items-center justify-center gap-5 p-6 rounded-2xl border aspect-square transition-all duration-300 ${
+                    isInteractable
+                      ? 'border-primary/15 bg-primary/[0.03] dark:bg-primary/[0.05] dark:border-primary/20 hover:bg-primary hover:border-primary hover:text-white dark:hover:bg-primary dark:hover:border-primary hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 cursor-pointer'
+                      : 'border-primary/5 bg-white/20 dark:bg-background-dark/20 dark:border-primary/10 opacity-40 cursor-default'
+                  }`}
+                >
+                  {/* Icon Container */}
+                  <div className={`transition-all duration-300 ${isInteractable ? 'text-primary group-hover:text-white group-hover:scale-110' : 'text-text-primary/40 dark:text-background-light/40'}`}>
+                    <span className="material-symbols-outlined text-5xl select-none">
+                      {app.icon}
                     </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+                  </div>
 
-          {/* Apps Grid */}
-          <div className="flex-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-primary dark:text-background-light/60 mb-4 px-1 flex items-center gap-2">
-              <span className="material-symbols-outlined text-base">widgets</span>
-              Aplicaciones
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {currentApps.map((app, idx) => {
-                const isInteractable = app.path && app.path !== "#";
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => isInteractable && handleActionClick(app.path)}
-                    disabled={!isInteractable}
-                    className={`group relative flex flex-col items-center justify-center gap-4 p-5 rounded-2xl border aspect-square transition-all duration-300 ${
-                      isInteractable
-                        ? 'border-primary/15 bg-primary/[0.03] dark:bg-primary/[0.05] dark:border-primary/20 hover:bg-primary hover:border-primary hover:text-white dark:hover:bg-primary dark:hover:border-primary hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 cursor-pointer'
-                        : 'border-primary/5 bg-white/20 dark:bg-background-dark/20 dark:border-primary/10 opacity-40 cursor-default'
-                    }`}
-                  >
-                    {/* Icon Container */}
-                    <div className={`transition-all duration-300 ${isInteractable ? 'text-primary group-hover:text-white group-hover:scale-110' : 'text-text-primary/40 dark:text-background-light/40'}`}>
-                      <span className="material-symbols-outlined text-4xl select-none">
-                        {app.icon}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <span className={`text-xs font-bold transition-colors duration-300 leading-tight max-w-[130px] ${
-                      isInteractable 
-                        ? 'text-text-primary/95 dark:text-background-light/90 group-hover:text-white' 
-                        : 'text-text-primary/40 dark:text-background-light/40'
-                    }`}>
-                      {app.label}
-                    </span>
-                  </button>
-                );
-              })}
-
-              {/* Add New App Placeholder / Coming Soon */}
-              <div className="group flex flex-col items-center justify-center gap-4 p-5 rounded-2xl border-2 border-dashed border-primary/15 dark:border-primary/25 bg-primary/[0.01] dark:bg-primary/[0.02] aspect-square text-center opacity-40">
-                <div className="text-primary/40">
-                  <span className="material-symbols-outlined text-4xl select-none">
-                    add
+                  {/* Title */}
+                  <span className={`text-sm md:text-base font-bold transition-colors duration-300 leading-tight max-w-[150px] ${
+                    isInteractable 
+                      ? 'text-text-primary/95 dark:text-background-light/90 group-hover:text-white' 
+                      : 'text-text-primary/40 dark:text-background-light/40'
+                  }`}>
+                    {app.label}
                   </span>
-                </div>
-                <span className="text-xs font-bold text-text-primary/45 dark:text-background-light/45 leading-tight">
-                  Próximamente
+                </button>
+              );
+            })}
+
+            {/* Add New App Placeholder / Coming Soon */}
+            <div className="group flex flex-col items-center justify-center gap-5 p-6 rounded-2xl border-2 border-dashed border-primary/15 dark:border-primary/25 bg-primary/[0.01] dark:bg-primary/[0.02] aspect-square text-center opacity-40">
+              <div className="text-primary/40">
+                <span className="material-symbols-outlined text-5xl select-none">
+                  add
                 </span>
               </div>
+              <span className="text-sm md:text-base font-bold text-text-primary/45 dark:text-background-light/45 leading-tight">
+                Próximamente
+              </span>
             </div>
           </div>
         </div>

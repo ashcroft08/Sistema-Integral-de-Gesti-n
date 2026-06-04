@@ -21,14 +21,12 @@ import CategoriaMpModel from './cacao/CategoriaMp.js';
 import ProductoMpModel from './cacao/ProductoMp.js';
 import FechaMpModel from './cacao/FechaMp.js';
 import CompraInternaModel from './cacao/CompraInterna.js';
-import StockLoteOrgModel from './cacao/StockLoteOrg.js';
 import RutaCompraModel from './cacao/RutaCompra.js';
-import LoteOrgModel from './cacao/LoteOrg.js';
-import LoteCvModel from './cacao/LoteCv.js';
 import ControlLoteOrgModel from './cacao/ControlLoteOrg.js';
 import ControlLoteCvModel from './cacao/ControlLoteCv.js';
 import LoteComercializacionOrgModel from './cacao/LoteComercializacionOrg.js';
 import LoteComercializacionCvModel from './cacao/LoteComercializacionCv.js';
+import CompraExternaModel from './cacao/CompraExterna.js';
 
 // 2. Initialize each model
 const Auditoria = AuditoriaModel(sequelize, DataTypes);
@@ -49,14 +47,12 @@ const CategoriaMp = CategoriaMpModel(sequelize, DataTypes);
 const ProductoMp = ProductoMpModel(sequelize, DataTypes);
 const FechaMp = FechaMpModel(sequelize, DataTypes);
 const CompraInterna = CompraInternaModel(sequelize, DataTypes);
-const StockLoteOrg = StockLoteOrgModel(sequelize, DataTypes);
 const RutaCompra = RutaCompraModel(sequelize, DataTypes);
-const LoteOrg = LoteOrgModel(sequelize, DataTypes);
-const LoteCv = LoteCvModel(sequelize, DataTypes);
 const ControlLoteOrg = ControlLoteOrgModel(sequelize, DataTypes);
 const ControlLoteCv = ControlLoteCvModel(sequelize, DataTypes);
 const LoteComercializacionOrg = LoteComercializacionOrgModel(sequelize, DataTypes);
 const LoteComercializacionCv = LoteComercializacionCvModel(sequelize, DataTypes);
+const CompraExterna = CompraExternaModel(sequelize, DataTypes);
 
 // 3. Group models
 const models = {
@@ -76,14 +72,12 @@ const models = {
     ProductoMp,
     FechaMp,
     CompraInterna,
-    StockLoteOrg,
     RutaCompra,
-    LoteOrg,
-    LoteCv,
     ControlLoteOrg,
     ControlLoteCv,
     LoteComercializacionOrg,
-    LoteComercializacionCv
+    LoteComercializacionCv,
+    CompraExterna
 };
 
 // 4. Run associations
@@ -111,14 +105,12 @@ export {
     ProductoMp,
     FechaMp,
     CompraInterna,
-    StockLoteOrg,
     RutaCompra,
-    LoteOrg,
-    LoteCv,
     ControlLoteOrg,
     ControlLoteCv,
     LoteComercializacionOrg,
-    LoteComercializacionCv
+    LoteComercializacionCv,
+    CompraExterna
 };
 
 export default db;
