@@ -220,34 +220,6 @@ module.exports = {
             }
         }, { schema });
 
-        // 9. LOTE_ORG
-        await queryInterface.createTable('lote_org', {
-            id_lote_org: {
-                type: Sequelize.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-                allowNull: false
-            },
-            lote_org: {
-                type: Sequelize.STRING(250),
-                allowNull: false
-            }
-        }, { schema });
-
-        // 10. LOTE_CV
-        await queryInterface.createTable('lote_cv', {
-            id_lote_cv: {
-                type: Sequelize.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-                allowNull: false
-            },
-            lote_cv: {
-                type: Sequelize.STRING(250),
-                allowNull: false
-            }
-        }, { schema });
-
         // 11. RUTA_COMPRA
         await queryInterface.createTable('ruta_compra', {
             id_ruta_compra: {
@@ -266,8 +238,6 @@ module.exports = {
     async down(queryInterface, Sequelize) {
         const schema = 'cacao';
         await queryInterface.dropTable({ tableName: 'ruta_compra', schema });
-        await queryInterface.dropTable({ tableName: 'lote_cv', schema });
-        await queryInterface.dropTable({ tableName: 'lote_org', schema });
         await queryInterface.dropTable({ tableName: 'producto_mp', schema });
         await queryInterface.dropTable({ tableName: 'categoria_mp', schema });
         await queryInterface.dropTable({ tableName: 'negociador_mp', schema });

@@ -117,42 +117,10 @@ module.exports = {
                 allowNull: false
             }
         }, { schema });
-
-        // 2. STOCK_LOTE_ORG
-        await queryInterface.createTable('stock_lote_org', {
-            id_stock_lote_org: {
-                type: Sequelize.INTEGER,
-                primaryKey: true,
-                autoIncrement: true,
-                allowNull: false
-            },
-            id_compra_interna: {
-                type: Sequelize.INTEGER,
-                allowNull: false,
-                references: {
-                    model: {
-                        tableName: 'compra_interna',
-                        schema
-                    },
-                    key: 'id_compra_interna'
-                },
-                onUpdate: 'CASCADE',
-                onDelete: 'RESTRICT'
-            },
-            cantidad_asignada: {
-                type: Sequelize.DECIMAL(10, 2),
-                allowNull: false
-            },
-            fecha_registro: {
-                type: Sequelize.DATEONLY,
-                allowNull: false
-            }
-        }, { schema });
     },
 
     async down(queryInterface, Sequelize) {
         const schema = 'cacao';
-        await queryInterface.dropTable({ tableName: 'stock_lote_org', schema });
         await queryInterface.dropTable({ tableName: 'compra_interna', schema });
     }
 };
