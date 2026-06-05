@@ -107,7 +107,7 @@ const ControlLotesTable = ({
                         <th className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3 text-left">Ruta Compra</th>
                         <th className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3 text-right">Libras</th>
                         <th className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3 text-right">Costo</th>
-                        <th className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3">¿Es Seco?</th>
+                        <th className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
