@@ -79,6 +79,11 @@ const CompraExternaModal = ({
     const handleSubmitLocal = (e) => {
         e.preventDefault();
         
+        if (pProv < 0 || qqFact < 0 || cUnit < 0 || pAss < 0 || pAs < 0 || pPajarito < 0 || pBasura < 0) {
+            alert("Los valores de peso o costo no pueden ser negativos.");
+            return;
+        }
+
         onSubmit({
             fecha,
             idProveedor,
@@ -196,6 +201,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     required
                                     placeholder="0.00"
                                     value={pesoProveedor}
@@ -210,6 +216,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     required
                                     placeholder="0.00"
                                     value={quintalesFacturas}
@@ -239,6 +246,7 @@ const CompraExternaModal = ({
                             <input
                                 type="number"
                                 step="0.0001"
+                                min="0"
                                 required
                                 placeholder="0.0000"
                                 value={costoUnitario}
@@ -261,6 +269,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     placeholder="0.00"
                                     value={pesoAss}
                                     onChange={(e) => setPesoAss(e.target.value)}
@@ -274,6 +283,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     placeholder="0.00"
                                     value={pesoAs}
                                     onChange={(e) => setPesoAs(e.target.value)}
@@ -290,6 +300,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     placeholder="0.00"
                                     value={pesoPajarito}
                                     onChange={(e) => setPesoPajarito(e.target.value)}
@@ -303,6 +314,7 @@ const CompraExternaModal = ({
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
                                     placeholder="0.00"
                                     value={pesoBasura}
                                     onChange={(e) => setPesoBasura(e.target.value)}

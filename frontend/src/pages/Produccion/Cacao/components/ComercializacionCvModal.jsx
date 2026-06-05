@@ -49,6 +49,12 @@ const ComercializacionCvModal = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (nAss < 0 || nAs < 0 || nPajarito < 0 || nImpureza < 0) {
+            alert('Los valores de clasificación no pueden ser negativos.');
+            return;
+        }
+
         setSaving(true);
         try {
             await onSave({
