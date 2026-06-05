@@ -54,8 +54,8 @@ const PeriodModal = ({
                             required
                             placeholder="Ej: 2026 - Trimestre 1"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all"
+                            onChange={(e) => setName(e.target.value.toUpperCase())}
+                            className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all uppercase"
                         />
                     </div>
 
@@ -94,6 +94,12 @@ const PeriodModal = ({
                             placeholder="Notas adicionales sobre este trimestre..."
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                            onBlur={(e) => {
+                                const val = e.target.value;
+                                if (val) {
+                                    setDescription(val.charAt(0).toUpperCase() + val.slice(1).toLowerCase());
+                                }
+                            }}
                             rows={2}
                             className="w-full rounded-xl border border-primary/20 dark:border-primary/30 bg-transparent text-sm text-text-primary dark:text-background-light px-3.5 py-2.5 outline-none focus:border-primary transition-all resize-none"
                         />

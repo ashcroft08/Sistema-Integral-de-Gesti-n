@@ -471,9 +471,14 @@ export class CompraGeneralService {
             }
         }
 
+        const formattedDesc = data.descripcion && data.descripcion.trim()
+            ? data.descripcion.trim().charAt(0).toUpperCase() + data.descripcion.trim().slice(1).toLowerCase()
+            : (data.descripcion || null);
+
         const periodo = await PeriodoCompra.create({
             ...data,
             nombre: nombreTrimmed,
+            descripcion: formattedDesc,
             trimestre: trimestreVal ? parseInt(trimestreVal, 10) : null,
             anio: anioVal ? parseInt(anioVal, 10) : null
         });
@@ -512,7 +517,7 @@ export class CompraGeneralService {
             throw new Error('El período no existe');
         }
 
-        const nombreTrimmed = data.nombre ? data.nombre.trim() : existing.nombre;
+        const nombreTrimmed = data.nombre ? data.nombre.trim().toUpperCase() : existing.nombre;
         const fechaInicio = data.fecha_inicio || existing.fecha_inicio;
         const fechaFin = data.fecha_fin || existing.fecha_fin;
 
@@ -534,6 +539,13 @@ export class CompraGeneralService {
                 throw new Error(`Ya existe otro trimestre o período registrado con el nombre "${nombreTrimmed}"`);
             }
             data.nombre = nombreTrimmed;
+        }
+
+        if (data.descripcion !== undefined) {
+            const descFormatted = data.descripcion && data.descripcion.trim()
+                ? data.descripcion.trim().charAt(0).toUpperCase() + data.descripcion.trim().slice(1).toLowerCase()
+                : (data.descripcion || null);
+            data.descripcion = descFormatted;
         }
 
         // 2. Check duplicate by date range overlap excluding this period itself

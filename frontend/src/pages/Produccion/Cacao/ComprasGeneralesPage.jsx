@@ -122,12 +122,16 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const handleCreatePeriodSubmit = async (e) => {
         e.preventDefault();
         if (!newPeriodName || !newPeriodStart || !newPeriodEnd) return;
+        const formattedName = newPeriodName.trim().toUpperCase();
+        const formattedDesc = newPeriodDesc.trim()
+            ? newPeriodDesc.trim().charAt(0).toUpperCase() + newPeriodDesc.trim().slice(1).toLowerCase()
+            : '';
         try {
             await createPeriodo({
-                nombre: newPeriodName,
+                nombre: formattedName,
                 fecha_inicio: newPeriodStart,
                 fecha_fin: newPeriodEnd,
-                descripcion: newPeriodDesc,
+                descripcion: formattedDesc,
                 trimestre: newPeriodTrimestre ? parseInt(newPeriodTrimestre, 10) : undefined,
                 anio: newPeriodAnio ? parseInt(newPeriodAnio, 10) : undefined
             });
@@ -169,12 +173,16 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const handleEditPeriodSubmit = async (e) => {
         e.preventDefault();
         if (!selectedPeriod || !editPeriodName || !editPeriodStart || !editPeriodEnd) return;
+        const formattedName = editPeriodName.trim().toUpperCase();
+        const formattedDesc = editPeriodDesc.trim()
+            ? editPeriodDesc.trim().charAt(0).toUpperCase() + editPeriodDesc.trim().slice(1).toLowerCase()
+            : '';
         try {
             await updatePeriodo(selectedPeriod, {
-                nombre: editPeriodName,
+                nombre: formattedName,
                 fecha_inicio: editPeriodStart,
                 fecha_fin: editPeriodEnd,
-                descripcion: editPeriodDesc,
+                descripcion: formattedDesc,
                 trimestre: editPeriodTrimestre ? parseInt(editPeriodTrimestre, 10) : null,
                 anio: editPeriodAnio ? parseInt(editPeriodAnio, 10) : null
             });
