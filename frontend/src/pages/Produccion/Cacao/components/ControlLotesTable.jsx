@@ -171,16 +171,20 @@ const ControlLotesTable = ({
                                     <div className="flex items-center justify-center">
                                         <button
                                             onClick={() => onToggleSeco(l)}
-                                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 ${
+                                            title="Haga clic para alternar entre Húmedo y Seco"
+                                            className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer select-none active:scale-95 hover:shadow-sm ${
                                                 l.es_seco
-                                                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 dark:bg-emerald-500/20'
-                                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 dark:bg-amber-500/20'
+                                                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 dark:bg-emerald-500/20 hover:bg-emerald-500/20'
+                                                    : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 dark:bg-amber-500/20 hover:bg-amber-500/20'
                                             }`}
                                         >
-                                            <span className="material-symbols-outlined text-xs font-bold">
+                                            <span className="material-symbols-outlined text-xs font-bold group-hover:rotate-180 transition-transform duration-300">
                                                 {l.es_seco ? 'water_drop' : 'cloud'}
                                             </span>
                                             {l.es_seco ? 'Seco' : 'Húmedo'}
+                                            <span className="material-symbols-outlined text-[10px] opacity-40 group-hover:opacity-100 transition-opacity">
+                                                sync
+                                            </span>
                                         </button>
                                     </div>
                                 </td>
