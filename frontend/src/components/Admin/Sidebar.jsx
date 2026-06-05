@@ -125,7 +125,7 @@ const Sidebar = () => {
   const getRoleDisplayName = (role) => {
     const roles = {
       ventas: "Ventas",
-      bodega: "Bodega",
+      bodega: "Producción",
       admin: "Administrador",
     };
     return roles[role] || "Administrador";
@@ -287,7 +287,7 @@ const Sidebar = () => {
                             ? "Administrador"
                             : role === "ventas"
                             ? "Ventas"
-                            : "Bodega"}
+                            : "Producción"}
                         </button>
                       ))}
                     </div>

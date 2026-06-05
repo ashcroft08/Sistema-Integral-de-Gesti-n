@@ -63,7 +63,7 @@ const ModuleLayout = ({ moduleName, moduleIcon, children }) => {
   };
 
   const getViewDisplayName = (view) => {
-    const views = { ventas: "Ventas", bodega: "Bodega", admin: "Administrador" };
+    const views = { ventas: "Ventas", bodega: "Producción", admin: "Administrador" };
     return views[view] || "Administrador";
   };
 
@@ -183,13 +183,13 @@ const ModuleLayout = ({ moduleName, moduleIcon, children }) => {
                               ? "admin_panel_settings"
                               : view === "ventas"
                               ? "shopping_cart"
-                              : "warehouse"}
+                              : "precision_manufacturing"}
                           </span>
                           {view === "admin"
                             ? "Administrador"
                             : view === "ventas"
                             ? "Ventas"
-                            : "Bodega"}
+                            : "Producción"}
                         </button>
                       ))}
                     </div>

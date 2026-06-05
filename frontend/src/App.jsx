@@ -23,9 +23,9 @@ import AdminSettingsPage from "./pages/Admin/SettingsPage";
 
 // Pages Ventas / Bodega
 import VentasDashboardPage from "./pages/Ventas/VentasDashboardPage";
-import BodegaDashboardPage from "./pages/Bodega/BodegaDashboardPage";
-import ComprasGeneralesPage from "./pages/Bodega/Cacao/ComprasGeneralesPage";
-import ComprasExternasPage from "./pages/Bodega/Cacao/ComprasExternasPage";
+import ProduccionDashboardPage from "./pages/Produccion/ProduccionDashboardPage";
+import ComprasGeneralesPage from "./pages/Produccion/Cacao/ComprasGeneralesPage";
+import ComprasExternasPage from "./pages/Produccion/Cacao/ComprasExternasPage";
 
 function App() {
   return (
@@ -101,8 +101,8 @@ function App() {
               />
             }
           >
-            <Route index element={<BodegaDashboardPage />} />
-            <Route path="dashboard" element={<BodegaDashboardPage />} />
+            <Route index element={<ProduccionDashboardPage />} />
+            <Route path="dashboard" element={<ProduccionDashboardPage />} />
             <Route path="cacao/compras-generales" element={<ComprasGeneralesPage />} />
             <Route path="cacao/compras-externas" element={<ComprasExternasPage />} />
           </Route>

@@ -5,6 +5,8 @@ import { compraGeneralService } from "../../services/compraGeneral.service";
 import ComprasGeneralesPage from "./Cacao/ComprasGeneralesPage";
 import ResumenReportesPage from "./Cacao/ResumenReportesPage";
 import ComprasExternasPage from "./Cacao/ComprasExternasPage";
+import ControlLotesOrganicosPage from "./Cacao/ControlLotesOrganicosPage";
+import ControlLotesConvencionalesPage from "./Cacao/ControlLotesConvencionalesPage";
 
 const tabs = [
   { id: "inventario", label: "Inventario", icon: "inventory_2" },
@@ -55,7 +57,7 @@ const quickActions = {
   ],
 };
 
-const BodegaDashboardPage = () => {
+const ProduccionDashboardPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [comprasCount, setComprasCount] = useState(0);
@@ -91,6 +93,10 @@ const BodegaDashboardPage = () => {
       setSearchParams({ tab: activeTab, subApp: "compras-externas" });
     } else if (path === "/bodega/cacao/resumen-reportes") {
       setSearchParams({ tab: activeTab, subApp: "resumen-reportes" });
+    } else if (path === "/bodega/cacao/control-lotes-organicos") {
+      setSearchParams({ tab: activeTab, subApp: "control-lotes-organicos" });
+    } else if (path === "/bodega/cacao/control-lotes-convencionales") {
+      setSearchParams({ tab: activeTab, subApp: "control-lotes-convencionales" });
     } else if (path && path !== "#") {
       navigate(path);
     }
@@ -130,8 +136,8 @@ const BodegaDashboardPage = () => {
       { label: "Compras Externas", icon: "shopping_bag", color: "text-blue-700 bg-blue-500/10", path: "/bodega/cacao/compras-externas" },
       { label: "Resumen Reportes", icon: "analytics", color: "text-emerald-700 bg-emerald-500/10", path: "/bodega/cacao/resumen-reportes" },
       { label: "Compras Internas", icon: "inventory_2", color: "text-green-600 bg-green-500/10", path: "#" },
-      { label: "Control Lotes Orgánicos", icon: "eco", color: "text-emerald-600 bg-emerald-500/10", path: "#" },
-      { label: "Control Lotes Convencional", icon: "park", color: "text-teal-600 bg-teal-500/10", path: "#" },
+      { label: "Control Lotes Orgánicos", icon: "eco", color: "text-emerald-600 bg-emerald-500/10", path: "/bodega/cacao/control-lotes-organicos" },
+      { label: "Control Lotes Convencional", icon: "park", color: "text-teal-600 bg-teal-500/10", path: "/bodega/cacao/control-lotes-convencionales" },
       { label: "Comercialización", icon: "storefront", color: "text-blue-600 bg-blue-500/10", path: "#" },
       { label: "Proveedores MP", icon: "groups", color: "text-purple-600 bg-purple-500/10", path: "#" },
     ],
@@ -147,7 +153,7 @@ const BodegaDashboardPage = () => {
   const currentApps = apps[activeTab] || [];
 
   return (
-    <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
+    <ModuleLayout moduleName="Módulo de Producción" moduleIcon="precision_manufacturing">
 
       {/* Tab Navigation (Hidden when inside a sub-app) */}
       {!activeSubApp && (
@@ -186,6 +192,14 @@ const BodegaDashboardPage = () => {
       ) : activeTab === "materia-prima-cacao" && activeSubApp === "resumen-reportes" ? (
         <div className="animate-in fade-in-50 duration-300">
           <ResumenReportesPage onBack={() => setSearchParams({ tab: activeTab })} />
+        </div>
+      ) : activeTab === "materia-prima-cacao" && activeSubApp === "control-lotes-organicos" ? (
+        <div className="animate-in fade-in-50 duration-300">
+          <ControlLotesOrganicosPage onBack={() => setSearchParams({ tab: activeTab })} />
+        </div>
+      ) : activeTab === "materia-prima-cacao" && activeSubApp === "control-lotes-convencionales" ? (
+        <div className="animate-in fade-in-50 duration-300">
+          <ControlLotesConvencionalesPage onBack={() => setSearchParams({ tab: activeTab })} />
         </div>
       ) : (
         <div className="animate-in fade-in-50 duration-300">
@@ -245,4 +259,4 @@ const BodegaDashboardPage = () => {
   );
 };
 
-export default BodegaDashboardPage;
+export default ProduccionDashboardPage;
