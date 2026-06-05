@@ -77,17 +77,6 @@ const ControlLotesConvencionalesPage = ({ onBack }) => {
         }
     };
 
-    // Handle ODP bulk update
-    const handleBulkUpdateOdp = async (updates) => {
-        try {
-            await controlLoteCvService.bulkUpdateOdp(updates);
-            toast.success('Secuencia de ODPs autocompletada y guardada correctamente', { toastId: 'odp-update-cv' });
-            fetchLotes();
-        } catch (err) {
-            toast.error('Error al actualizar secuencia de ODPs convencionales', { toastId: 'odp-bulk-error-cv' });
-        }
-    };
-
     // Handle toggling of es_seco state
     const handleToggleSeco = async (lote) => {
         const nextSecoState = !lote.es_seco;
@@ -312,7 +301,6 @@ const ControlLotesConvencionalesPage = ({ onBack }) => {
                                 formatCurrency={formatCurrency}
                                 onToggleSeco={handleToggleSeco}
                                 onUpdateOdp={handleUpdateOdp}
-                                onBulkUpdateOdp={handleBulkUpdateOdp}
                             />
                         ) : (
                             <ComercializacionCvTable

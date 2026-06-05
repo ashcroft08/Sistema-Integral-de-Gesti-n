@@ -78,17 +78,6 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
         }
     };
 
-    // Handle ODP bulk update
-    const handleBulkUpdateOdp = async (updates) => {
-        try {
-            await controlLoteOrgService.bulkUpdateOdp(updates);
-            toast.success('Secuencia de ODPs autocompletada y guardada correctamente', { toastId: 'odp-update-org' });
-            fetchLotes();
-        } catch (err) {
-            toast.error('Error al actualizar secuencia de ODPs');
-        }
-    };
-
     // Handle toggling of es_seco state
     const handleToggleSeco = async (lote) => {
         const nextSecoState = !lote.es_seco;
@@ -313,7 +302,6 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
                                 formatCurrency={formatCurrency}
                                 onToggleSeco={handleToggleSeco}
                                 onUpdateOdp={handleUpdateOdp}
-                                onBulkUpdateOdp={handleBulkUpdateOdp}
                             />
                         ) : (
                             <ComercializacionTable
