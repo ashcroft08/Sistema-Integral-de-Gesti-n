@@ -5,6 +5,37 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const schema = 'cacao';
 
+        // 1. Create table 'proveedor'
+        await queryInterface.createTable('proveedor', {
+            id_proveedor: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+                allowNull: false
+            },
+            nombres: {
+                type: Sequelize.STRING(250),
+                allowNull: false
+            },
+            direccion: {
+                type: Sequelize.STRING(250),
+                allowNull: true
+            },
+            telefono: {
+                type: Sequelize.STRING(10),
+                allowNull: true
+            },
+            identificacion: {
+                type: Sequelize.STRING(50),
+                allowNull: true
+            },
+            correo: {
+                type: Sequelize.STRING(250),
+                allowNull: true
+            }
+        }, { schema });
+
+        // 2. Create table 'compra_externa'
         await queryInterface.createTable('compra_externa', {
             id_compra_externa: {
                 type: Sequelize.INTEGER,
@@ -12,12 +43,21 @@ module.exports = {
                 autoIncrement: true,
                 allowNull: false
             },
+            id_proveedor: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'proveedor',
+                        schema
+                    },
+                    key: 'id_proveedor'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
             fecha: {
                 type: Sequelize.DATEONLY,
-                allowNull: true
-            },
-            nombres: {
-                type: Sequelize.STRING(250),
                 allowNull: true
             },
             peso_proveedor: {
@@ -56,10 +96,6 @@ module.exports = {
                 type: Sequelize.DECIMAL(10, 2),
                 allowNull: true
             },
-            total_qq: {
-                type: Sequelize.DECIMAL(10, 2),
-                allowNull: true
-            },
             libras_seco: {
                 type: Sequelize.DECIMAL(10, 2),
                 allowNull: true
@@ -69,7 +105,7 @@ module.exports = {
                 allowNull: true
             },
             quintales_escurrido: {
-                type: Sequelize.DECIMAL(10, 4),
+                type: Sequelize.DECIMAL(10, 2),
                 allowNull: true
             },
             es_organico: {
@@ -96,5 +132,6 @@ module.exports = {
     async down(queryInterface, Sequelize) {
         const schema = 'cacao';
         await queryInterface.dropTable({ tableName: 'compra_externa', schema });
+        await queryInterface.dropTable({ tableName: 'proveedor', schema });
     }
 };

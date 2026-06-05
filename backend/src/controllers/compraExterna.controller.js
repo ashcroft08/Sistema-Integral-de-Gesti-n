@@ -1,5 +1,5 @@
 // src/controllers/compraExterna.controller.js
-import { CompraExterna, PeriodoCompra } from '../models/index.js';
+import { CompraExterna, PeriodoCompra, Proveedor } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 
@@ -8,7 +8,7 @@ export class CompraExternaController {
         const {
             id_periodo_compra,
             fecha,
-            nombres,
+            id_proveedor,
             peso_proveedor,
             peso_diferencia,
             quintales_facturas,
@@ -18,7 +18,6 @@ export class CompraExternaController {
             peso_as,
             peso_pajarito,
             peso_basura,
-            total_qq,
             libras_seco,
             libras_escurrido,
             quintales_escurrido,
@@ -29,15 +28,24 @@ export class CompraExternaController {
             return res.status(400).json(ApiResponse.error('El período es requerido.'));
         }
 
+        if (!id_proveedor) {
+            return res.status(400).json(ApiResponse.error('El proveedor es requerido.'));
+        }
+
         const periodo = await PeriodoCompra.findByPk(id_periodo_compra);
         if (!periodo) {
             return res.status(404).json(ApiResponse.error('El período no existe.'));
         }
 
+        const prov = await Proveedor.findByPk(id_proveedor);
+        if (!prov) {
+            return res.status(404).json(ApiResponse.error('El proveedor no existe.'));
+        }
+
         const compra = await CompraExterna.create({
             id_periodo_compra,
             fecha,
-            nombres,
+            id_proveedor,
             peso_proveedor,
             peso_diferencia,
             quintales_facturas,
@@ -47,14 +55,18 @@ export class CompraExternaController {
             peso_as,
             peso_pajarito,
             peso_basura,
-            total_qq,
             libras_seco,
             libras_escurrido,
             quintales_escurrido,
             es_organico
         });
 
-        return res.status(201).json(ApiResponse.success(compra, 'Compra externa registrada correctamente.'));
+        // Reload to include Proveedor in response
+        const fullCompra = await CompraExterna.findByPk(compra.id_compra_externa, {
+            include: [{ model: Proveedor, attributes: ['id_proveedor', 'nombres', 'direccion', 'telefono', 'identificacion', 'correo'] }]
+        });
+
+        return res.status(201).json(ApiResponse.success(fullCompra.get({ plain: true }), 'Compra externa registrada correctamente.'));
     });
 
     getAll = asyncHandler(async (req, res) => {
@@ -63,6 +75,12 @@ export class CompraExternaController {
 
         const compras = await CompraExterna.findAll({
             where,
+            include: [
+                {
+                    model: Proveedor,
+                    attributes: ['id_proveedor', 'nombres', 'direccion', 'telefono', 'identificacion', 'correo']
+                }
+            ],
             order: [['fecha', 'DESC'], ['id_compra_externa', 'DESC']]
         });
 
@@ -80,7 +98,12 @@ export class CompraExternaController {
             resumen.totalPesoProveedor = compras.reduce((acc, c) => acc + parseFloat(c.peso_proveedor || 0), 0);
             resumen.totalQuintalesFacturas = compras.reduce((acc, c) => acc + parseFloat(c.quintales_facturas || 0), 0);
             resumen.totalMonto = compras.reduce((acc, c) => acc + parseFloat(c.total || 0), 0);
-            resumen.totalQ_fisicos = compras.reduce((acc, c) => acc + parseFloat(c.total_qq || 0), 0);
+            resumen.totalQ_fisicos = compras.reduce((acc, c) => acc + (
+                parseFloat(c.peso_ass || 0) +
+                parseFloat(c.peso_as || 0) +
+                parseFloat(c.peso_pajarito || 0) +
+                parseFloat(c.peso_basura || 0)
+            ), 0);
             resumen.totalLibrasSeco = compras.reduce((acc, c) => acc + parseFloat(c.libras_seco || 0), 0);
             resumen.totalEscurridoLibras = compras.reduce((acc, c) => acc + parseFloat(c.libras_escurrido || 0), 0);
         }
@@ -96,10 +119,21 @@ export class CompraExternaController {
             return res.status(404).json(ApiResponse.error('El registro de compra externa no existe.'));
         }
 
-        const periodo = await PeriodoCompra.findByPk(compra.id_periodo_compra);
+        if (req.body.id_proveedor) {
+            const prov = await Proveedor.findByPk(req.body.id_proveedor);
+            if (!prov) {
+                return res.status(404).json(ApiResponse.error('El proveedor no existe.'));
+            }
+        }
 
         await compra.update(req.body);
-        return res.status(200).json(ApiResponse.success(compra, 'Registro actualizado correctamente.'));
+
+        // Reload to include Proveedor in response
+        const fullCompra = await CompraExterna.findByPk(compra.id_compra_externa, {
+            include: [{ model: Proveedor, attributes: ['id_proveedor', 'nombres', 'direccion', 'telefono', 'identificacion', 'correo'] }]
+        });
+
+        return res.status(200).json(ApiResponse.success(fullCompra.get({ plain: true }), 'Registro actualizado correctamente.'));
     });
 
     delete = asyncHandler(async (req, res) => {
@@ -109,8 +143,6 @@ export class CompraExternaController {
         if (!compra) {
             return res.status(404).json(ApiResponse.error('El registro de compra externa no existe.'));
         }
-
-        const periodo = await PeriodoCompra.findByPk(compra.id_periodo_compra);
 
         await compra.destroy();
         return res.status(200).json(ApiResponse.success(null, 'Registro eliminado correctamente.'));

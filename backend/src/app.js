@@ -12,11 +12,15 @@ import roleRoutes from './routes/role.routes.js';
 import userSettingsRoutes from './routes/userSettings.routes.js';
 import compraGeneralRoutes from './routes/compraGeneral.routes.js';
 import compraExternaRoutes from './routes/compraExterna.routes.js';
+import proveedorRoutes from './routes/proveedor.routes.js';
+import controlLoteOrgRoutes from './routes/controlLoteOrg.routes.js';
+import controlLoteCvRoutes from './routes/controlLoteCv.routes.js';
 
 import { errorHandler } from './middleware/error.middleware.js';
 import { auditMiddleware } from './middleware/audit.middleware.js';
 
 const app = express();
+
 
 // 1. Cabeceras de seguridad con Helmet
 app.use(helmet());
@@ -71,6 +75,9 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/user-settings', userSettingsRoutes);
 app.use('/api/cacao/compra-general', compraGeneralRoutes);
 app.use('/api/cacao/compra-externa', compraExternaRoutes);
+app.use('/api/cacao/proveedor', proveedorRoutes);
+app.use('/api/cacao/control-lote-org', controlLoteOrgRoutes);
+app.use('/api/cacao/control-lote-cv', controlLoteCvRoutes);
 
 // --- Middleware Global de Errores ---
 app.use(errorHandler);

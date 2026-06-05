@@ -5,12 +5,12 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
+        id_proveedor: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
         fecha: {
             type: DataTypes.DATEONLY,
-            allowNull: true
-        },
-        nombres: {
-            type: DataTypes.STRING(250),
             allowNull: true
         },
         peso_proveedor: {
@@ -49,10 +49,6 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true
         },
-        total_qq: {
-            type: DataTypes.DECIMAL(10, 2),
-            allowNull: true
-        },
         libras_seco: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true
@@ -62,7 +58,7 @@ export default (sequelize, DataTypes) => {
             allowNull: true
         },
         quintales_escurrido: {
-            type: DataTypes.DECIMAL(10, 4),
+            type: DataTypes.DECIMAL(10, 2),
             allowNull: true
         },
         es_organico: {
@@ -82,6 +78,7 @@ export default (sequelize, DataTypes) => {
 
     CompraExterna.associate = (models) => {
         CompraExterna.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
+        CompraExterna.belongsTo(models.Proveedor, { foreignKey: 'id_proveedor' });
     };
 
     return CompraExterna;
