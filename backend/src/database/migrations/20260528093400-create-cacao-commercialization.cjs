@@ -13,6 +13,19 @@ module.exports = {
                 autoIncrement: true,
                 allowNull: false
             },
+            id_periodo_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'periodo_compra',
+                        schema
+                    },
+                    key: 'id_periodo_compra'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
             id_control_lote_org: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
@@ -64,6 +77,19 @@ module.exports = {
                 primaryKey: true,
                 autoIncrement: true,
                 allowNull: false
+            },
+            id_periodo_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'periodo_compra',
+                        schema
+                    },
+                    key: 'id_periodo_compra'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
             },
             id_control_lote_cv: {
                 type: Sequelize.INTEGER,

@@ -109,7 +109,7 @@ export class CompraGeneralController {
         const { id } = req.params;
         const resultado = await compraGeneralService.approvePeriod(id);
         return res.status(200).json(
-            ApiResponse.success(resultado, 'Período aprobado y datos cargados al Data Warehouse correctamente')
+            ApiResponse.success(resultado, 'Período aprobado y datos cargados correctamente')
         );
     });
 

@@ -1,26 +1,30 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
-import ModuleLayout from '../../../components/Layout/ModuleLayout';
 import { useComprasGenerales } from '../../../hooks/useComprasGenerales';
-import MetricCardSplit from './components/MetricCardSplit';
+import Breadcrumbs from './components/Breadcrumbs';
 import PeriodModal from './components/PeriodModal';
 import PurchaseTable from './components/PurchaseTable';
-import Breadcrumbs from './components/Breadcrumbs';
+import MetricCardSplit from './components/MetricCardSplit';
+import ModuleLayout from '../../../components/Layout/ModuleLayout';
+import { useNavigate } from 'react-router-dom';
+
+// Modular Child Components
+import ExcelUploadZone from './components/ExcelUploadZone';
+import ETLProgressCard from './components/ETLProgressCard';
+import PeriodActionsBanner from './components/PeriodActionsBanner';
 
 const ComprasGeneralesPage = ({ onBack }) => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-    
-    // UI modals / states
-    const [isDragOver, setIsDragOver] = useState(false);
+
+    const [showCreatePeriodModal, setShowCreatePeriodModal] = useState(false);
+    const [showEditPeriodModal, setShowEditPeriodModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showApproveConfirm, setShowApproveConfirm] = useState(false);
-    const [showCreatePeriodModal, setShowCreatePeriodModal] = useState(false);
     const [showImportBanner, setShowImportBanner] = useState(true);
     const [showDetailView, setShowDetailView] = useState(false);
 
-    // Form states for creating a new Period
+    // Create period states
     const [newPeriodName, setNewPeriodName] = useState('');
     const [newPeriodStart, setNewPeriodStart] = useState('');
     const [newPeriodEnd, setNewPeriodEnd] = useState('');
@@ -28,8 +32,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     const [newPeriodTrimestre, setNewPeriodTrimestre] = useState('');
     const [newPeriodAnio, setNewPeriodAnio] = useState('');
 
-    // Form states for editing an existing Period
-    const [showEditPeriodModal, setShowEditPeriodModal] = useState(false);
+    // Edit period states
     const [editPeriodName, setEditPeriodName] = useState('');
     const [editPeriodStart, setEditPeriodStart] = useState('');
     const [editPeriodEnd, setEditPeriodEnd] = useState('');
@@ -93,41 +96,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
     // ─── File handling ───
     const handleFileSelect = useCallback((file) => {
         if (!file || !selectedPeriod) return;
-        const validTypes = [
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-excel',
-        ];
-        if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls)$/i)) {
-            return;
-        }
         uploadFile(file, selectedPeriod);
     }, [uploadFile, selectedPeriod]);
-
-    const handleDragOver = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(true);
-    }, []);
-
-    const handleDragLeave = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(false);
-    }, []);
-
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(false);
-        const file = e.dataTransfer.files?.[0];
-        handleFileSelect(file);
-    }, [handleFileSelect]);
-
-    const handleInputChange = useCallback((e) => {
-        const file = e.target.files?.[0];
-        handleFileSelect(file);
-        e.target.value = '';
-    }, [handleFileSelect]);
 
     const handleDelete = async () => {
         if (!selectedPeriod) return;
@@ -219,7 +189,6 @@ const ComprasGeneralesPage = ({ onBack }) => {
         if (!dateStr) return '—';
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
-        // Fix timezone offset for DateOnly
         const userTimezoneOffset = d.getTimezoneOffset() * 60000;
         const normalizedDate = new Date(d.getTime() + userTimezoneOffset);
         return normalizedDate.toLocaleDateString('es-EC', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -253,8 +222,8 @@ const ComprasGeneralesPage = ({ onBack }) => {
                     onClick={onBack ? onBack : () => navigate('/bodega')}
                     className="flex items-center gap-1 text-primary/70 hover:text-primary transition-colors cursor-pointer"
                 >
-                    <span className="material-symbols-outlined text-base">warehouse</span>
-                    <span>Bodega</span>
+                    <span className="material-symbols-outlined text-base">precision_manufacturing</span>
+                    <span>Producción</span>
                 </button>
                 <span className="material-symbols-outlined text-xs text-text-secondary/50 dark:text-background-light/30">chevron_right</span>
                 <span className="text-text-secondary/70 dark:text-background-light/50">Materia Prima Cacao</span>
@@ -366,7 +335,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                     activePeriodObj.estado === 'APROBADO'
                                         ? 'bg-primary/15 text-primary border border-primary/25'
                                         : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                }`}>
+                                }}`}>
                                     <span className="material-symbols-outlined text-[10px] font-bold">
                                         {activePeriodObj.estado === 'APROBADO' ? 'lock' : 'lock_open'}
                                     </span>
@@ -467,62 +436,14 @@ const ComprasGeneralesPage = ({ onBack }) => {
                 <>
                     {/* ═══════ ACTIONS & NOTICE BAR (WHEN DATA LOADED) ═══════ */}
                     {total > 0 && !uploading && (
-                        activePeriodObj?.estado === 'APROBADO' ? (
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-primary/20 dark:border-primary/45 bg-primary/5 dark:bg-primary/10 p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
-                                <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-accent">
-                                        <span className="material-symbols-outlined text-2xl font-bold">verified</span>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="text-sm font-bold text-primary dark:text-accent leading-tight">
-                                            Trimestre Aprobado y Guardado en el Historial
-                                        </h4>
-                                        <p className="text-xs text-text-secondary dark:text-background-light/60 mt-1 leading-relaxed">
-                                            Este período de compras ha sido revisado, aprobado y archivado en el registro histórico oficial. Para asegurar que la información no se altere, se encuentra <strong className="font-bold">bloqueado</strong> para nuevas cargas, modificaciones o eliminaciones.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0 self-end md:self-center flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/25 rounded-xl text-primary text-xs font-bold uppercase tracking-wider">
-                                    <span className="material-symbols-outlined text-sm font-bold">lock</span>
-                                    Trimestre Cerrado
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-500/[0.04] dark:bg-amber-500/[0.08] p-5 shadow-sm animate-in slide-in-from-top-2 duration-300">
-                                <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                    <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                        <span className="material-symbols-outlined text-2xl font-bold">info</span>
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 leading-tight">
-                                            Borrador de Compras (Revisión Pendiente)
-                                        </h4>
-                                        <p className="text-xs text-amber-700/90 dark:text-amber-500/80 mt-1 leading-relaxed">
-                                            Las compras de este trimestre han sido pre-cargadas de forma temporal. Por favor, revisa el listado inferior. Si la información es correcta, haz clic en <strong className="font-bold">"Aprobar y Guardar de forma Permanente"</strong> para registrar los datos formalmente.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0 self-end md:self-center flex flex-wrap items-center gap-3">
-                                    <button
-                                        onClick={() => setShowDeleteConfirm(true)}
-                                        disabled={loading}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 hover:scale-[1.02] shadow-sm hover:shadow transition-all duration-200 cursor-pointer whitespace-nowrap"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">delete_sweep</span>
-                                        Limpiar Trimestre
-                                    </button>
-                                    
-                                    <button
-                                        onClick={() => setShowApproveConfirm(true)}
-                                        disabled={loading}
-                                        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary/95 hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-primary/20 hover:shadow-primary/30 rounded-xl transition-all duration-200 cursor-pointer whitespace-nowrap"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">verified_user</span>
-                                        Aprobar y Guardar de forma Permanente
-                                    </button>
-                                </div>
-                            </div>
-                        )
+                        <PeriodActionsBanner
+                            isApproved={activePeriodObj?.estado === 'APROBADO'}
+                            total={total}
+                            periodName={activePeriodObj?.nombre}
+                            loading={loading}
+                            onClear={() => setShowDeleteConfirm(true)}
+                            onApprove={() => setShowApproveConfirm(true)}
+                        />
                     )}
 
                     {/* ═══════ DELETE CONFIRMATION MODAL ═══════ */}
@@ -612,94 +533,20 @@ const ComprasGeneralesPage = ({ onBack }) => {
                         document.body
                     )}
 
-                    {/* ═══════ UPLOAD ZONE (ONLY SHOW IF NO DATA AND NOT LOADING) ═══════ */}
+                    {/* ═══════ UPLOAD ZONE ═══════ */}
                     {!loading && !uploading && total === 0 && compras.length === 0 && !uploadResult && (
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`relative group cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300 overflow-hidden mb-6 ${
-                                isDragOver
-                                    ? 'border-primary bg-primary/5 dark:bg-primary/10 scale-[1.01] shadow-lg shadow-primary/10'
-                                    : 'border-primary/20 dark:border-primary/30 bg-white/50 dark:bg-background-dark/40 hover:border-primary/40 hover:bg-primary/[0.03] dark:hover:bg-primary/[0.08] hover:shadow-md'
-                            }`}
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-accent/[0.02] dark:from-primary/[0.05] dark:to-accent/[0.05] pointer-events-none" />
-
-                            <div className="relative flex flex-col items-center justify-center py-12 px-6">
-                                <div className={`flex items-center justify-center w-20 h-20 rounded-2xl mb-5 transition-all duration-300 ${
-                                    isDragOver
-                                        ? 'bg-primary/15 dark:bg-primary/25 scale-110'
-                                        : 'bg-primary/5 dark:bg-primary/10 group-hover:bg-primary/10 dark:group-hover:bg-primary/20 group-hover:scale-105'
-                                }`}>
-                                    <span className={`material-symbols-outlined text-5xl transition-colors duration-300 ${
-                                        isDragOver
-                                            ? 'text-primary dark:text-accent'
-                                            : 'text-primary/40 dark:text-primary/50 group-hover:text-primary/70'
-                                    }`}>
-                                        upload_file
-                                    </span>
-                                </div>
-
-                                <h3 className="text-lg font-semibold text-text-primary dark:text-background-light mb-1 text-center">
-                                    {isDragOver ? 'Suelta tu archivo aquí' : `Arrastra tu Excel de compras para ${activePeriodObj?.nombre}`}
-                                </h3>
-                                <p className="text-sm text-text-secondary dark:text-background-light/40 mb-5">
-                                    o
-                                </p>
-                                <div
-                                    className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200"
-                                >
-                                    <span className="material-symbols-outlined text-lg">folder_open</span>
-                                    Seleccionar Archivo
-                                </div>
-                                <p className="text-xs text-text-secondary/60 dark:text-background-light/30 mt-4">
-                                    Formatos soportados: <span className="font-medium">.xlsx</span>, <span className="font-medium">.xls</span>
-                                </p>
-                            </div>
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".xlsx,.xls"
-                                onChange={handleInputChange}
-                                className="hidden"
-                            />
-                        </div>
+                        <ExcelUploadZone
+                            onFileSelect={handleFileSelect}
+                            periodName={activePeriodObj?.nombre}
+                        />
                     )}
 
                     {/* ═══════ UPLOAD PROGRESS ═══════ */}
                     {uploading && (
-                        <div className="rounded-2xl border border-primary/20 dark:border-primary/30 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-8 mb-6">
-                            <div className="flex flex-col items-center gap-5">
-                                <div className="relative">
-                                    <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 dark:bg-primary/20 animate-pulse">
-                                        <span className="material-symbols-outlined text-4xl text-primary dark:text-accent">cloud_upload</span>
-                                    </div>
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-lg font-semibold text-text-primary dark:text-background-light mb-1">
-                                        Procesando y Normalizando...
-                                    </h3>
-                                    <p className="text-sm text-text-secondary dark:text-background-light/50">
-                                        Por favor espera mientras aplicamos el proceso ETL a {activePeriodObj?.nombre}
-                                    </p>
-                                </div>
-                                <div className="w-full max-w-md">
-                                    <div className="flex items-center justify-between text-sm mb-2">
-                                        <span className="text-text-secondary dark:text-background-light/50">Progreso</span>
-                                        <span className="font-bold text-primary dark:text-accent">{uploadProgress}%</span>
-                                    </div>
-                                    <div className="h-3 rounded-full bg-primary/10 dark:bg-primary/20 overflow-hidden">
-                                        <div
-                                            className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] animate-[shimmer_2s_linear_infinite] transition-[width] duration-300 ease-out"
-                                            style={{ width: `${uploadProgress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ETLProgressCard
+                            progress={uploadProgress}
+                            periodName={activePeriodObj?.nombre}
+                        />
                     )}
 
                     {/* ═══════ ETL SUCCESS BANNER ═══════ */}
@@ -716,7 +563,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
                                         </h4>
                                         <p className="text-xs text-emerald-700 dark:text-emerald-500/80 mt-0.5">
                                             Se ha procesado y registrado la información del archivo de Excel en el sistema.
-                                        </p>
+                                         </p>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-emerald-800/70 dark:text-emerald-500/60 font-bold">
                                             <span>✓ Nuevas compras registradas: {(uploadResult.filasInsertadas ?? uploadResult.filas_insertadas ?? 0)}</span>
                                             <span>· ✖ Compras duplicadas (evitadas): {(uploadResult.duplicadosEliminados ?? uploadResult.duplicados_eliminados ?? 0)}</span>
@@ -814,7 +661,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     if (showDetailView) {
         if (onBack) return renderDetailView();
         return (
-            <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
+            <ModuleLayout moduleName="Módulo de Producción" moduleIcon="precision_manufacturing">
                 {renderDetailView()}
             </ModuleLayout>
         );
@@ -825,7 +672,7 @@ const ComprasGeneralesPage = ({ onBack }) => {
     }
 
     return (
-        <ModuleLayout moduleName="Módulo de Bodega" moduleIcon="warehouse">
+        <ModuleLayout moduleName="Módulo de Producción" moduleIcon="precision_manufacturing">
             {renderContent()}
         </ModuleLayout>
     );

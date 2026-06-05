@@ -5,6 +5,10 @@ export default (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true
         },
+        id_periodo_compra: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
         id_control_lote_cv: {
             type: DataTypes.INTEGER,
             allowNull: false
@@ -46,6 +50,7 @@ export default (sequelize, DataTypes) => {
 
     LoteComercializacionCv.associate = (models) => {
         LoteComercializacionCv.belongsTo(models.ControlLoteCv, { foreignKey: 'id_control_lote_cv' });
+        LoteComercializacionCv.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
     };
 
     return LoteComercializacionCv;

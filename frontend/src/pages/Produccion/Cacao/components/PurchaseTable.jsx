@@ -40,14 +40,14 @@ const PurchaseTable = ({
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="max-h-[500px] overflow-y-auto overflow-x-auto custom-scrollbar relative">
                 <table className="w-full text-sm">
                     <thead>
-                        <tr className="bg-primary/[0.03] dark:bg-primary/[0.08]">
+                        <tr className="border-b border-primary/10 dark:border-primary/20">
                             {['#', 'Número', 'Fecha', 'Comunidad', 'Código', 'Proveedor', 'Categoría', 'Producto', 'Cantidad', 'V. Unitario', 'Total', 'Negociador'].map((col) => (
                                 <th
                                     key={col}
-                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 whitespace-nowrap"
+                                    className="sticky top-0 z-10 bg-[#fafafa] dark:bg-[#141416] px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 whitespace-nowrap"
                                 >
                                     {col}
                                 </th>

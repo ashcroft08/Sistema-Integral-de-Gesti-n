@@ -1,0 +1,141 @@
+// src/controllers/controlLoteOrg.controller.js
+import { ControlLoteOrg, LoteComercializacionOrg } from '../models/index.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/apiResponse.js';
+
+export class ControlLoteOrgController {
+    /**
+     * Obtener todos los controles de lote y sus datos de comercialización orgánicos
+     * Opcionalmente filtrado por id_periodo_compra
+     */
+    getAll = asyncHandler(async (req, res) => {
+        const { id_periodo_compra } = req.query;
+        if (!id_periodo_compra) {
+            return res.status(400).json(ApiResponse.error('El id_periodo_compra es obligatorio.'));
+        }
+
+        const list = await ControlLoteOrg.findAll({
+            where: { id_periodo_compra },
+            include: [
+                {
+                    model: LoteComercializacionOrg,
+                    required: false
+                }
+            ],
+            order: [
+                ['fecha', 'ASC'],
+                ['lote', 'ASC']
+            ]
+        });
+
+        return res.status(200).json(ApiResponse.success(list));
+    });
+
+    /**
+     * Actualizar campos específicos (odp, es_seco) de un lote de control orgánico
+     */
+    update = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { odp, es_seco } = req.body;
+
+        const loteControl = await ControlLoteOrg.findByPk(id);
+        if (!loteControl) {
+            return res.status(404).json(ApiResponse.error('No se encontró el lote de control especificado.'));
+        }
+
+        const updateData = {};
+        if (odp !== undefined) updateData.odp = odp;
+        if (es_seco !== undefined) {
+            updateData.es_seco = es_seco;
+            // Si es_seco cambia a false, opcionalmente podríamos decidir eliminar o conservar la comercialización.
+            // Para mantener la consistencia de los datos históricos, los mantenemos y deshabilitamos en la UI.
+        }
+
+        await loteControl.update(updateData);
+        return res.status(200).json(ApiResponse.success(loteControl, 'Lote de control actualizado correctamente.'));
+    });
+
+    /**
+     * Actualización masiva de ODPs
+     */
+    bulkUpdateOdp = asyncHandler(async (req, res) => {
+        const { updates } = req.body;
+        if (!Array.isArray(updates)) {
+            return res.status(400).json(ApiResponse.error('Debe proporcionar una lista de actualizaciones.'));
+        }
+
+        const t = await ControlLoteOrg.sequelize.transaction();
+        try {
+            for (const update of updates) {
+                await ControlLoteOrg.update(
+                    { odp: update.odp },
+                    { 
+                        where: { id_control_lote_org: update.id_control_lote_org },
+                        transaction: t 
+                    }
+                );
+            }
+            await t.commit();
+        } catch (error) {
+            await t.rollback();
+            throw error;
+        }
+
+        return res.status(200).json(ApiResponse.success(null, 'ODPs actualizadas secuencialmente con éxito.'));
+    });
+
+    /**
+     * Guardar o actualizar datos de comercialización del lote de control orgánico
+     */
+    saveComercializacion = asyncHandler(async (req, res) => {
+        const {
+            id_control_lote_org,
+            id_periodo_compra,
+            fecha_clasificacion,
+            ass,
+            as: asVal,
+            pajarito,
+            impureza,
+            total
+        } = req.body;
+
+        if (!id_control_lote_org || !id_periodo_compra || !fecha_clasificacion) {
+            return res.status(400).json(ApiResponse.error('Faltan campos obligatorios para guardar la comercialización.'));
+        }
+
+        const controlLote = await ControlLoteOrg.findByPk(id_control_lote_org);
+        if (!controlLote) {
+            return res.status(404).json(ApiResponse.error('El lote de control de referencia no existe.'));
+        }
+
+        // Calcular porcentaje_perdida = (cantidad_libra / total)
+        const cantLbs = parseFloat(controlLote.cantidad_libra) || 0;
+        const totalVal = parseFloat(total) || 0;
+        const porcentaje_perdida = totalVal > 0 ? parseFloat((cantLbs / totalVal).toFixed(2)) : 0;
+
+        // Buscar si ya existe la comercialización de este lote
+        let comercializacion = await LoteComercializacionOrg.findOne({
+            where: { id_control_lote_org }
+        });
+
+        const data = {
+            id_periodo_compra,
+            id_control_lote_org,
+            fecha_clasificacion,
+            ass: parseFloat(ass) || 0,
+            as: parseFloat(asVal) || 0,
+            pajarito: parseFloat(pajarito) || 0,
+            impureza: parseFloat(impureza) || 0,
+            total: totalVal,
+            porcentaje_perdida
+        };
+
+        if (comercializacion) {
+            await comercializacion.update(data);
+        } else {
+            comercializacion = await LoteComercializacionOrg.create(data);
+        }
+
+        return res.status(200).json(ApiResponse.success(comercializacion, 'Datos de comercialización guardados correctamente.'));
+    });
+}
