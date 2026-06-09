@@ -7,6 +7,7 @@ import ResumenReportesPage from "./Cacao/ResumenReportesPage";
 import ComprasExternasPage from "./Cacao/ComprasExternasPage";
 import ControlLotesOrganicosPage from "./Cacao/ControlLotesOrganicosPage";
 import ControlLotesConvencionalesPage from "./Cacao/ControlLotesConvencionalesPage";
+import RutasCompraPage from "./Cacao/RutasCompraPage";
 
 const tabs = [
   { id: "inventario", label: "Inventario", icon: "inventory_2" },
@@ -97,6 +98,8 @@ const ProduccionDashboardPage = () => {
       setSearchParams({ tab: activeTab, subApp: "control-lotes-organicos" });
     } else if (path === "/bodega/cacao/control-lotes-convencionales") {
       setSearchParams({ tab: activeTab, subApp: "control-lotes-convencionales" });
+    } else if (path === "/bodega/cacao/rutas-compra") {
+      setSearchParams({ tab: activeTab, subApp: "rutas-compra" });
     } else if (path && path !== "#") {
       navigate(path);
     }
@@ -138,6 +141,7 @@ const ProduccionDashboardPage = () => {
       { label: "Compras Internas", icon: "inventory_2", color: "text-green-600 bg-green-500/10", path: "#" },
       { label: "Control Lotes Orgánicos", icon: "eco", color: "text-emerald-600 bg-emerald-500/10", path: "/bodega/cacao/control-lotes-organicos" },
       { label: "Control Lotes Convencional", icon: "park", color: "text-teal-600 bg-teal-500/10", path: "/bodega/cacao/control-lotes-convencionales" },
+      { label: "Rutas de Compra", icon: "explore", color: "text-orange-600 bg-orange-500/10", path: "/bodega/cacao/rutas-compra" },
       { label: "Comercialización", icon: "storefront", color: "text-blue-600 bg-blue-500/10", path: "#" },
       { label: "Proveedores MP", icon: "groups", color: "text-purple-600 bg-purple-500/10", path: "#" },
     ],
@@ -200,6 +204,10 @@ const ProduccionDashboardPage = () => {
       ) : activeTab === "materia-prima-cacao" && activeSubApp === "control-lotes-convencionales" ? (
         <div className="animate-in fade-in-50 duration-300">
           <ControlLotesConvencionalesPage onBack={() => setSearchParams({ tab: activeTab })} />
+        </div>
+      ) : activeTab === "materia-prima-cacao" && activeSubApp === "rutas-compra" ? (
+        <div className="animate-in fade-in-50 duration-300">
+          <RutasCompraPage onBack={() => setSearchParams({ tab: activeTab })} />
         </div>
       ) : (
         <div className="animate-in fade-in-50 duration-300">

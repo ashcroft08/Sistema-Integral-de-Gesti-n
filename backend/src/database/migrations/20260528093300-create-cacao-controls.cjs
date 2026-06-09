@@ -26,20 +26,29 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
+            id_ruta_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'ruta_compra',
+                        schema
+                    },
+                    key: 'id_ruta_compra'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
             odp: {
-                type: Sequelize.CHAR(10),
+                type: Sequelize.STRING(250),
                 allowNull: true
             },
             lote: {
                 type: Sequelize.STRING(250),
                 allowNull: false
             },
-            fecha: {
+            fecha_ingreso: {
                 type: Sequelize.DATEONLY,
-                allowNull: false
-            },
-            ruta_compra: {
-                type: Sequelize.STRING(250),
                 allowNull: false
             },
             cantidad_libra: {
@@ -50,7 +59,12 @@ module.exports = {
                 type: Sequelize.DECIMAL(10, 4),
                 allowNull: false
             },
-            es_seco: {
+            estado: {
+                type: Sequelize.ENUM('ESCURRIDO', 'FERMENTADO', 'SECO', 'PRESECADO'),
+                allowNull: false,
+                defaultValue: 'ESCURRIDO'
+            },
+            clasificado: {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
                 defaultValue: false
@@ -78,20 +92,29 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'RESTRICT'
             },
+            id_ruta_compra: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                references: {
+                    model: {
+                        tableName: 'ruta_compra',
+                        schema
+                    },
+                    key: 'id_ruta_compra'
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'RESTRICT'
+            },
             odp: {
-                type: Sequelize.CHAR(10),
+                type: Sequelize.STRING(250),
                 allowNull: true
             },
             lote: {
                 type: Sequelize.STRING(250),
                 allowNull: false
             },
-            fecha: {
+            fecha_ingreso: {
                 type: Sequelize.DATEONLY,
-                allowNull: false
-            },
-            ruta_compra: {
-                type: Sequelize.STRING(250),
                 allowNull: false
             },
             cantidad_libra: {
@@ -102,7 +125,12 @@ module.exports = {
                 type: Sequelize.DECIMAL(10, 4),
                 allowNull: false
             },
-            es_seco: {
+            estado: {
+                type: Sequelize.ENUM('ESCURRIDO', 'FERMENTADO', 'SECO', 'PRESECADO'),
+                allowNull: false,
+                defaultValue: 'ESCURRIDO'
+            },
+            clasificado: {
                 type: Sequelize.BOOLEAN,
                 allowNull: false,
                 defaultValue: false

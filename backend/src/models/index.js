@@ -28,6 +28,8 @@ import LoteComercializacionOrgModel from './cacao/LoteComercializacionOrg.js';
 import LoteComercializacionCvModel from './cacao/LoteComercializacionCv.js';
 import CompraExternaModel from './cacao/CompraExterna.js';
 import ProveedorModel from './cacao/Proveedor.js';
+import HistorialEstadoLoteModel from './cacao/HistorialEstadoLote.js';
+import PresecadoLoteModel from './cacao/PresecadoLote.js';
 
 // 2. Initialize each model
 const Auditoria = AuditoriaModel(sequelize, DataTypes);
@@ -55,6 +57,8 @@ const LoteComercializacionOrg = LoteComercializacionOrgModel(sequelize, DataType
 const LoteComercializacionCv = LoteComercializacionCvModel(sequelize, DataTypes);
 const CompraExterna = CompraExternaModel(sequelize, DataTypes);
 const Proveedor = ProveedorModel(sequelize, DataTypes);
+const HistorialEstadoLote = HistorialEstadoLoteModel(sequelize, DataTypes);
+const PresecadoLote = PresecadoLoteModel(sequelize, DataTypes);
 
 // 3. Group models
 const models = {
@@ -80,7 +84,9 @@ const models = {
     LoteComercializacionOrg,
     LoteComercializacionCv,
     CompraExterna,
-    Proveedor
+    Proveedor,
+    HistorialEstadoLote,
+    PresecadoLote
 };
 
 // 4. Run associations
@@ -114,7 +120,9 @@ export {
     LoteComercializacionOrg,
     LoteComercializacionCv,
     CompraExterna,
-    Proveedor
+    Proveedor,
+    HistorialEstadoLote,
+    PresecadoLote
 };
 
 export default db;

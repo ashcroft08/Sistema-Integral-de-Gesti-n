@@ -9,23 +9,17 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
+        id_ruta_compra: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
         lote: {
             type: DataTypes.STRING(250),
             allowNull: false
         },
-        fecha: {
+        fecha_ingreso: {
             type: DataTypes.DATEONLY,
             allowNull: false
-        },
-        ruta_compra: {
-            type: DataTypes.STRING(250),
-            allowNull: false,
-            validate: {
-                isIn: {
-                    args: [['RUTA 1-CAPO', 'RUTA 2-CAPO', 'RUTA 3-CAPO', 'RUTA 5-CAPO']],
-                    msg: 'La ruta de compra seleccionada no es válida.'
-                }
-            }
         },
         cantidad_libra: {
             type: DataTypes.DECIMAL(10, 2),
@@ -35,13 +29,18 @@ export default (sequelize, DataTypes) => {
             type: DataTypes.DECIMAL(10, 4),
             allowNull: false
         },
-        es_seco: {
+        estado: {
+            type: DataTypes.ENUM('ESCURRIDO', 'FERMENTADO', 'SECO', 'PRESECADO'),
+            allowNull: false,
+            defaultValue: 'ESCURRIDO'
+        },
+        clasificado: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false
         },
         odp: {
-            type: DataTypes.CHAR(10),
+            type: DataTypes.STRING(250),
             allowNull: true
         }
     }, {
@@ -52,6 +51,7 @@ export default (sequelize, DataTypes) => {
 
     ControlLoteOrg.associate = (models) => {
         ControlLoteOrg.belongsTo(models.PeriodoCompra, { foreignKey: 'id_periodo_compra' });
+        ControlLoteOrg.belongsTo(models.RutaCompra, { foreignKey: 'id_ruta_compra' });
         ControlLoteOrg.hasMany(models.LoteComercializacionOrg, { foreignKey: 'id_control_lote_org' });
     };
 

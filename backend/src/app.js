@@ -15,6 +15,7 @@ import compraExternaRoutes from './routes/compraExterna.routes.js';
 import proveedorRoutes from './routes/proveedor.routes.js';
 import controlLoteOrgRoutes from './routes/controlLoteOrg.routes.js';
 import controlLoteCvRoutes from './routes/controlLoteCv.routes.js';
+import rutaCompraRoutes from './routes/rutaCompra.routes.js';
 
 import { errorHandler } from './middleware/error.middleware.js';
 import { auditMiddleware } from './middleware/audit.middleware.js';
@@ -78,6 +79,7 @@ app.use('/api/cacao/compra-externa', compraExternaRoutes);
 app.use('/api/cacao/proveedor', proveedorRoutes);
 app.use('/api/cacao/control-lote-org', controlLoteOrgRoutes);
 app.use('/api/cacao/control-lote-cv', controlLoteCvRoutes);
+app.use('/api/cacao/ruta-compra', rutaCompraRoutes);
 
 // --- Middleware Global de Errores ---
 app.use(errorHandler);
