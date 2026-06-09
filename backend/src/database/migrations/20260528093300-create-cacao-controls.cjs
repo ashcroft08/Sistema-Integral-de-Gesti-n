@@ -28,7 +28,7 @@ module.exports = {
             },
             id_ruta_compra: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
+                allowNull: true,
                 references: {
                     model: {
                         tableName: 'ruta_compra',
@@ -94,7 +94,7 @@ module.exports = {
             },
             id_ruta_compra: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
+                allowNull: true,
                 references: {
                     model: {
                         tableName: 'ruta_compra',

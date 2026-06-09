@@ -51,7 +51,7 @@ const ComercializacionTable = ({
                         lotes.map((l) => {
                             const com = l.LoteComercializacionOrgs?.[0] || null;
                             const hasCom = !!com;
-                            const isSeco = l.es_seco;
+                            const isSeco = l.estado === 'SECO';
 
                             return (
                                 <tr

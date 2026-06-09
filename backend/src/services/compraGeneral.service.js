@@ -800,29 +800,18 @@ export class CompraGeneralService {
                 const year2Digit = String(dateObj.getUTCFullYear()).slice(-2);
                 const seqStr = String(idx + 1).padStart(2, '0');
 
-                // Determine Route
-                const dayOfWeek = dateObj.getUTCDay();
-                let ruta = 'RUTA 5-CAPO'; // default
-                if (dayOfWeek === 3) {
-                    ruta = 'RUTA 1-CAPO';
-                } else if (dayOfWeek === 4) {
-                    ruta = 'RUTA 2-CAPO';
-                } else if (dayOfWeek === 5) {
-                    const friIndex = uniqueFridays.indexOf(dateStr);
-                    ruta = (friIndex % 2 === 0) ? 'RUTA 5-CAPO' : 'RUTA 3-CAPO';
-                }
-
                 const group = dailyGroups[dateStr];
 
                 if (group.organico.qty > 0) {
                     controlLotesOrg.push({
                         id_periodo_compra: idInt,
                         lote: `KPO-O${year2Digit}-A${seqStr}`,
-                        fecha: dateStr,
-                        ruta_compra: ruta,
+                        fecha_ingreso: dateStr,
+                        id_ruta_compra: null,
                         cantidad_libra: group.organico.qty,
                         costo: group.organico.total,
-                        es_seco: false
+                        estado: 'ESCURRIDO',
+                        clasificado: false
                     });
                 }
 
@@ -830,11 +819,12 @@ export class CompraGeneralService {
                     controlLotesCv.push({
                         id_periodo_compra: idInt,
                         lote: `KPO-CV${year2Digit}-A${seqStr}`,
-                        fecha: dateStr,
-                        ruta_compra: ruta,
+                        fecha_ingreso: dateStr,
+                        id_ruta_compra: null,
                         cantidad_libra: group.convencional.qty,
                         costo: group.convencional.total,
-                        es_seco: false
+                        estado: 'ESCURRIDO',
+                        clasificado: false
                     });
                 }
             });

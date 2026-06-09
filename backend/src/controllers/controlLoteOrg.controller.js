@@ -1,5 +1,5 @@
 // src/controllers/controlLoteOrg.controller.js
-import { ControlLoteOrg, LoteComercializacionOrg } from '../models/index.js';
+import { ControlLoteOrg, LoteComercializacionOrg, RutaCompra } from '../models/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/apiResponse.js';
 
@@ -20,10 +20,14 @@ export class ControlLoteOrgController {
                 {
                     model: LoteComercializacionOrg,
                     required: false
+                },
+                {
+                    model: RutaCompra,
+                    required: false
                 }
             ],
             order: [
-                ['fecha', 'ASC'],
+                ['fecha_ingreso', 'ASC'],
                 ['lote', 'ASC']
             ]
         });
@@ -32,11 +36,11 @@ export class ControlLoteOrgController {
     });
 
     /**
-     * Actualizar campos específicos (odp, es_seco) de un lote de control orgánico
+     * Actualizar campos específicos (odp, estado, clasificado, id_ruta_compra) de un lote de control orgánico
      */
     update = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { odp, es_seco } = req.body;
+        const { odp, estado, clasificado, id_ruta_compra } = req.body;
 
         const loteControl = await ControlLoteOrg.findByPk(id);
         if (!loteControl) {
@@ -45,11 +49,9 @@ export class ControlLoteOrgController {
 
         const updateData = {};
         if (odp !== undefined) updateData.odp = odp;
-        if (es_seco !== undefined) {
-            updateData.es_seco = es_seco;
-            // Si es_seco cambia a false, opcionalmente podríamos decidir eliminar o conservar la comercialización.
-            // Para mantener la consistencia de los datos históricos, los mantenemos y deshabilitamos en la UI.
-        }
+        if (estado !== undefined) updateData.estado = estado;
+        if (clasificado !== undefined) updateData.clasificado = clasificado;
+        if (id_ruta_compra !== undefined) updateData.id_ruta_compra = id_ruta_compra;
 
         await loteControl.update(updateData);
         return res.status(200).json(ApiResponse.success(loteControl, 'Lote de control actualizado correctamente.'));
@@ -135,6 +137,9 @@ export class ControlLoteOrgController {
         } else {
             comercializacion = await LoteComercializacionOrg.create(data);
         }
+
+        // Marcar el lote de control como clasificado
+        await controlLote.update({ clasificado: true });
 
         return res.status(200).json(ApiResponse.success(comercializacion, 'Datos de comercialización guardados correctamente.'));
     });

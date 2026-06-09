@@ -11,7 +11,7 @@ export default (sequelize, DataTypes) => {
         },
         id_ruta_compra: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: true
         },
         lote: {
             type: DataTypes.STRING(250),

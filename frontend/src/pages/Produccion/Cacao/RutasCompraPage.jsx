@@ -152,49 +152,38 @@ const RutasCompraPage = ({ onBack }) => {
 
     return (
         <div className="space-y-6">
-            {/* Header / Breadcrumbs */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Breadcrumbs
-                    items={[
-                        { label: 'Producción', onClick: onBack },
-                        { label: 'Materia Prima Cacao', onClick: onBack },
-                        { label: 'Rutas de Compra', active: true }
-                    ]}
-                />
+            {/* Breadcrumb */}
+            <Breadcrumbs onBack={onBack} currentPath="Rutas de Compra" />
 
-                <div className="flex flex-wrap gap-3">
-                    <button
-                        onClick={onBack}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-lg">arrow_back</span>
-                        Volver
-                    </button>
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+                <div>
+                    <h1 className="text-2xl font-heading font-bold text-text-primary dark:text-background-light tracking-tight flex items-center gap-3">
+                        {onBack && (
+                            <button
+                                onClick={onBack}
+                                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/10 dark:border-primary/25 text-primary hover:scale-105 active:scale-95 transition-all cursor-pointer group shadow-sm"
+                                title="Volver a Producción"
+                            >
+                                <span className="material-symbols-outlined text-xl group-hover:-translate-x-0.5 transition-transform font-bold">arrow_back</span>
+                            </button>
+                        )}
+                        <span className="material-symbols-outlined text-3xl text-primary font-bold">explore</span>
+                        Administración de Rutas de Compra
+                    </h1>
+                    <p className="text-sm text-text-secondary dark:text-background-light/50 mt-1">
+                        Administra el catálogo de rutas para registrar la procedencia en los lotes de control de cacao convencional y orgánico.
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-center mt-2 sm:mt-0">
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-lg shadow-primary/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary/95 shadow-md shadow-primary/20 hover:scale-[1.02] transition-all cursor-pointer"
                     >
-                        <span className="material-symbols-outlined text-lg font-bold">add</span>
+                        <span className="material-symbols-outlined text-lg">add_circle</span>
                         Nueva Ruta
                     </button>
-                </div>
-            </div>
-
-            {/* Banner/Title */}
-            <div className="relative rounded-3xl overflow-hidden border border-primary/10 dark:border-primary/20 bg-gradient-to-br from-white to-primary/[0.02] dark:from-background-dark dark:to-primary/[0.05] p-6 shadow-sm">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 dark:bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 text-primary">
-                        <span className="material-symbols-outlined text-3xl">explore</span>
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-text-primary dark:text-background-light">
-                            Administración de Rutas de Compra
-                        </h2>
-                        <p className="text-sm text-text-secondary dark:text-background-light/60 mt-1 max-w-xl">
-                            Administra el catálogo de rutas para registrar la procedencia en los lotes de control de cacao convencional y orgánico.
-                        </p>
-                    </div>
                 </div>
             </div>
 

@@ -6,8 +6,10 @@ import ModuleLayout from '../../../components/Layout/ModuleLayout';
 import ControlLotesTable from './components/ControlLotesTable';
 import ComercializacionTable from './components/ComercializacionTable';
 import ComercializacionModal from './components/ComercializacionModal';
+import ConfirmSecoModal from './components/ConfirmSecoModal';
 import { controlLoteOrgService } from '../../../services/controlLoteOrg.service';
 import { compraGeneralService } from '../../../services/compraGeneral.service';
+import { rutaCompraService } from '../../../services/rutaCompra.service';
 
 const ControlLotesOrganicosPage = ({ onBack }) => {
     const navigate = useNavigate();
@@ -20,6 +22,7 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
     // Main page state
     const [lotes, setLotes] = useState([]);
     const [loadingLotes, setLoadingLotes] = useState(false);
+    const [rutasCompra, setRutasCompra] = useState([]);
     const [activeTab, setActiveTab] = useState('control'); // 'control' | 'comercializacion'
 
     // Modal state
@@ -27,26 +30,29 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
     const [selectedLote, setSelectedLote] = useState(null);
     const [selectedComercializacion, setSelectedComercializacion] = useState(null);
 
+    // Confirmation Modal state
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [confirmLote, setConfirmLote] = useState(null);
+
     // Fetch periods on mount
     useEffect(() => {
-        const fetchPeriodos = async () => {
+        const fetchData = async () => {
             try {
                 setLoadingPeriodos(true);
-                const response = await compraGeneralService.getPeriodos();
-                const list = response.data || [];
+                const [periodosRes, rutasRes] = await Promise.all([
+                    compraGeneralService.getPeriodos(),
+                    rutaCompraService.getAll()
+                ]);
+                const list = periodosRes.data || [];
                 setPeriodos(list);
-                
-                // Pre-select first period if available
-                if (list.length > 0) {
-                    setSelectedPeriod(list[0].id_periodo_compra);
-                }
+                setRutasCompra(rutasRes.data || []);
             } catch (err) {
-                toast.error('Error al cargar trimestres');
+                toast.error('Error al cargar datos iniciales');
             } finally {
                 setLoadingPeriodos(false);
             }
         };
-        fetchPeriodos();
+        fetchData();
     }, []);
 
     // Fetch control lotes when period changes
@@ -78,15 +84,41 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
         }
     };
 
-    // Handle toggling of es_seco state
-    const handleToggleSeco = async (lote) => {
-        const nextSecoState = !lote.es_seco;
+    // Handle opening confirmation modal
+    const handleMarkSeco = (lote) => {
+        const hasOdp = lote.odp && lote.odp.trim() !== '';
+        const hasRuta = lote.id_ruta_compra !== null && lote.id_ruta_compra !== undefined;
+
+        if (!hasOdp || !hasRuta) {
+            toast.error('Debe asignar un ODP y una Ruta de Compra antes de cambiar el estado a SECO', {
+                toastId: 'seco-validation-org'
+            });
+            return;
+        }
+
+        setConfirmLote(lote);
+        setIsConfirmOpen(true);
+    };
+
+    // Actual execution of changing state to SECO
+    const handleConfirmSeco = async (lote) => {
         try {
-            await controlLoteOrgService.update(lote.id_control_lote_org, { es_seco: nextSecoState });
-            toast.success(`Estado del lote cambiado a ${nextSecoState ? 'Seco' : 'Húmedo'}`, { toastId: 'seco-toggle-org' });
+            await controlLoteOrgService.update(lote.id_control_lote_org, { estado: 'SECO' });
+            toast.success('Estado del lote cambiado a SECO correctamente', { toastId: 'seco-mark-org' });
             fetchLotes();
         } catch (err) {
-            toast.error('Error al cambiar el estado de humedad del lote');
+            toast.error('Error al actualizar el estado a SECO');
+        }
+    };
+
+    // Handle Ruta individual update
+    const handleUpdateRuta = async (id, id_ruta_compra) => {
+        try {
+            await controlLoteOrgService.update(id, { id_ruta_compra });
+            toast.success('Ruta asignada correctamente', { toastId: 'ruta-update-org' });
+            fetchLotes();
+        } catch (err) {
+            toast.error('Error al actualizar Ruta de Compra');
         }
     };
 
@@ -138,10 +170,29 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
 
     // Metrics calculations
     const totalLbsOriginal = lotes.reduce((acc, curr) => acc + (parseFloat(curr.cantidad_libra) || 0), 0);
-    const countSeco = lotes.filter(l => l.es_seco).length;
+    const countSeco = lotes.filter(l => l.estado === 'SECO').length;
+    const totalSecoLbs = lotes.filter(l => l.estado === 'SECO').reduce((acc, curr) => acc + (parseFloat(curr.cantidad_libra) || 0), 0);
     const totalComercializacion = lotes.reduce((acc, curr) => {
         const com = curr.LoteComercializacionOrgs?.[0];
         return acc + (com ? parseFloat(com.total) : 0);
+    }, 0);
+    const totalCosto = lotes.reduce((acc, curr) => acc + (parseFloat(curr.costo) || 0), 0);
+
+    const totalASS = lotes.reduce((acc, curr) => {
+        const com = curr.LoteComercializacionOrgs?.[0];
+        return acc + (com ? parseFloat(com.ass) : 0);
+    }, 0);
+    const totalAS = lotes.reduce((acc, curr) => {
+        const com = curr.LoteComercializacionOrgs?.[0];
+        return acc + (com ? parseFloat(com.as) : 0);
+    }, 0);
+    const totalPajarito = lotes.reduce((acc, curr) => {
+        const com = curr.LoteComercializacionOrgs?.[0];
+        return acc + (com ? parseFloat(com.pajarito) : 0);
+    }, 0);
+    const totalImpureza = lotes.reduce((acc, curr) => {
+        const com = curr.LoteComercializacionOrgs?.[0];
+        return acc + (com ? parseFloat(com.impureza) : 0);
     }, 0);
 
     const activePeriodObj = periodos.find(p => p.id_periodo_compra === parseInt(selectedPeriod, 10));
@@ -223,47 +274,111 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
             ) : (
                 <>
                     {/* Summary Metrics */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-xl">dataset</span>
+                    {activeTab === 'control' ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">dataset</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{lotes.length}</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total Lotes</span>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{lotes.length}</span>
-                                <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total Lotes</span>
-                            </div>
-                        </div>
 
-                        <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-xl">scale</span>
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">scale</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalLbsOriginal)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Peso Total Recibido</span>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalLbsOriginal)} Lbs</span>
-                                <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Peso Total Recibido</span>
-                            </div>
-                        </div>
 
-                        <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-xl">wb_sunny</span>
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">balance</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalLbsOriginal / 100)} QQ</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Peso Total en QQ</span>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{countSeco} Lotes</span>
-                                <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Lotes Secos / Aptos</span>
-                            </div>
-                        </div>
 
-                        <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-xl">receipt_long</span>
-                            </div>
-                            <div>
-                                <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalComercializacion)} Lbs</span>
-                                <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total Comercializado</span>
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">payments</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatCurrency(totalCosto)}</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Costo Total</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">sell</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalASS)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total ASS</span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">sell</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalAS)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total AS</span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">spa</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalPajarito)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total Pajarito</span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">delete_sweep</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalImpureza)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total Impureza</span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">scale</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalComercializacion)} Lbs</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total para Comercialización</span>
+                                </div>
+                            </div>
+
+                            <div className="rounded-xl border border-primary/10 dark:border-primary/20 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm p-4 shadow-sm hover:scale-[1.01] transition-all flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-xl">balance</span>
+                                </div>
+                                <div>
+                                    <span className="text-lg font-bold text-text-primary dark:text-background-light block leading-none mb-1">{formatDecimal(totalComercializacion / 100)} QQ</span>
+                                    <span className="text-[10px] font-bold text-text-secondary dark:text-background-light/50 uppercase tracking-wider">Total para Comercialición</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Tab Navigation */}
                     <div className="flex border-b border-primary/10 dark:border-primary/20">
@@ -297,11 +412,13 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
                             <ControlLotesTable
                                 lotes={lotes}
                                 loading={loadingLotes}
+                                rutasCompra={rutasCompra}
                                 formatDate={formatDate}
-                                formatDecimal={formatDecimal}
+                                                                formatDecimal={formatDecimal}
                                 formatCurrency={formatCurrency}
-                                onToggleSeco={handleToggleSeco}
                                 onUpdateOdp={handleUpdateOdp}
+                                onUpdateRuta={handleUpdateRuta}
+                                onMarkSeco={handleMarkSeco}
                             />
                         ) : (
                             <ComercializacionTable
@@ -323,6 +440,14 @@ const ControlLotesOrganicosPage = ({ onBack }) => {
                 lote={selectedLote}
                 comercializacion={selectedComercializacion}
                 onSave={handleSaveComercializacion}
+            />
+
+            {/* Modal for permanent state change confirmation */}
+            <ConfirmSecoModal
+                isOpen={isConfirmOpen}
+                onClose={() => setIsConfirmOpen(false)}
+                onConfirm={handleConfirmSeco}
+                lote={confirmLote}
             />
         </div>
     );
