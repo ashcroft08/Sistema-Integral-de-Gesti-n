@@ -59,28 +59,4 @@ export class RutaCompraController {
 
         return res.status(200).json(ApiResponse.success(existingRoute, 'Ruta de compra actualizada correctamente.'));
     });
-
-    delete = asyncHandler(async (req, res) => {
-        const { id } = req.params;
-
-        const route = await RutaCompra.findByPk(id);
-        if (!route) {
-            return res.status(404).json(ApiResponse.error('La ruta de compra no existe.'));
-        }
-
-        // Dynamically require models to avoid circular dependencies if any
-        const models = await import('../models/index.js');
-        const ControlLoteOrg = models.ControlLoteOrg;
-        const ControlLoteCv = models.ControlLoteCv;
-
-        const orgLinked = await ControlLoteOrg.findOne({ where: { id_ruta_compra: id } });
-        const cvLinked = await ControlLoteCv.findOne({ where: { id_ruta_compra: id } });
-
-        if (orgLinked || cvLinked) {
-            return res.status(400).json(ApiResponse.error('No se puede eliminar la ruta de compra porque está vinculada a lotes de control existentes.'));
-        }
-
-        await route.destroy();
-        return res.status(200).json(ApiResponse.success(null, 'Ruta de compra eliminada correctamente.'));
-    });
 }

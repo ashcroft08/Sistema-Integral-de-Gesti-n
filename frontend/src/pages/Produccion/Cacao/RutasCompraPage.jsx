@@ -76,7 +76,6 @@ const RutasCompraPage = ({ onBack }) => {
     // Modal States
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Field States
     const [newRouteName, setNewRouteName] = useState('');
@@ -137,28 +136,6 @@ const RutasCompraPage = ({ onBack }) => {
             }
         } catch (err) {
             toast.error(err.response?.data?.error || err.message || 'Error de servidor.');
-        }
-    };
-
-    const handleDeleteClick = (route) => {
-        setSelectedRoute(route);
-        setShowDeleteConfirm(true);
-    };
-
-    const handleDeleteConfirm = async () => {
-        if (!selectedRoute) return;
-        try {
-            const res = await rutaCompraService.delete(selectedRoute.id_ruta_compra);
-            if (res && res.success) {
-                toast.success(res.message || 'Ruta eliminada correctamente.');
-                setShowDeleteConfirm(false);
-                setSelectedRoute(null);
-                fetchRoutes();
-            } else {
-                toast.error(res.message || 'Error al eliminar la ruta.');
-            }
-        } catch (err) {
-            toast.error(err.response?.data?.error || err.message || 'No se puede eliminar la ruta porque está en uso.');
         }
     };
 
@@ -294,13 +271,6 @@ const RutasCompraPage = ({ onBack }) => {
                                                 >
                                                     <span className="material-symbols-outlined text-lg">edit</span>
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(route)}
-                                                    className="p-1.5 rounded-lg border border-red-200 dark:border-red-800/40 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
-                                                    title="Eliminar Ruta"
-                                                >
-                                                    <span className="material-symbols-outlined text-lg">delete</span>
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -341,46 +311,6 @@ const RutasCompraPage = ({ onBack }) => {
                 setValue={setEditRouteName}
                 submitLabel="Guardar Cambios"
             />
-
-            {/* Delete Confirmation Portal */}
-            {showDeleteConfirm && createPortal(
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDeleteConfirm(false)} />
-                    <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-primary/10 dark:border-primary/20 p-6 max-w-md w-full animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30">
-                                <span className="material-symbols-outlined text-2xl text-red-600 dark:text-red-400">warning</span>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary dark:text-background-light">
-                                    ¿Eliminar Ruta de Compra?
-                                </h3>
-                                <p className="text-xs text-text-secondary dark:text-background-light/50">
-                                    Ruta: {selectedRoute?.ruta_compra}
-                                </p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-text-primary/70 dark:text-background-light/60 mb-6">
-                            Esta acción eliminará de forma permanente la ruta. No se podrá realizar si ya hay lotes de control vinculados a esta ruta.
-                        </p>
-                        <div className="flex items-center gap-3 justify-end">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2.5 text-sm font-medium rounded-xl border border-primary/20 dark:border-primary/30 text-text-primary dark:text-background-light hover:bg-primary/5 dark:hover:bg-primary/10 transition-all cursor-pointer"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleDeleteConfirm}
-                                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20 transition-all cursor-pointer"
-                            >
-                                Sí, eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
         </div>
     );
 };

@@ -15,11 +15,6 @@ class RutaCompraService {
         const response = await axiosInstance.put(`/cacao/ruta-compra/${id}`, data);
         return response.data;
     }
-
-    async delete(id) {
-        const response = await axiosInstance.delete(`/cacao/ruta-compra/${id}`);
-        return response.data;
-    }
 }
 
 export const rutaCompraService = new RutaCompraService();

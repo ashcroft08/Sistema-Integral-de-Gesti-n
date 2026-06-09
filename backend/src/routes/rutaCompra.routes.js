@@ -33,11 +33,4 @@ router.get('/', bodegaAccess, controller.getAll);
  */
 router.put('/:id', bodegaAccess, controller.update);
 
-/**
- * @route   DELETE /api/cacao/ruta-compra/:id
- * @desc    Eliminar una ruta de compra
- * @access  Privado (Bodega/Admin/Superusuario)
- */
-router.delete('/:id', bodegaAccess, controller.delete);
-
 export default router;
