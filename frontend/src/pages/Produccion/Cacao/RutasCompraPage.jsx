@@ -221,23 +221,40 @@ const RutasCompraPage = ({ onBack }) => {
             </div>
 
             {/* Listing Table */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-primary/10 dark:border-primary/20 overflow-hidden shadow-sm">
+            <div className="rounded-2xl border border-primary/15 dark:border-primary/25 bg-white/60 dark:bg-background-dark/40 backdrop-blur-sm overflow-hidden shadow-sm animate-in fade-in-50 duration-200">
+                {/* Table Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-primary/10 dark:border-primary/20">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/5 dark:bg-primary/10 text-primary">
+                            <span className="material-symbols-outlined text-xl">table_chart</span>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-text-primary dark:text-background-light">
+                                Catálogo de Rutas de Compra
+                            </h3>
+                            <p className="text-xs text-text-secondary dark:text-background-light/40">
+                                {filteredRoutes.length} rutas registradas
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-primary/10 dark:border-primary/20 bg-primary/[0.02] dark:bg-primary/[0.04]">
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50">
-                                    ID
+                            <tr className="border-b border-primary/10 dark:border-primary/20">
+                                <th className="bg-[#fafafa] dark:bg-[#141416] px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50">
+                                    #
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50">
+                                <th className="bg-[#fafafa] dark:bg-[#141416] px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50">
                                     Ruta de Compra
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50 text-right">
+                                <th className="bg-[#fafafa] dark:bg-[#141416] px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-text-secondary dark:text-background-light/50">
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-primary/5 dark:divide-primary/10">
+                        <tbody className="divide-y divide-primary/[0.06] dark:divide-primary/[0.12]">
                             {loading ? (
                                 <tr>
                                     <td colSpan={3} className="px-6 py-12 text-center text-text-secondary dark:text-background-light/50">
@@ -254,12 +271,19 @@ const RutasCompraPage = ({ onBack }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredRoutes.map((route) => (
-                                    <tr key={route.id_ruta_compra} className="hover:bg-primary/[0.01] dark:hover:bg-primary/[0.02] transition-colors">
-                                        <td className="px-6 py-4 text-sm font-bold text-primary">
-                                            #{route.id_ruta_compra}
+                                filteredRoutes.map((route, idx) => (
+                                    <tr
+                                        key={route.id_ruta_compra}
+                                        className={`transition-colors hover:bg-primary/[0.04] dark:hover:bg-primary/[0.08] ${
+                                            idx % 2 === 0
+                                                ? 'bg-transparent'
+                                                : 'bg-primary/[0.015] dark:bg-primary/[0.04]'
+                                        }`}
+                                    >
+                                        <td className="px-6 py-4 text-xs font-mono text-text-secondary dark:text-background-light/40">
+                                            {idx + 1}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-text-primary dark:text-background-light">
+                                        <td className="px-6 py-4 text-sm font-medium text-text-primary dark:text-background-light whitespace-nowrap">
                                             {route.ruta_compra}
                                         </td>
                                         <td className="px-6 py-4 text-right">
